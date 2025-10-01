@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from './AuthProvider';
 import { db, Collections } from '../lib/firebase';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { calculateWaitlistNumber } from '../lib/functions/waitlist';
 
 interface FeedbackData {
@@ -100,18 +100,22 @@ export default function UserFeedbackForm({ onComplete }: UserFeedbackFormProps) 
 
   const handleSubmit = async () => {
     if (!user?.email) {
-      alert('User not authenticated. Please sign in again.');
+      console.error('[UserFeedbackForm] No user email found');
+      alert('❌ User not authenticated. Please sign in again.');
       return;
     }
 
     setSubmitting(true);
+    console.log('[UserFeedbackForm] Starting feedback submission for:', user.email);
+
     try {
-      console.log('Starting feedback submission for:', user.email);
-
-      // Calculate waitlist number
+      // Step 1: Calculate waitlist number
+      console.log('[UserFeedbackForm] Step 1: Calculating waitlist number...');
       const waitlistNumber = await calculateWaitlistNumber();
+      console.log('[UserFeedbackForm] Waitlist number calculated:', waitlistNumber);
 
-      // Save feedback
+      // Step 2: Save feedback to user_feedback collection
+      console.log('[UserFeedbackForm] Step 2: Saving feedback to Firestore...');
       const feedbackRef = doc(db, Collections.USER_FEEDBACK, user.email);
       await setDoc(feedbackRef, {
         selectedFeatures: feedback.selectedFeatures,
@@ -122,32 +126,65 @@ export default function UserFeedbackForm({ onComplete }: UserFeedbackFormProps) 
         waitlistNumber: waitlistNumber,
         version: '2.0'
       });
+      console.log('[UserFeedbackForm] Feedback saved to user_feedback collection');
 
-      // Update user document - mark both feedback and onboarding as complete
+      // Step 3: Update user document - CRITICAL: mark both flags as true
+      console.log('[UserFeedbackForm] Step 3: Updating user document...');
       const userRef = doc(db, Collections.USERS, user.email);
       await setDoc(userRef, {
         feedbackCompleted: true,
-        onboardingCompleted: true, // Skip onboarding questionnaire
+        onboardingCompleted: true,
         waitlistNumber: waitlistNumber,
         updatedAt: new Date().toISOString()
       }, { merge: true });
+      console.log('[UserFeedbackForm] User document updated successfully');
 
-      console.log('Feedback saved successfully');
+      // Step 4: Verify the update
+      console.log('[UserFeedbackForm] Step 4: Verifying user document update...');
+      const verifyDoc = await getDoc(userRef);
+      if (verifyDoc.exists()) {
+        const verifyData = verifyDoc.data();
+        console.log('[UserFeedbackForm] Verification - User document state:', {
+          feedbackCompleted: verifyData.feedbackCompleted,
+          onboardingCompleted: verifyData.onboardingCompleted,
+          waitlistNumber: verifyData.waitlistNumber
+        });
+
+        if (verifyData.feedbackCompleted !== true || verifyData.onboardingCompleted !== true) {
+          throw new Error('Failed to update user completion flags in Firestore');
+        }
+      } else {
+        throw new Error('User document not found after update');
+      }
+
+      console.log('[UserFeedbackForm] ✅ All steps completed successfully');
 
       // Show success message
       alert(`🎉 CONGRATULATIONS! 🎉\n\n✅ Your feedback has been submitted!\n\nGet ready to transform your fitness journey! 💪`);
 
+      // Trigger callback to update AppRouter state
+      console.log('[UserFeedbackForm] Calling onComplete callback...');
       onComplete();
     } catch (error: any) {
-      console.error('Error submitting feedback:', error);
+      console.error('[UserFeedbackForm] ❌ Error submitting feedback:', error);
+      console.error('[UserFeedbackForm] Error code:', error.code);
+      console.error('[UserFeedbackForm] Error message:', error.message);
+      console.error('[UserFeedbackForm] Error stack:', error.stack);
+
+      // Enterprise-grade error handling with specific messages
+      let errorMessage = 'An unexpected error occurred. Please try again.';
 
       if (error.code === 'permission-denied') {
-        alert('❌ Permission denied. Please ensure you are signed in and Firebase rules are configured correctly.');
+        errorMessage = 'Permission denied. Please ensure you are signed in and Firebase security rules are configured correctly.';
       } else if (error.code === 'unavailable') {
-        alert('❌ Network error. Please check your internet connection and try again.');
-      } else {
-        alert(`❌ Failed to submit feedback: ${error.message}\n\nPlease try again or contact support.`);
+        errorMessage = 'Network error. Please check your internet connection and try again.';
+      } else if (error.code === 'unauthenticated') {
+        errorMessage = 'Authentication error. Please sign out and sign in again.';
+      } else if (error.message) {
+        errorMessage = `Error: ${error.message}`;
       }
+
+      alert(`❌ Failed to submit feedback\n\n${errorMessage}\n\nPlease try again or contact support if the problem persists.`);
 
       setSubmitting(false);
     }

@@ -4,59 +4,77 @@ import { db, Collections } from './lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import LandingPage from './App';
 import UserFeedbackForm from './components/UserFeedbackForm';
-import OnboardingQuestionnaire from './components/OnboardingQuestionnaire';
 import MainDashboard from './components/MainDashboard';
 import AdminDashboard from './components/AdminDashboard';
 
 // Admin email list - add authorized admin emails here
 const ADMIN_EMAILS = ['akhilreddyd3@gmail.com'];
 
+interface UserStatus {
+  feedbackCompleted: boolean;
+  onboardingCompleted: boolean;
+}
+
 export default function AppRouter() {
   const { user, loading, signOut } = useAuth();
-  const [feedbackComplete, setFeedbackComplete] = useState(false);
-  const [onboardingComplete, setOnboardingComplete] = useState(false);
-  const [checkingOnboarding, setCheckingOnboarding] = useState(true);
+  const [userStatus, setUserStatus] = useState<UserStatus>({
+    feedbackCompleted: false,
+    onboardingCompleted: false
+  });
+  const [checkingStatus, setCheckingStatus] = useState(true);
   const [showAdmin, setShowAdmin] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  console.log('AppRouter state:', {
+  console.log('[AppRouter] Current state:', {
     hasUser: !!user,
     userEmail: user?.email,
     loading,
-    checkingOnboarding,
-    onboardingComplete,
-    showAdmin
+    checkingStatus,
+    feedbackCompleted: userStatus.feedbackCompleted,
+    onboardingCompleted: userStatus.onboardingCompleted,
+    showAdmin,
+    error
   });
 
   useEffect(() => {
     // Handle sign out URL parameter
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('signout') === 'true') {
-      console.log('Sign out parameter detected, signing out...');
+      console.log('[AppRouter] Sign out parameter detected');
       signOut().then(() => {
         window.location.href = '/';
+      }).catch((err) => {
+        console.error('[AppRouter] Sign out error:', err);
+        setError('Failed to sign out. Please try again.');
       });
       return;
     }
 
-    if (user) {
-      checkOnboardingStatus();
+    if (user && user.email) {
+      checkUserStatus();
+
       // Check if user is admin
-      if (user.email && ADMIN_EMAILS.includes(user.email)) {
-        // Check URL for admin route
+      if (ADMIN_EMAILS.includes(user.email)) {
         if (window.location.pathname === '/admin') {
           setShowAdmin(true);
         }
       }
     } else {
-      setCheckingOnboarding(false);
+      setCheckingStatus(false);
     }
   }, [user]);
 
-  const checkOnboardingStatus = async () => {
-    if (!user || !user.email) return;
+  const checkUserStatus = async () => {
+    if (!user || !user.email) {
+      console.log('[AppRouter] No user or email, skipping status check');
+      setCheckingStatus(false);
+      return;
+    }
 
     try {
-      console.log('Checking onboarding status for:', user.email);
+      console.log('[AppRouter] Checking user status for:', user.email);
+      setCheckingStatus(true);
+      setError(null);
 
       // Check user document in Firestore
       const userDocRef = doc(db, Collections.USERS, user.email);
@@ -64,38 +82,95 @@ export default function AppRouter() {
 
       if (userDoc.exists()) {
         const userData = userDoc.data();
-        console.log('User data:', userData);
+        console.log('[AppRouter] User document found:', {
+          feedbackCompleted: userData.feedbackCompleted,
+          onboardingCompleted: userData.onboardingCompleted,
+          waitlistNumber: userData.waitlistNumber
+        });
 
-        const feedbackDone = userData.feedbackCompleted || false;
-        const onboardingDone = userData.onboardingCompleted || false;
-
-        console.log('Feedback completed:', feedbackDone);
-        console.log('Onboarding completed:', onboardingDone);
-
-        setFeedbackComplete(feedbackDone);
-        setOnboardingComplete(onboardingDone);
+        setUserStatus({
+          feedbackCompleted: userData.feedbackCompleted === true,
+          onboardingCompleted: userData.onboardingCompleted === true
+        });
       } else {
-        console.log('User document not found, showing feedback form');
-        // For new users, show feedback form first
-        setFeedbackComplete(false);
-        setOnboardingComplete(false);
+        console.log('[AppRouter] User document not found - new user');
+        setUserStatus({
+          feedbackCompleted: false,
+          onboardingCompleted: false
+        });
       }
-    } catch (error) {
-      console.error('Error checking onboarding:', error);
-      // For new users, show feedback form first
-      setFeedbackComplete(false);
-      setOnboardingComplete(false);
+    } catch (error: any) {
+      console.error('[AppRouter] Error checking user status:', error);
+
+      // Enterprise-grade error handling
+      if (error.code === 'permission-denied') {
+        setError('Permission denied. Please check Firebase security rules.');
+      } else if (error.code === 'unavailable') {
+        setError('Network error. Please check your internet connection.');
+      } else {
+        setError(`Failed to load user data: ${error.message}`);
+      }
+
+      // Default to showing form on error (safe fallback)
+      setUserStatus({
+        feedbackCompleted: false,
+        onboardingCompleted: false
+      });
     } finally {
-      setCheckingOnboarding(false);
+      setCheckingStatus(false);
     }
   };
 
-  if (loading || checkingOnboarding) {
+  const handleFeedbackComplete = async () => {
+    console.log('[AppRouter] Feedback completed callback triggered');
+
+    // Update local state immediately
+    setUserStatus({
+      feedbackCompleted: true,
+      onboardingCompleted: true
+    });
+
+    // Re-check from Firestore to ensure consistency
+    try {
+      console.log('[AppRouter] Re-checking Firestore after feedback completion');
+      await checkUserStatus();
+    } catch (error) {
+      console.error('[AppRouter] Error re-checking status:', error);
+      // Even if re-check fails, keep the updated local state
+    }
+  };
+
+  // Loading state
+  if (loading || checkingStatus) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-red-50 flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-orange-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600 font-medium">Loading...</p>
+          <p className="text-gray-600 font-medium">Loading your experience...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-red-50 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span className="text-3xl">⚠️</span>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Oops! Something went wrong</h2>
+          <p className="text-gray-600 mb-6">{error}</p>
+          <button
+            onClick={() => {
+              setError(null);
+              checkUserStatus();
+            }}
+            className="px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold rounded-full hover:from-orange-600 hover:to-red-600 transition-all"
+          >
+            Try Again
+          </button>
         </div>
       </div>
     );
@@ -103,26 +178,25 @@ export default function AppRouter() {
 
   // Always show landing page if user is not authenticated
   if (!user) {
-    console.log('Showing LandingPage - user not authenticated');
+    console.log('[AppRouter] Showing LandingPage - user not authenticated');
     return <LandingPage />;
   }
 
-  console.log('User is authenticated, checking next step...');
+  console.log('[AppRouter] User is authenticated, determining view...');
 
   // Show admin dashboard if user is admin and on /admin route
   if (showAdmin && user.email && ADMIN_EMAILS.includes(user.email)) {
+    console.log('[AppRouter] Showing AdminDashboard');
     return <AdminDashboard />;
   }
 
-  // Show feedback form only for brand new users (no feedback completed)
-  if (!feedbackComplete) {
-    return <UserFeedbackForm onComplete={async () => {
-      console.log('Feedback completed, going to dashboard...');
-      setFeedbackComplete(true);
-      setOnboardingComplete(true); // Skip onboarding questionnaire
-    }} />;
+  // Show feedback form for new users who haven't completed it
+  if (!userStatus.feedbackCompleted) {
+    console.log('[AppRouter] Showing UserFeedbackForm - feedback not completed');
+    return <UserFeedbackForm onComplete={handleFeedbackComplete} />;
   }
 
-  // Go directly to dashboard after feedback
+  // Show dashboard for users who have completed feedback
+  console.log('[AppRouter] Showing MainDashboard - user onboarded');
   return <MainDashboard />;
 }
