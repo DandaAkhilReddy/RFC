@@ -3,7 +3,7 @@ import { useAuth } from './components/AuthProvider';
 import { api } from './lib/api';
 import LandingPage from './App';
 import OnboardingQuestionnaire from './components/OnboardingQuestionnaire';
-import ModernDashboard from './components/ModernDashboard';
+import MainDashboard from './components/MainDashboard';
 import AdminPanel from './components/AdminPanel';
 
 // Admin email list - add authorized admin emails here
@@ -101,5 +101,5 @@ export default function AppRouter() {
     }} />;
   }
 
-  return <ModernDashboard />;
+  return <MainDashboard />;
 }

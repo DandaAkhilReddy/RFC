@@ -22,6 +22,7 @@ export const db = getFirestore(app);
 // Collection names (easy to find in Firebase Console)
 export const Collections = {
   USERS: 'users',
+  USER_SETTINGS: 'user_settings',
   MEALS: 'meals',
   WEIGHT_LOGS: 'weight_logs',
   WORKOUTS: 'workouts',
