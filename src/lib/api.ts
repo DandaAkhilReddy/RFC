@@ -1,6 +1,6 @@
 // API client for Azure Functions backend
-// Using relative path for Static Web App integrated API
-const API_BASE_URL = '/api';
+// Using standalone Azure Functions App
+const API_BASE_URL = 'https://reddyfit-api.azurewebsites.net/api';
 
 export interface UserProfile {
   id: string;
