@@ -111,4 +111,24 @@ export const api = {
       throw error;
     }
   },
+
+  // Admin: Delete user
+  async deleteUser(userId: string): Promise<{ message: string; success: boolean }> {
+    const response = await fetch(`${API_BASE_URL}/admin/users/${userId}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) {
+      throw new Error('Failed to delete user');
+    }
+    return response.json();
+  },
+
+  // Admin: Get statistics
+  async getAdminStats(): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/admin/stats`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch admin statistics');
+    }
+    return response.json();
+  },
 };
