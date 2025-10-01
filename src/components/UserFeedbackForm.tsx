@@ -15,6 +15,7 @@ import {
 import { useAuth } from './AuthProvider';
 import { db, Collections } from '../lib/firebase';
 import { doc, setDoc } from 'firebase/firestore';
+import { calculateWaitlistNumber } from '../lib/functions/waitlist';
 
 interface FeedbackData {
   // User Experience
@@ -103,6 +104,9 @@ export default function UserFeedbackForm({ onComplete }: UserFeedbackFormProps) 
       console.log('Starting feedback submission for:', user.email);
       console.log('Feedback data:', feedback);
 
+      // Calculate waitlist number (4x the number of registered users)
+      const waitlistNumber = await calculateWaitlistNumber();
+
       // Save feedback to user_feedback collection
       const feedbackRef = doc(db, Collections.USER_FEEDBACK, user.email);
       console.log('Saving feedback to:', Collections.USER_FEEDBACK);
@@ -112,6 +116,7 @@ export default function UserFeedbackForm({ onComplete }: UserFeedbackFormProps) 
         userEmail: user.email,
         userName: user.displayName || user.email,
         submittedAt: new Date().toISOString(),
+        waitlistNumber: waitlistNumber,
         version: '1.0'
       });
 
@@ -123,11 +128,16 @@ export default function UserFeedbackForm({ onComplete }: UserFeedbackFormProps) 
 
       await setDoc(userRef, {
         feedbackCompleted: true,
+        waitlistNumber: waitlistNumber,
         updatedAt: new Date().toISOString()
       }, { merge: true });
 
       console.log('User document updated successfully');
-      alert('Thank you! Your feedback has been submitted successfully!');
+
+      // Show congratulations with waitlist number
+      const mostExcited = feedback.mostExcitedFeature || 'ReddyFit features';
+      alert(`🎉 CONGRATULATIONS! 🎉\n\n✅ Your feedback has been submitted successfully!\n\n🏆 You are #${waitlistNumber} on the waitlist for ${mostExcited}!\n\nWe'll notify you when it's ready. Get ready to transform your fitness journey! 💪`);
+
       onComplete();
     } catch (error: any) {
       console.error('Error submitting feedback:', error);
