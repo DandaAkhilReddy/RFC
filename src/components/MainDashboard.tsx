@@ -13,11 +13,11 @@ import {
 } from 'lucide-react';
 import { useAuth } from './AuthProvider';
 import ReddyAIAgent from './ReddyAIAgent';
-import DietPlanPage from './DietPlanPage';
+import FitCalcPro from './FitCalcPro';
 import SettingsPage from './SettingsPage';
 import AICompanionPage from './AICompanionPage';
 
-type PageView = 'home' | 'reddy' | 'diet' | 'workout' | 'companion' | 'settings';
+type PageView = 'home' | 'reddy' | 'fitcalc' | 'datefit' | 'settings';
 
 export default function MainDashboard() {
   const { user, signOut } = useAuth();
@@ -27,35 +27,27 @@ export default function MainDashboard() {
   const mainFeatures = [
     {
       id: 'reddy',
-      name: 'Reddy AI Coach',
-      description: 'Chat with AI, voice messages & photo analysis',
+      name: 'Reddy AI',
+      description: 'AI Chat, voice messages & photo analysis help',
       icon: Bot,
       color: 'from-orange-500 to-red-500',
       available: true
     },
     {
-      id: 'diet',
-      name: 'Diet Plan',
-      description: 'Track calories, macros & meal planning',
-      icon: Utensils,
-      color: 'from-green-500 to-emerald-500',
+      id: 'fitcalc',
+      name: 'FitCalc Pro',
+      description: 'Body fat %, BMI, BMR & weight loss calculator',
+      icon: Activity,
+      color: 'from-blue-500 to-indigo-500',
       available: true
     },
     {
-      id: 'companion',
-      name: 'AI Companion',
+      id: 'datefit',
+      name: 'Cupid AI',
       description: 'Daily accountability partner matching',
       icon: Heart,
       color: 'from-pink-500 to-purple-500',
       available: true
-    },
-    {
-      id: 'workout',
-      name: 'Workout Plans',
-      description: 'AI-generated custom workout routines',
-      icon: Dumbbell,
-      color: 'from-blue-500 to-indigo-500',
-      available: false // Coming Soon
     }
   ];
 
@@ -82,11 +74,11 @@ export default function MainDashboard() {
     return <ReddyAIAgent onBack={() => setCurrentPage('home')} />;
   }
 
-  if (currentPage === 'diet') {
-    return <DietPlanPage onBack={() => setCurrentPage('home')} />;
+  if (currentPage === 'fitcalc') {
+    return <FitCalcPro onBack={() => setCurrentPage('home')} />;
   }
 
-  if (currentPage === 'companion') {
+  if (currentPage === 'datefit') {
     return <AICompanionPage onBack={() => setCurrentPage('home')} />;
   }
 
