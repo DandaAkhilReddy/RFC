@@ -1,0 +1,104 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Helper function to check if user owns the document
+    function isOwner(email) {
+      return isAuthenticated() && request.auth.token.email == email;
+    }
+
+    // Users collection - users can read and write their own documents
+    match /users/{userEmail} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.auth.token.email == userEmail;
+      allow update: if isOwner(userEmail);
+      allow delete: if false; // No deletes allowed
+    }
+
+    // User feedback - users can write their own feedback
+    match /user_feedback/{userEmail} {
+      allow read: if isAuthenticated();
+      allow create, update: if isOwner(userEmail);
+      allow delete: if false;
+    }
+
+    // User settings - users can read and write their own settings
+    match /user_settings/{userEmail} {
+      allow read: if isAuthenticated();
+      allow create, update: if isOwner(userEmail);
+      allow delete: if false;
+    }
+
+    // Meals - users can read and write their own meals
+    match /meals/{mealId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() &&
+        resource.data.userEmail == request.auth.token.email;
+    }
+
+    // Workouts - users can read and write their own workouts
+    match /workouts/{workoutId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() &&
+        resource.data.userEmail == request.auth.token.email;
+    }
+
+    // Weight logs - users can read and write their own logs
+    match /weight_logs/{logId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() &&
+        resource.data.userEmail == request.auth.token.email;
+    }
+
+    // Matches - users can read their own matches
+    match /matches/{matchId} {
+      allow read: if isAuthenticated() &&
+        (resource.data.userEmail == request.auth.token.email ||
+         resource.data.matchedUserEmail == request.auth.token.email);
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() &&
+        (resource.data.userEmail == request.auth.token.email ||
+         resource.data.matchedUserEmail == request.auth.token.email);
+      allow delete: if false;
+    }
+
+    // Swipes - users can read and write their own swipes
+    match /swipes/{swipeId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAuthenticated();
+      allow delete: if false;
+    }
+
+    // Chat messages - users can read their own messages
+    match /chat_messages/{messageId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() &&
+        resource.data.userEmail == request.auth.token.email;
+    }
+
+    // Match preferences - users can read and write their own preferences
+    match /match_preferences/{userEmail} {
+      allow read: if isAuthenticated();
+      allow create, update: if isOwner(userEmail);
+      allow delete: if false;
+    }
+
+    // Progress photos - users can read and write their own photos
+    match /progress_photos/{photoId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() &&
+        resource.data.userEmail == request.auth.token.email;
+    }
+  }
+}

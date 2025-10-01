@@ -93,32 +93,54 @@ export default function UserFeedbackForm({ onComplete }: UserFeedbackFormProps) 
   };
 
   const handleSubmit = async () => {
-    if (!user?.email) return;
+    if (!user?.email) {
+      alert('User not authenticated. Please sign in again.');
+      return;
+    }
 
     setSubmitting(true);
     try {
+      console.log('Starting feedback submission for:', user.email);
+      console.log('Feedback data:', feedback);
+
       // Save feedback to user_feedback collection
       const feedbackRef = doc(db, Collections.USER_FEEDBACK, user.email);
+      console.log('Saving feedback to:', Collections.USER_FEEDBACK);
+
       await setDoc(feedbackRef, {
         ...feedback,
         userEmail: user.email,
-        userName: user.displayName,
+        userName: user.displayName || user.email,
         submittedAt: new Date().toISOString(),
         version: '1.0'
       });
 
+      console.log('Feedback saved successfully');
+
       // Mark feedback as complete in users collection
       const userRef = doc(db, Collections.USERS, user.email);
+      console.log('Updating user document in:', Collections.USERS);
+
       await setDoc(userRef, {
         feedbackCompleted: true,
         updatedAt: new Date().toISOString()
       }, { merge: true });
 
-      console.log('Feedback submitted successfully');
+      console.log('User document updated successfully');
+      alert('Thank you! Your feedback has been submitted successfully!');
       onComplete();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error submitting feedback:', error);
-      alert('Failed to submit feedback. Please try again.');
+      console.error('Error code:', error.code);
+      console.error('Error message:', error.message);
+
+      if (error.code === 'permission-denied') {
+        alert('Permission denied. Firebase security rules need to be configured.\n\nPlease contact the administrator to enable write access to Firestore.');
+      } else if (error.code === 'unavailable') {
+        alert('Network error. Please check your internet connection and try again.');
+      } else {
+        alert(`Failed to submit feedback: ${error.message}\n\nPlease try again or contact support.`);
+      }
     } finally {
       setSubmitting(false);
     }
