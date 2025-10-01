@@ -114,23 +114,15 @@ export default function AppRouter() {
     return <AdminDashboard />;
   }
 
-  // Show feedback form first (for all new users)
+  // Show feedback form only for brand new users (no feedback completed)
   if (!feedbackComplete) {
     return <UserFeedbackForm onComplete={async () => {
-      console.log('Feedback completed, moving to onboarding...');
+      console.log('Feedback completed, going to dashboard...');
       setFeedbackComplete(true);
-      await checkOnboardingStatus();
+      setOnboardingComplete(true); // Skip onboarding questionnaire
     }} />;
   }
 
-  // Then show fitness onboarding
-  if (!onboardingComplete) {
-    return <OnboardingQuestionnaire onComplete={async () => {
-      console.log('Onboarding completed, re-checking status...');
-      setCheckingOnboarding(true);
-      await checkOnboardingStatus();
-    }} />;
-  }
-
+  // Go directly to dashboard after feedback
   return <MainDashboard />;
 }

@@ -123,10 +123,11 @@ export default function UserFeedbackForm({ onComplete }: UserFeedbackFormProps) 
         version: '2.0'
       });
 
-      // Update user document
+      // Update user document - mark both feedback and onboarding as complete
       const userRef = doc(db, Collections.USERS, user.email);
       await setDoc(userRef, {
         feedbackCompleted: true,
+        onboardingCompleted: true, // Skip onboarding questionnaire
         waitlistNumber: waitlistNumber,
         updatedAt: new Date().toISOString()
       }, { merge: true });
