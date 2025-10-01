@@ -1,6 +1,6 @@
-// API client for Azure Functions backend
-// Using standalone Azure Functions App
-const API_BASE_URL = 'https://reddyfit-api.azurewebsites.net/api';
+// API client for Express.js backend
+// Using Azure App Service with Express.js
+const API_BASE_URL = 'https://reddyfit-express-api.azurewebsites.net/api';
 
 export interface UserProfile {
   id: string;
