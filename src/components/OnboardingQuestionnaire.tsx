@@ -25,11 +25,15 @@ export default function OnboardingQuestionnaire({ onComplete }: { onComplete: ()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !user.email) return;
+    if (!user || !user.email) {
+      alert('You must be signed in to complete onboarding.');
+      return;
+    }
 
     setIsSubmitting(true);
 
     try {
+      console.log('Updating user profile...');
       // Update user profile
       await api.upsertUserProfile({
         email: user.email,
@@ -38,9 +42,11 @@ export default function OnboardingQuestionnaire({ onComplete }: { onComplete: ()
         gender: formData.gender,
         avatar_url: user.photoURL || '',
       });
+      console.log('User profile updated successfully');
 
+      console.log('Submitting onboarding responses...');
       // Submit onboarding responses
-      await api.submitOnboarding({
+      const response = await api.submitOnboarding({
         email: user.email,
         fitness_goal: formData.fitnessGoal,
         current_fitness_level: formData.currentLevel,
@@ -53,11 +59,18 @@ export default function OnboardingQuestionnaire({ onComplete }: { onComplete: ()
         willing_to_pay: formData.willingToPay,
         price_range: formData.priceRange,
       });
+      console.log('Onboarding response:', response);
 
-      onComplete();
-    } catch (error) {
+      if (response.success) {
+        console.log('Onboarding completed successfully!');
+        onComplete();
+      } else {
+        throw new Error(response.error || 'Failed to save onboarding');
+      }
+    } catch (error: any) {
       console.error('Error submitting questionnaire:', error);
-      alert('Error saving your responses. Please try again.');
+      const errorMessage = error.message || error.details || 'Error saving your responses. Please try again.';
+      alert(`Failed to save your responses:\n\n${errorMessage}\n\nPlease try again or contact support.`);
     } finally {
       setIsSubmitting(false);
     }

@@ -88,17 +88,27 @@ export const api = {
   },
 
   // Submit onboarding responses
-  async submitOnboarding(data: OnboardingData): Promise<{ message: string }> {
-    const response = await fetch(`${API_BASE_URL}/onboarding`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    });
-    if (!response.ok) {
-      throw new Error('Failed to submit onboarding');
+  async submitOnboarding(data: OnboardingData): Promise<{ message?: string; success?: boolean; error?: string; details?: string }> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/onboarding`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        console.error('Onboarding API error:', result);
+        throw new Error(result.error || result.details || 'Failed to submit onboarding');
+      }
+
+      return result;
+    } catch (error: any) {
+      console.error('Error in submitOnboarding:', error);
+      throw error;
     }
-    return response.json();
   },
 };
