@@ -8,14 +8,16 @@ import {
   Lock,
   Menu,
   X,
-  ChevronRight
+  ChevronRight,
+  Heart
 } from 'lucide-react';
 import { useAuth } from './AuthProvider';
 import ReddyAIAgent from './ReddyAIAgent';
 import DietPlanPage from './DietPlanPage';
 import SettingsPage from './SettingsPage';
+import AICompanionPage from './AICompanionPage';
 
-type PageView = 'home' | 'reddy' | 'diet' | 'workout' | 'progress' | 'settings';
+type PageView = 'home' | 'reddy' | 'diet' | 'workout' | 'companion' | 'settings';
 
 export default function MainDashboard() {
   const { user, signOut } = useAuth();
@@ -37,6 +39,14 @@ export default function MainDashboard() {
       description: 'Track calories, macros & meal planning',
       icon: Utensils,
       color: 'from-green-500 to-emerald-500',
+      available: true
+    },
+    {
+      id: 'companion',
+      name: 'AI Companion',
+      description: 'Daily accountability partner matching',
+      icon: Heart,
+      color: 'from-pink-500 to-purple-500',
       available: true
     },
     {
@@ -74,6 +84,10 @@ export default function MainDashboard() {
 
   if (currentPage === 'diet') {
     return <DietPlanPage onBack={() => setCurrentPage('home')} />;
+  }
+
+  if (currentPage === 'companion') {
+    return <AICompanionPage onBack={() => setCurrentPage('home')} />;
   }
 
   if (currentPage === 'settings') {
