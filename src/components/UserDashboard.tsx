@@ -22,7 +22,11 @@ import {
   Settings,
   ChevronRight,
   Clock,
-  CheckCircle2
+  CheckCircle2,
+  X,
+  Utensils,
+  Apple,
+  Beef
 } from 'lucide-react';
 import { useAuth } from './AuthProvider';
 import { sendChatMessage, transcribeAudio, type ChatMessage, type UserContext } from '../lib/aiService';
@@ -114,6 +118,16 @@ export default function UserDashboard() {
 
   const [currentStreak, setCurrentStreak] = useState(1);
   const [totalWorkouts, setTotalWorkouts] = useState(0);
+
+  // Meal logging state
+  const [showMealModal, setShowMealModal] = useState(false);
+  const [mealData, setMealData] = useState({
+    calories: '',
+    protein: '',
+    carbs: '',
+    fats: '',
+    mealPhoto: ''
+  });
 
   // Calculate progress metrics
   const totalLoss = userData.startWeight - userData.currentWeight;
@@ -424,6 +438,45 @@ export default function UserDashboard() {
     reader.readAsDataURL(file);
   };
 
+  // Handle meal photo upload
+  const handleMealPhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setMealData({ ...mealData, mealPhoto: reader.result as string });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Log meal manually
+  const logMeal = () => {
+    const calories = parseInt(mealData.calories) || 0;
+    const protein = parseInt(mealData.protein) || 0;
+    const carbs = parseInt(mealData.carbs) || 0;
+    const fats = parseInt(mealData.fats) || 0;
+
+    // Update today's log
+    setTodayLog(prev => ({
+      ...prev,
+      caloriesEaten: prev.caloriesEaten + calories,
+      proteinEaten: prev.proteinEaten + protein,
+      mealPhotos: mealData.mealPhoto ? [...prev.mealPhotos, mealData.mealPhoto] : prev.mealPhotos
+    }));
+
+    // Add confirmation message
+    setChatMessages(prev => [...prev, {
+      role: 'assistant',
+      content: `✅ Meal logged successfully!\n\n📊 **Nutrition Added:**\n🔥 Calories: ${calories} cal\n🥩 Protein: ${protein}g\n🍚 Carbs: ${carbs}g\n🥑 Fats: ${fats}g\n\n**Remaining Today:**\n- ${userData.dailyCalories - (todayLog.caloriesEaten + calories)} cal\n- ${userData.dailyProtein - (todayLog.proteinEaten + protein)}g protein`,
+      timestamp: new Date()
+    }]);
+
+    // Reset modal
+    setMealData({ calories: '', protein: '', carbs: '', fats: '', mealPhoto: '' });
+    setShowMealModal(false);
+  };
+
   // Chat View
   const ChatView = () => (
     <div className="flex flex-col h-[calc(100vh-200px)]">
@@ -478,8 +531,15 @@ export default function UserDashboard() {
       <div className="mb-6 px-4">
         <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
           <button
+            onClick={() => setShowMealModal(true)}
+            className="px-5 py-2.5 bg-gradient-to-r from-orange-400 to-red-500 text-white rounded-full text-sm font-semibold whitespace-nowrap hover:shadow-lg hover:scale-105 transition-all flex items-center gap-2"
+          >
+            <Utensils className="w-4 h-4" />
+            Log Meal
+          </button>
+          <button
             onClick={() => setInputMessage('What should I eat today?')}
-            className="px-5 py-2.5 bg-gradient-to-r from-orange-400 to-red-500 text-white rounded-full text-sm font-semibold whitespace-nowrap hover:shadow-lg hover:scale-105 transition-all"
+            className="px-5 py-2.5 bg-gradient-to-r from-amber-400 to-orange-500 text-white rounded-full text-sm font-semibold whitespace-nowrap hover:shadow-lg hover:scale-105 transition-all"
           >
             🍽️ Meal Plan
           </button>
@@ -713,6 +773,191 @@ export default function UserDashboard() {
 
       {/* Spacer for bottom nav */}
       <div className="h-24"></div>
+
+      {/* Meal Logging Modal */}
+      {showMealModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+            {/* Modal Header */}
+            <div className="sticky top-0 bg-gradient-to-r from-orange-500 to-red-500 text-white p-6 rounded-t-3xl">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Utensils className="w-6 h-6" />
+                  <h2 className="text-xl font-bold">Log Your Meal</h2>
+                </div>
+                <button onClick={() => setShowMealModal(false)} className="p-2 hover:bg-white/20 rounded-full transition-all">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 space-y-6">
+              {/* Meal Photo Upload */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-3">📸 Meal Photo (Optional)</label>
+                {mealData.mealPhoto ? (
+                  <div className="relative">
+                    <img src={mealData.mealPhoto} alt="Meal" className="w-full h-48 object-cover rounded-2xl" />
+                    <button
+                      onClick={() => setMealData({ ...mealData, mealPhoto: '' })}
+                      className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-all"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={async () => {
+                        // Analyze with Gemini
+                        setChatMessages(prev => [...prev, {
+                          role: 'assistant',
+                          content: '🔍 Analyzing your meal photo...',
+                          timestamp: new Date()
+                        }]);
+
+                        const userContext: UserContext = {
+                          name: user?.displayName || 'User',
+                          email: user?.email || '',
+                          startWeight: userData.startWeight,
+                          currentWeight: userData.currentWeight,
+                          targetWeight: userData.targetWeight,
+                          fitnessGoal: userData.fitnessGoal,
+                          currentLevel: userData.currentLevel,
+                          dailyCalories: userData.dailyCalories,
+                          dailyProtein: userData.dailyProtein
+                        };
+
+                        try {
+                          const analysis = await analyzeMealPhotoWithGemini(mealData.mealPhoto, userContext);
+                          setMealData({
+                            ...mealData,
+                            calories: analysis.calories.toString(),
+                            protein: analysis.protein.toString(),
+                            carbs: analysis.carbs.toString(),
+                            fats: analysis.fats.toString()
+                          });
+
+                          setChatMessages(prev => [...prev, {
+                            role: 'assistant',
+                            content: `✅ Analysis complete!\n\n**Estimated Nutrition:**\n🔥 ${analysis.calories} cal\n🥩 ${analysis.protein}g protein\n🍚 ${analysis.carbs}g carbs\n🥑 ${analysis.fats}g fats\n\n**Foods:** ${analysis.foods.join(', ')}`,
+                            timestamp: new Date()
+                          }]);
+                        } catch (error) {
+                          setChatMessages(prev => [...prev, {
+                            role: 'assistant',
+                            content: '❌ Could not analyze photo. Please enter nutrition manually.',
+                            timestamp: new Date()
+                          }]);
+                        }
+                      }}
+                      className="absolute bottom-2 right-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full text-sm font-semibold hover:shadow-lg transition-all"
+                    >
+                      🤖 AI Analyze
+                    </button>
+                  </div>
+                ) : (
+                  <label className="block w-full h-48 border-2 border-dashed border-gray-300 rounded-2xl hover:border-orange-500 transition-all cursor-pointer">
+                    <div className="h-full flex flex-col items-center justify-center text-gray-400 hover:text-orange-500 transition-all">
+                      <Camera className="w-12 h-12 mb-2" />
+                      <p className="text-sm font-medium">Tap to upload photo</p>
+                      <p className="text-xs">AI will analyze nutrition</p>
+                    </div>
+                    <input type="file" accept="image/*" onChange={handleMealPhotoUpload} className="hidden" />
+                  </label>
+                )}
+              </div>
+
+              {/* Nutrition Inputs */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                    <Flame className="w-4 h-4 text-orange-500" />
+                    Calories
+                  </label>
+                  <input
+                    type="number"
+                    value={mealData.calories}
+                    onChange={(e) => setMealData({ ...mealData, calories: e.target.value })}
+                    placeholder="450"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-orange-500 focus:outline-none transition-all"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                    <Beef className="w-4 h-4 text-red-500" />
+                    Protein (g)
+                  </label>
+                  <input
+                    type="number"
+                    value={mealData.protein}
+                    onChange={(e) => setMealData({ ...mealData, protein: e.target.value })}
+                    placeholder="35"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-red-500 focus:outline-none transition-all"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                    <Apple className="w-4 h-4 text-green-500" />
+                    Carbs (g)
+                  </label>
+                  <input
+                    type="number"
+                    value={mealData.carbs}
+                    onChange={(e) => setMealData({ ...mealData, carbs: e.target.value })}
+                    placeholder="40"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:outline-none transition-all"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                    <Droplet className="w-4 h-4 text-yellow-500" />
+                    Fats (g)
+                  </label>
+                  <input
+                    type="number"
+                    value={mealData.fats}
+                    onChange={(e) => setMealData({ ...mealData, fats: e.target.value })}
+                    placeholder="18"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-yellow-500 focus:outline-none transition-all"
+                  />
+                </div>
+              </div>
+
+              {/* Daily Summary */}
+              <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-4">
+                <p className="text-sm font-semibold text-gray-700 mb-2">📊 Today's Totals</p>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <p className="text-gray-600">Calories: <span className="font-bold">{todayLog.caloriesEaten + (parseInt(mealData.calories) || 0)}</span> / {userData.dailyCalories}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Protein: <span className="font-bold">{todayLog.proteinEaten + (parseInt(mealData.protein) || 0)}g</span> / {userData.dailyProtein}g</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowMealModal(false)}
+                  className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={logMeal}
+                  disabled={!mealData.calories && !mealData.protein}
+                  className="flex-1 px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Log Meal
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
