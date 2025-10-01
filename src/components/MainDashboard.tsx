@@ -9,7 +9,12 @@ import {
   Menu,
   X,
   ChevronRight,
-  Heart
+  Heart,
+  Activity,
+  Camera,
+  MessageCircle,
+  TrendingUp,
+  Users
 } from 'lucide-react';
 import { useAuth } from './AuthProvider';
 import ReddyAIAgent from './ReddyAIAgent';
@@ -27,35 +32,64 @@ export default function MainDashboard() {
   const mainFeatures = [
     {
       id: 'reddy',
-      name: 'Reddy AI',
-      description: 'AI Chat, voice messages & photo analysis help',
+      name: 'Reddy AI Agent',
+      description: 'Your personal AI fitness coach - Chat, voice help & guidance',
       icon: Bot,
       color: 'from-orange-500 to-red-500',
       available: true
     },
     {
-      id: 'fitcalc',
-      name: 'FitCalc Pro',
-      description: 'Body fat %, BMI, BMR & weight loss calculator',
-      icon: Activity,
-      color: 'from-blue-500 to-indigo-500',
-      available: true
+      id: 'fitbuddy',
+      name: 'FitBuddy AI Agent',
+      description: 'AI companion for accountability & daily motivation',
+      icon: MessageCircle,
+      color: 'from-green-500 to-emerald-500',
+      available: false
     },
     {
-      id: 'datefit',
-      name: 'Cupid AI',
-      description: 'Daily accountability partner matching',
+      id: 'cupid',
+      name: 'Cupid AI Agent',
+      description: 'Smart fitness partner matching & accountability buddies',
       icon: Heart,
       color: 'from-pink-500 to-purple-500',
-      available: true
+      available: false
     }
   ];
 
   const additionalFeatures = [
     {
+      id: 'chat',
+      name: 'AI Chatbot',
+      description: 'Advanced conversational AI for fitness advice',
+      icon: MessageCircle,
+      available: false
+    },
+    {
+      id: 'photo',
+      name: 'Photo Analysis',
+      description: 'AI-powered body composition & form analysis',
+      icon: Camera,
+      available: false
+    },
+    {
+      id: 'fatcalc',
+      name: 'Body Fat Calculator',
+      description: 'Accurate body fat percentage & composition metrics',
+      icon: Activity,
+      available: false
+    },
+    {
       id: 'progress',
       name: 'Progress Tracking',
-      description: 'Track your fitness journey',
+      description: 'Visual tracking of your transformation journey',
+      icon: TrendingUp,
+      available: false
+    },
+    {
+      id: 'community',
+      name: 'Community & Groups',
+      description: 'Connect with like-minded fitness enthusiasts',
+      icon: Users,
       available: false
     }
   ];
@@ -214,21 +248,24 @@ export default function MainDashboard() {
 
         {/* Additional Features */}
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Additional Features</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Coming Soon Features</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {additionalFeatures.map((feature) => (
               <div
                 key={feature.id}
-                className="bg-white rounded-xl p-6 shadow-sm opacity-75"
+                className="bg-white rounded-xl p-6 shadow-sm border-2 border-gray-100 hover:border-orange-200 transition-all"
               >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-lg font-bold text-gray-900 mb-1">{feature.name}</h3>
-                    <p className="text-sm text-gray-600">{feature.description}</p>
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <feature.icon className="w-6 h-6 text-gray-600" />
                   </div>
-                  <div className="flex items-center gap-2 px-3 py-1.5 bg-orange-100 text-orange-700 rounded-lg text-sm font-medium">
-                    <Lock className="w-4 h-4" />
-                    Coming Soon
+                  <div className="flex-1">
+                    <h3 className="text-lg font-bold text-gray-900 mb-1">{feature.name}</h3>
+                    <p className="text-sm text-gray-600 mb-3">{feature.description}</p>
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-orange-100 text-orange-700 rounded-lg text-xs font-medium w-fit">
+                      <Lock className="w-3 h-3" />
+                      Coming Soon
+                    </div>
                   </div>
                 </div>
               </div>
