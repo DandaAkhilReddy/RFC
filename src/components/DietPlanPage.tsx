@@ -18,6 +18,8 @@ import {
   Clock
 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from 'recharts';
+import { uploadImageToAzure, BlobContainers, logMeal } from '../lib/storage';
+import { useAuth } from './AuthProvider';
 
 interface Meal {
   id: string;

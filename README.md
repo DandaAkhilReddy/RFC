@@ -220,31 +220,64 @@ az staticwebapp create \
 3. Publish directory: `dist`
 4. Add environment variables
 
-## 💾 Database Setup
+## 💾 Storage Architecture
 
-### Azure SQL Database
+ReddyFit uses a **hybrid storage approach** for optimal performance and organization:
 
-1. **Create Azure SQL Database**
+### Firebase Firestore (Structured Data)
+
+**Collections:**
+- `users/` - Basic user authentication data
+- `user_settings/` - Personal info, fitness preferences, BMI/BMR calculations, profile URLs
+- `user_feedback/` - Feature expectations, ideas, notification preferences
+- `meals/` - Meal logs with calories, macros, timestamps (photo URLs reference Azure Blob)
+- `workouts/` - Workout logs with exercises, duration (photo URLs reference Azure Blob)
+- `weight_logs/` - Weight tracking over time
+- `matches/` - Daily accountability partner matches
+- `swipes/` - User swipe history for AI Companion
+- `chat_messages/` - AI chat conversation history
+
+### Azure Blob Storage (Media Files)
+
+**Containers:** (auto-created on first upload)
+- `profile-pictures/` - User profile photos
+- `cover-photos/` - User cover photos
+- `meal-photos/` - Meal tracking photos
+- `workout-photos/` - Workout tracking photos
+- `progress-photos/` - Progress tracking photos
+- `chat-attachments/` - AI chat image attachments
+
+**Organized Folder Structure:**
+```
+{container}/users/{userEmail}/{timestamp}_{filename}
+Example: meal-photos/users/user@email.com/1672531200000.jpg
+```
+
+### Setup Instructions
+
+1. **Configure Azure Blob Storage**
    ```bash
-   az sql server create --name reddyfit-sql --resource-group reddyfit-rg --location centralus --admin-user sqladmin --admin-password YourPassword123!
+   # Create storage account
+   az storage account create \
+     --name reddyfitstorage \
+     --resource-group sixpack-rg \
+     --location eastus \
+     --sku Standard_LRS
 
-   az sql db create --resource-group reddyfit-rg --server reddyfit-sql --name reddyfitdb --service-objective S0
+   # Get connection string
+   az storage account show-connection-string \
+     --name reddyfitstorage \
+     --resource-group sixpack-rg \
+     --query connectionString -o tsv
    ```
 
-2. **Apply Schema**
+2. **Add to `.env` file**
    ```bash
-   cd database
-   npm install
-   node apply-schema.js
+   VITE_AZURE_STORAGE_CONNECTION_STRING=your_connection_string
+   VITE_AZURE_STORAGE_ACCOUNT_NAME=reddyfitstorage
    ```
 
-3. **Configure Firewall**
-   - Add your IP in Azure Portal
-   - Allow Azure services to access server
-
-### Firebase Firestore (Alternative)
-
-The app also supports Firebase Firestore as a database option. The schema automatically handles user profiles and onboarding data.
+3. **Containers are auto-created** - The app automatically creates all required containers on first run with public blob access.
 
 ## 📊 Database Schema
 

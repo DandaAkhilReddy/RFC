@@ -20,7 +20,7 @@ import {
 import { useAuth } from './AuthProvider';
 import { db, Collections } from '../lib/firebase';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { uploadImageToAzure, BlobContainers } from '../lib/storage';
 
 interface UserSettings {
   // Personal Info
@@ -174,11 +174,12 @@ export default function SettingsPage({ onBack }: SettingsPageProps) {
     setUploading(true);
 
     try {
-      const storage = getStorage();
-      const storageRef = ref(storage, `users/${user.email}/${type}_${Date.now()}`);
+      const containerName = type === 'profile'
+        ? BlobContainers.PROFILE_PICTURES
+        : BlobContainers.COVER_PHOTOS;
 
-      await uploadBytes(storageRef, file);
-      const downloadURL = await getDownloadURL(storageRef);
+      const fileName = `${type}_${Date.now()}.jpg`;
+      const downloadURL = await uploadImageToAzure(file, containerName, user.email, fileName);
 
       if (type === 'profile') {
         setSettings(prev => ({ ...prev, profilePicture: downloadURL }));

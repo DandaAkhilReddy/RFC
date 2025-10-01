@@ -15,6 +15,7 @@ import {
   Loader
 } from 'lucide-react';
 import { useAuth } from './AuthProvider';
+import { uploadImageToAzure, BlobContainers } from '../lib/storage';
 
 interface Message {
   id: string;
@@ -60,36 +61,54 @@ export default function ReddyAIAgent({ onBack }: ReddyAIAgentProps) {
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim() && !selectedImage) return;
+    if (!user?.email) return;
 
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      role: 'user',
-      content: inputMessage,
-      timestamp: new Date(),
-      image: imagePreview || undefined
-    };
-
-    setMessages(prev => [...prev, userMessage]);
-    setInputMessage('');
     setIsLoading(true);
 
-    // Simulate AI response (replace with actual AI API call)
-    setTimeout(() => {
-      const aiResponse: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: generateAIResponse(inputMessage, !!selectedImage),
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, aiResponse]);
-      setIsLoading(false);
-
-      // Clear image after sending
-      if (selectedImage) {
-        setSelectedImage(null);
-        setImagePreview('');
+    try {
+      // Upload image to Azure Blob if present
+      let imageUrl = imagePreview;
+      if (selectedImage && user?.email) {
+        imageUrl = await uploadImageToAzure(
+          selectedImage,
+          BlobContainers.CHAT_ATTACHMENTS,
+          user.email
+        );
       }
-    }, 1500);
+
+      const userMessage: Message = {
+        id: Date.now().toString(),
+        role: 'user',
+        content: inputMessage,
+        timestamp: new Date(),
+        image: imageUrl || undefined
+      };
+
+      setMessages(prev => [...prev, userMessage]);
+      setInputMessage('');
+
+      // Simulate AI response (replace with actual AI API call)
+      setTimeout(() => {
+        const aiResponse: Message = {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: generateAIResponse(inputMessage, !!selectedImage),
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, aiResponse]);
+        setIsLoading(false);
+
+        // Clear image after sending
+        if (selectedImage) {
+          setSelectedImage(null);
+          setImagePreview('');
+        }
+      }, 1500);
+    } catch (error) {
+      console.error('Error sending message:', error);
+      setIsLoading(false);
+      alert('Failed to send message. Please try again.');
+    }
   };
 
   const generateAIResponse = (userInput: string, hasImage: boolean): string => {
