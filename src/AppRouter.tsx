@@ -5,7 +5,7 @@ import LandingPage from './App';
 import UserFeedbackForm from './components/UserFeedbackForm';
 import OnboardingQuestionnaire from './components/OnboardingQuestionnaire';
 import MainDashboard from './components/MainDashboard';
-import AdminPanel from './components/AdminPanel';
+import AdminDashboard from './components/AdminDashboard';
 
 // Admin email list - add authorized admin emails here
 const ADMIN_EMAILS = ['akhilreddyd3@gmail.com'];
@@ -96,9 +96,9 @@ export default function AppRouter() {
 
   console.log('User is authenticated, checking next step...');
 
-  // Show admin panel if user is admin and on /admin route
+  // Show admin dashboard if user is admin and on /admin route
   if (showAdmin && user.email && ADMIN_EMAILS.includes(user.email)) {
-    return <AdminPanel />;
+    return <AdminDashboard />;
   }
 
   // Show feedback form first (for all new users)
