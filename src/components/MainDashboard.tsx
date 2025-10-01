@@ -18,11 +18,11 @@ import {
 } from 'lucide-react';
 import { useAuth } from './AuthProvider';
 import ReddyAIAgent from './ReddyAIAgent';
-import FitCalcPro from './FitCalcPro';
+import FitBuddyAIAgent from './FitBuddyAIAgent';
+import CupidAIAgent from './CupidAIAgent';
 import SettingsPage from './SettingsPage';
-import AICompanionPage from './AICompanionPage';
 
-type PageView = 'home' | 'reddy' | 'fitcalc' | 'datefit' | 'settings';
+type PageView = 'home' | 'reddy' | 'fitbuddy' | 'cupid' | 'settings';
 
 export default function MainDashboard() {
   const { user, signOut } = useAuth();
@@ -41,18 +41,18 @@ export default function MainDashboard() {
     {
       id: 'fitbuddy',
       name: 'FitBuddy AI Agent',
-      description: 'AI companion for accountability & daily motivation',
+      description: 'Daily accountability companion & motivation partner',
       icon: MessageCircle,
       color: 'from-green-500 to-emerald-500',
-      available: false
+      available: true
     },
     {
       id: 'cupid',
       name: 'Cupid AI Agent',
-      description: 'Smart fitness partner matching & accountability buddies',
+      description: 'Smart fitness partner matching for accountability',
       icon: Heart,
       color: 'from-pink-500 to-purple-500',
-      available: false
+      available: true
     }
   ];
 
@@ -108,12 +108,12 @@ export default function MainDashboard() {
     return <ReddyAIAgent onBack={() => setCurrentPage('home')} />;
   }
 
-  if (currentPage === 'fitcalc') {
-    return <FitCalcPro onBack={() => setCurrentPage('home')} />;
+  if (currentPage === 'fitbuddy') {
+    return <FitBuddyAIAgent onBack={() => setCurrentPage('home')} />;
   }
 
-  if (currentPage === 'datefit') {
-    return <AICompanionPage onBack={() => setCurrentPage('home')} />;
+  if (currentPage === 'cupid') {
+    return <CupidAIAgent onBack={() => setCurrentPage('home')} />;
   }
 
   if (currentPage === 'settings') {

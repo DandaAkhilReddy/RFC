@@ -134,12 +134,7 @@ export default function UserFeedbackForm({ onComplete }: UserFeedbackFormProps) 
       console.log('Feedback saved successfully');
 
       // Show success message
-      const featureCount = feedback.selectedFeatures.length;
-      const featureText = featureCount > 0
-        ? `${featureCount} amazing feature${featureCount > 1 ? 's' : ''}`
-        : 'ReddyFit';
-
-      alert(`🎉 CONGRATULATIONS! 🎉\n\n✅ Your feedback has been submitted!\n\n🏆 You are #${waitlistNumber} on the waitlist for ${featureText}!\n\nWe'll notify you when they're ready. Get ready to transform your fitness journey! 💪`);
+      alert(`🎉 CONGRATULATIONS! 🎉\n\n✅ Your feedback has been submitted!\n\nGet ready to transform your fitness journey! 💪`);
 
       onComplete();
     } catch (error: any) {
