@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from './components/AuthProvider';
 import { api } from './lib/api';
 import LandingPage from './App';
+import UserFeedbackForm from './components/UserFeedbackForm';
 import OnboardingQuestionnaire from './components/OnboardingQuestionnaire';
 import MainDashboard from './components/MainDashboard';
 import AdminPanel from './components/AdminPanel';
@@ -11,6 +12,7 @@ const ADMIN_EMAILS = ['akhilreddyd3@gmail.com'];
 
 export default function AppRouter() {
   const { user, loading, signOut } = useAuth();
+  const [feedbackComplete, setFeedbackComplete] = useState(false);
   const [onboardingComplete, setOnboardingComplete] = useState(false);
   const [checkingOnboarding, setCheckingOnboarding] = useState(true);
   const [showAdmin, setShowAdmin] = useState(false);
@@ -57,13 +59,19 @@ export default function AppRouter() {
       const profile = await api.getUserProfile({ email: user.email });
       console.log('User profile:', profile);
 
-      const isComplete = profile?.onboarding_completed || false;
-      console.log('Onboarding completed:', isComplete);
-      setOnboardingComplete(isComplete);
+      const feedbackDone = profile?.feedbackCompleted || false;
+      const onboardingDone = profile?.onboarding_completed || false;
+
+      console.log('Feedback completed:', feedbackDone);
+      console.log('Onboarding completed:', onboardingDone);
+
+      setFeedbackComplete(feedbackDone);
+      setOnboardingComplete(onboardingDone);
     } catch (error) {
       console.error('Error checking onboarding:', error);
-      // Skip onboarding for now - go straight to dashboard
-      setOnboardingComplete(true);
+      // For new users, show feedback form first
+      setFeedbackComplete(false);
+      setOnboardingComplete(false);
     } finally {
       setCheckingOnboarding(false);
     }
@@ -93,6 +101,16 @@ export default function AppRouter() {
     return <AdminPanel />;
   }
 
+  // Show feedback form first (for all new users)
+  if (!feedbackComplete) {
+    return <UserFeedbackForm onComplete={async () => {
+      console.log('Feedback completed, moving to onboarding...');
+      setFeedbackComplete(true);
+      await checkOnboardingStatus();
+    }} />;
+  }
+
+  // Then show fitness onboarding
   if (!onboardingComplete) {
     return <OnboardingQuestionnaire onComplete={async () => {
       console.log('Onboarding completed, re-checking status...');
