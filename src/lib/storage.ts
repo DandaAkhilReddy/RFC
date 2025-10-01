@@ -13,12 +13,16 @@
  */
 
 import { BlobServiceClient } from '@azure/storage-blob';
-import { db, Collections } from './firebase';
+import { db, Collections, storage as firebaseStorage } from './firebase';
 import { doc, setDoc, getDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 // Azure Blob Storage Configuration
 const AZURE_STORAGE_CONNECTION_STRING = import.meta.env.VITE_AZURE_STORAGE_CONNECTION_STRING || '';
 const AZURE_STORAGE_ACCOUNT_NAME = import.meta.env.VITE_AZURE_STORAGE_ACCOUNT_NAME || 'reddyfitstorage';
+
+// Storage mode: 'azure' or 'firebase'
+const USE_FIREBASE_FALLBACK = !AZURE_STORAGE_CONNECTION_STRING;
 
 // Container names for organized storage
 export const BlobContainers = {
@@ -92,6 +96,11 @@ export const BlobContainers = {
 let blobServiceClient: BlobServiceClient | null = null;
 
 export const initAzureBlobStorage = async () => {
+  if (USE_FIREBASE_FALLBACK) {
+    console.log('Using Firebase Storage (Azure Blob not configured)');
+    return;
+  }
+
   try {
     if (AZURE_STORAGE_CONNECTION_STRING) {
       blobServiceClient = BlobServiceClient.fromConnectionString(AZURE_STORAGE_CONNECTION_STRING);
@@ -110,11 +119,12 @@ export const initAzureBlobStorage = async () => {
     console.log('Azure Blob Storage initialized successfully');
   } catch (error) {
     console.error('Error initializing Azure Blob Storage:', error);
+    console.log('Falling back to Firebase Storage');
   }
 };
 
 /**
- * Upload image to Azure Blob Storage with organized folder structure
+ * Upload image to Azure Blob Storage or Firebase Storage (fallback)
  */
 export const uploadImageToAzure = async (
   file: File,
@@ -122,14 +132,22 @@ export const uploadImageToAzure = async (
   userEmail: string,
   fileName?: string
 ): Promise<string> => {
-  if (!blobServiceClient) {
-    await initAzureBlobStorage();
+  // Use Firebase Storage if Azure is not configured
+  if (USE_FIREBASE_FALLBACK || !blobServiceClient) {
+    console.log('Uploading to Firebase Storage...');
+    const timestamp = Date.now();
+    const fileExtension = file.name.split('.').pop();
+    const storagePath = fileName
+      ? `${containerName}/${userEmail}/${fileName}`
+      : `${containerName}/${userEmail}/${timestamp}.${fileExtension}`;
+
+    const storageRef = ref(firebaseStorage, storagePath);
+    await uploadBytes(storageRef, file);
+    const downloadURL = await getDownloadURL(storageRef);
+    return downloadURL;
   }
 
-  if (!blobServiceClient) {
-    throw new Error('Azure Blob Storage not initialized');
-  }
-
+  // Use Azure Blob Storage
   try {
     const containerClient = blobServiceClient.getContainerClient(containerName);
 
@@ -152,8 +170,19 @@ export const uploadImageToAzure = async (
     // Return the URL
     return blockBlobClient.url;
   } catch (error) {
-    console.error('Error uploading to Azure Blob:', error);
-    throw error;
+    console.error('Error uploading to Azure Blob, falling back to Firebase:', error);
+
+    // Fallback to Firebase on error
+    const timestamp = Date.now();
+    const fileExtension = file.name.split('.').pop();
+    const storagePath = fileName
+      ? `${containerName}/${userEmail}/${fileName}`
+      : `${containerName}/${userEmail}/${timestamp}.${fileExtension}`;
+
+    const storageRef = ref(firebaseStorage, storagePath);
+    await uploadBytes(storageRef, file);
+    const downloadURL = await getDownloadURL(storageRef);
+    return downloadURL;
   }
 };
 
