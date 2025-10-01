@@ -1,16 +1,14 @@
 import React, { useState } from 'react';
 import {
-  ArrowRight,
-  Lightbulb,
-  Bell,
+  Bot,
   Heart,
-  Star,
-  MessageSquare,
+  Camera,
+  MessageCircle,
+  Activity,
+  TrendingUp,
+  Users,
   Sparkles,
-  CheckCircle,
-  Clock,
-  User,
-  Mail
+  CheckCircle2
 } from 'lucide-react';
 import { useAuth } from './AuthProvider';
 import { db, Collections } from '../lib/firebase';
@@ -18,32 +16,7 @@ import { doc, setDoc } from 'firebase/firestore';
 import { calculateWaitlistNumber } from '../lib/functions/waitlist';
 
 interface FeedbackData {
-  // User Experience
-  experienceWithReddy: string;
-  experienceWithDiet: string;
-  experienceWithCompanion: string;
-  experienceWithWorkout: string;
-
-  // Feature Ideas
-  featureIdeas: string[];
-  customFeatureIdea: string;
-  suggestedFeatureName: string;
-
-  // Notification Preferences
-  notificationFrequency: string;
-  notificationTimes: string[];
-  notificationTypes: string[];
-
-  // FitBuddy Behavior
-  fitbuddyPersonality: string;
-  fitbuddyResponseStyle: string;
-  fitbuddyMotivationLevel: string;
-  dailyCheckInTime: string;
-
-  // Additional Feedback
-  mostExcitedFeature: string;
-  suggestionsForImprovement: string;
-  wouldRecommend: string;
+  selectedFeatures: string[];
   additionalComments: string;
 }
 
@@ -53,42 +26,74 @@ interface UserFeedbackFormProps {
 
 export default function UserFeedbackForm({ onComplete }: UserFeedbackFormProps) {
   const { user } = useAuth();
-  const [currentStep, setCurrentStep] = useState(1);
-  const totalSteps = 5;
   const [submitting, setSubmitting] = useState(false);
-
   const [feedback, setFeedback] = useState<FeedbackData>({
-    experienceWithReddy: '',
-    experienceWithDiet: '',
-    experienceWithCompanion: '',
-    experienceWithWorkout: '',
-    featureIdeas: [],
-    customFeatureIdea: '',
-    suggestedFeatureName: '',
-    notificationFrequency: '',
-    notificationTimes: [],
-    notificationTypes: [],
-    fitbuddyPersonality: '',
-    fitbuddyResponseStyle: '',
-    fitbuddyMotivationLevel: '',
-    dailyCheckInTime: '',
-    mostExcitedFeature: '',
-    suggestionsForImprovement: '',
-    wouldRecommend: '',
+    selectedFeatures: [],
     additionalComments: ''
   });
 
-  const handleCheckboxChange = (field: keyof FeedbackData, value: string) => {
-    const currentValues = feedback[field] as string[];
-    if (currentValues.includes(value)) {
+  const features = [
+    {
+      id: 'reddy-ai',
+      name: 'Reddy AI Agent',
+      description: 'Personal AI fitness coach with chat & voice help',
+      icon: Bot,
+      gradient: 'from-orange-500 to-red-500'
+    },
+    {
+      id: 'fitbuddy-ai',
+      name: 'FitBuddy AI Agent',
+      description: 'Daily accountability companion & motivation',
+      icon: MessageCircle,
+      gradient: 'from-green-500 to-emerald-500'
+    },
+    {
+      id: 'cupid-ai',
+      name: 'Cupid AI Agent',
+      description: 'Smart fitness partner matching',
+      icon: Heart,
+      gradient: 'from-pink-500 to-purple-500'
+    },
+    {
+      id: 'photo-analysis',
+      name: 'Photo Analysis',
+      description: 'AI-powered body composition analysis',
+      icon: Camera,
+      gradient: 'from-blue-500 to-indigo-500'
+    },
+    {
+      id: 'body-fat-calc',
+      name: 'Body Fat Calculator',
+      description: 'Accurate body metrics & composition',
+      icon: Activity,
+      gradient: 'from-cyan-500 to-blue-500'
+    },
+    {
+      id: 'progress-tracking',
+      name: 'Progress Tracking',
+      description: 'Visual transformation journey tracking',
+      icon: TrendingUp,
+      gradient: 'from-yellow-500 to-orange-500'
+    },
+    {
+      id: 'community',
+      name: 'Community & Groups',
+      description: 'Connect with fitness enthusiasts',
+      icon: Users,
+      gradient: 'from-violet-500 to-purple-500'
+    }
+  ];
+
+  const toggleFeature = (featureId: string) => {
+    if (feedback.selectedFeatures.includes(featureId)) {
       setFeedback({
         ...feedback,
-        [field]: currentValues.filter(v => v !== value)
+        selectedFeatures: feedback.selectedFeatures.filter(id => id !== featureId)
       });
     } else {
       setFeedback({
         ...feedback,
-        [field]: [...currentValues, value]
+        selectedFeatures: [...feedback.selectedFeatures, featureId]
       });
     }
   };
@@ -102,547 +107,226 @@ export default function UserFeedbackForm({ onComplete }: UserFeedbackFormProps) 
     setSubmitting(true);
     try {
       console.log('Starting feedback submission for:', user.email);
-      console.log('Feedback data:', feedback);
 
-      // Calculate waitlist number (4x the number of registered users)
+      // Calculate waitlist number
       const waitlistNumber = await calculateWaitlistNumber();
 
-      // Save feedback to user_feedback collection
+      // Save feedback
       const feedbackRef = doc(db, Collections.USER_FEEDBACK, user.email);
-      console.log('Saving feedback to:', Collections.USER_FEEDBACK);
-
       await setDoc(feedbackRef, {
-        ...feedback,
+        selectedFeatures: feedback.selectedFeatures,
+        additionalComments: feedback.additionalComments,
         userEmail: user.email,
         userName: user.displayName || user.email,
         submittedAt: new Date().toISOString(),
         waitlistNumber: waitlistNumber,
-        version: '1.0'
+        version: '2.0'
       });
 
-      console.log('Feedback saved successfully');
-
-      // Mark feedback as complete in users collection
+      // Update user document
       const userRef = doc(db, Collections.USERS, user.email);
-      console.log('Updating user document in:', Collections.USERS);
-
       await setDoc(userRef, {
         feedbackCompleted: true,
         waitlistNumber: waitlistNumber,
         updatedAt: new Date().toISOString()
       }, { merge: true });
 
-      console.log('User document updated successfully');
+      console.log('Feedback saved successfully');
 
-      // Show congratulations with waitlist number
-      const mostExcited = feedback.mostExcitedFeature || 'ReddyFit features';
-      alert(`🎉 CONGRATULATIONS! 🎉\n\n✅ Your feedback has been submitted successfully!\n\n🏆 You are #${waitlistNumber} on the waitlist for ${mostExcited}!\n\nWe'll notify you when it's ready. Get ready to transform your fitness journey! 💪`);
+      // Show success message
+      const featureCount = feedback.selectedFeatures.length;
+      const featureText = featureCount > 0
+        ? `${featureCount} amazing feature${featureCount > 1 ? 's' : ''}`
+        : 'ReddyFit';
+
+      alert(`🎉 CONGRATULATIONS! 🎉\n\n✅ Your feedback has been submitted!\n\n🏆 You are #${waitlistNumber} on the waitlist for ${featureText}!\n\nWe'll notify you when they're ready. Get ready to transform your fitness journey! 💪`);
 
       onComplete();
     } catch (error: any) {
       console.error('Error submitting feedback:', error);
-      console.error('Error code:', error.code);
-      console.error('Error message:', error.message);
 
       if (error.code === 'permission-denied') {
-        alert('Permission denied. Firebase security rules need to be configured.\n\nPlease contact the administrator to enable write access to Firestore.');
+        alert('❌ Permission denied. Please ensure you are signed in and Firebase rules are configured correctly.');
       } else if (error.code === 'unavailable') {
-        alert('Network error. Please check your internet connection and try again.');
+        alert('❌ Network error. Please check your internet connection and try again.');
       } else {
-        alert(`Failed to submit feedback: ${error.message}\n\nPlease try again or contact support.`);
+        alert(`❌ Failed to submit feedback: ${error.message}\n\nPlease try again or contact support.`);
       }
-    } finally {
+
       setSubmitting(false);
     }
   };
 
-  const canProceed = () => {
-    switch (currentStep) {
-      case 1:
-        return feedback.experienceWithReddy && feedback.experienceWithDiet &&
-               feedback.experienceWithCompanion && feedback.experienceWithWorkout;
-      case 2:
-        return feedback.featureIdeas.length > 0 || feedback.customFeatureIdea;
-      case 3:
-        return feedback.notificationFrequency && feedback.notificationTimes.length > 0;
-      case 4:
-        return feedback.fitbuddyPersonality && feedback.fitbuddyResponseStyle;
-      case 5:
-        return feedback.mostExcitedFeature;
-      default:
-        return false;
-    }
-  };
-
-  const progressPercentage = (currentStep / totalSteps) * 100;
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-red-50 flex items-center justify-center p-4">
-      <div className="max-w-3xl w-full">
-        {/* Progress Bar */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-600">Step {currentStep} of {totalSteps}</span>
-            <span className="text-sm font-medium text-orange-600">{Math.round(progressPercentage)}% Complete</span>
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-red-50 py-12 px-4">
+      <div className="max-w-4xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-12 animate-fade-in-down">
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-orange-500 to-red-500 rounded-full mb-6 shadow-lg">
+            <Sparkles className="w-10 h-10 text-white" />
           </div>
-          <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-orange-500 to-red-500 transition-all duration-500"
-              style={{ width: `${progressPercentage}%` }}
-            />
-          </div>
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+            Welcome to ReddyFit! 🎉
+          </h1>
+          <p className="text-xl text-gray-600 mb-2">
+            Which features are you most excited about?
+          </p>
+          <p className="text-sm text-gray-500">
+            Select all that interest you (optional)
+          </p>
         </div>
 
-        {/* Form Card */}
-        <div className="bg-white rounded-2xl shadow-xl p-8">
-          {/* Step 1: Experience with Features */}
-          {currentStep === 1 && (
-            <div className="space-y-6">
-              <div className="text-center mb-6">
-                <Sparkles className="w-12 h-12 text-orange-600 mx-auto mb-4" />
-                <h2 className="text-3xl font-bold text-gray-900 mb-2">Welcome to ReddyFit! 🎉</h2>
-                <p className="text-gray-600">
-                  We'd love to hear your thoughts on each feature. Your feedback shapes the platform!
-                </p>
-              </div>
+        {/* Features Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          {features.map((feature, index) => {
+            const isSelected = feedback.selectedFeatures.includes(feature.id);
 
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    How do you want Reddy AI Coach to help you?
-                  </label>
-                  <textarea
-                    value={feedback.experienceWithReddy}
-                    onChange={(e) => setFeedback({ ...feedback, experienceWithReddy: e.target.value })}
-                    rows={3}
-                    placeholder="e.g., Quick workout advice, meal analysis, daily motivation..."
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    What would make Diet Plan perfect for you?
-                  </label>
-                  <textarea
-                    value={feedback.experienceWithDiet}
-                    onChange={(e) => setFeedback({ ...feedback, experienceWithDiet: e.target.value })}
-                    rows={3}
-                    placeholder="e.g., Barcode scanning, restaurant menu tracking, meal reminders..."
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    What do you expect from your AI Companion?
-                  </label>
-                  <textarea
-                    value={feedback.experienceWithCompanion}
-                    onChange={(e) => setFeedback({ ...feedback, experienceWithCompanion: e.target.value })}
-                    rows={3}
-                    placeholder="e.g., Daily check-ins, workout accountability, celebrating wins together..."
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    What workout features would you love to see?
-                  </label>
-                  <textarea
-                    value={feedback.experienceWithWorkout}
-                    onChange={(e) => setFeedback({ ...feedback, experienceWithWorkout: e.target.value })}
-                    rows={3}
-                    placeholder="e.g., Video demonstrations, custom routines, rest timers, form checking..."
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Step 2: Feature Ideas */}
-          {currentStep === 2 && (
-            <div className="space-y-6">
-              <div className="text-center mb-6">
-                <Lightbulb className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
-                <h2 className="text-3xl font-bold text-gray-900 mb-2">Your Ideas Matter!</h2>
-                <p className="text-gray-600">
-                  We'll seriously consider every suggestion. The best ideas get built AND named by you!
-                </p>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
-                    What features would you love to see? (Select all that apply)
-                  </label>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {[
-                      'Progress Photos Timeline',
-                      'Recipe Suggestions',
-                      'Workout Music Integration',
-                      'Social Challenges',
-                      'Body Measurement Tracker',
-                      'Habit Streaks',
-                      'Meditation & Mindfulness',
-                      'Sleep Tracking',
-                      'Water Reminder',
-                      'Macro Meal Planner',
-                      'Supplement Tracking',
-                      'Virtual Personal Trainer'
-                    ].map(idea => (
-                      <label key={idea} className="flex items-center gap-2 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-orange-50 transition-colors">
-                        <input
-                          type="checkbox"
-                          checked={feedback.featureIdeas.includes(idea)}
-                          onChange={() => handleCheckboxChange('featureIdeas', idea)}
-                          className="w-4 h-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
-                        />
-                        <span className="text-sm text-gray-700">{idea}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    💡 Got a unique idea? Tell us!
-                  </label>
-                  <textarea
-                    value={feedback.customFeatureIdea}
-                    onChange={(e) => setFeedback({ ...feedback, customFeatureIdea: e.target.value })}
-                    rows={4}
-                    placeholder="Describe your feature idea in detail. Be creative! We're listening..."
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  />
-                </div>
-
-                {feedback.customFeatureIdea && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      🎯 What should we name this feature?
-                    </label>
-                    <input
-                      type="text"
-                      value={feedback.suggestedFeatureName}
-                      onChange={(e) => setFeedback({ ...feedback, suggestedFeatureName: e.target.value })}
-                      placeholder="Your suggested name (we might use it!)"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                    />
-                    <p className="text-xs text-orange-600 mt-1">
-                      ✨ If we build this, we'll credit you and use your name!
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Step 3: Notification Preferences */}
-          {currentStep === 3 && (
-            <div className="space-y-6">
-              <div className="text-center mb-6">
-                <Bell className="w-12 h-12 text-blue-600 mx-auto mb-4" />
-                <h2 className="text-3xl font-bold text-gray-900 mb-2">Stay Connected</h2>
-                <p className="text-gray-600">
-                  How would you like us to keep you motivated?
-                </p>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Notification Frequency
-                  </label>
-                  <select
-                    value={feedback.notificationFrequency}
-                    onChange={(e) => setFeedback({ ...feedback, notificationFrequency: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  >
-                    <option value="">Select frequency...</option>
-                    <option value="minimal">Minimal (1-2 per day)</option>
-                    <option value="moderate">Moderate (3-5 per day)</option>
-                    <option value="active">Active (Multiple throughout day)</option>
-                    <option value="custom">Custom Schedule</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
-                    Best times for notifications
-                  </label>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                    {[
-                      'Early Morning (6-8 AM)',
-                      'Morning (8-10 AM)',
-                      'Midday (12-2 PM)',
-                      'Afternoon (3-5 PM)',
-                      'Evening (6-8 PM)',
-                      'Night (8-10 PM)'
-                    ].map(time => (
-                      <label key={time} className="flex items-center gap-2 p-2 border rounded-lg cursor-pointer hover:bg-orange-50">
-                        <input
-                          type="checkbox"
-                          checked={feedback.notificationTimes.includes(time)}
-                          onChange={() => handleCheckboxChange('notificationTimes', time)}
-                          className="w-4 h-4 text-orange-600"
-                        />
-                        <span className="text-xs">{time}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
-                    What type of notifications do you want?
-                  </label>
-                  <div className="space-y-2">
-                    {[
-                      'Daily motivational quotes',
-                      'Workout reminders',
-                      'Meal logging reminders',
-                      'Water intake reminders',
-                      'Progress updates',
-                      'Achievement celebrations',
-                      'Companion messages',
-                      'Weekly summary reports',
-                      'Community challenges',
-                      'Tips and educational content'
-                    ].map(type => (
-                      <label key={type} className="flex items-center gap-2 p-3 border rounded-lg cursor-pointer hover:bg-orange-50">
-                        <input
-                          type="checkbox"
-                          checked={feedback.notificationTypes.includes(type)}
-                          onChange={() => handleCheckboxChange('notificationTypes', type)}
-                          className="w-4 h-4 text-orange-600"
-                        />
-                        <span className="text-sm text-gray-700">{type}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Step 4: FitBuddy Behavior */}
-          {currentStep === 4 && (
-            <div className="space-y-6">
-              <div className="text-center mb-6">
-                <Heart className="w-12 h-12 text-pink-600 mx-auto mb-4" />
-                <h2 className="text-3xl font-bold text-gray-900 mb-2">Design Your FitBuddy</h2>
-                <p className="text-gray-600">
-                  How should your AI companion interact with you?
-                </p>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    FitBuddy Personality
-                  </label>
-                  <select
-                    value={feedback.fitbuddyPersonality}
-                    onChange={(e) => setFeedback({ ...feedback, fitbuddyPersonality: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  >
-                    <option value="">Select personality...</option>
-                    <option value="cheerful">Cheerful & Energetic 🎉</option>
-                    <option value="calm">Calm & Supportive 🧘</option>
-                    <option value="tough">Tough Love Coach 💪</option>
-                    <option value="funny">Funny & Lighthearted 😄</option>
-                    <option value="professional">Professional & Informative 📊</option>
-                    <option value="friend">Best Friend Vibes 🤝</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Response Style
-                  </label>
-                  <select
-                    value={feedback.fitbuddyResponseStyle}
-                    onChange={(e) => setFeedback({ ...feedback, fitbuddyResponseStyle: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  >
-                    <option value="">Select style...</option>
-                    <option value="brief">Brief & To the Point</option>
-                    <option value="detailed">Detailed Explanations</option>
-                    <option value="conversational">Conversational & Friendly</option>
-                    <option value="scientific">Scientific & Data-Driven</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Motivation Level
-                  </label>
-                  <select
-                    value={feedback.fitbuddyMotivationLevel}
-                    onChange={(e) => setFeedback({ ...feedback, fitbuddyMotivationLevel: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  >
-                    <option value="">Select level...</option>
-                    <option value="gentle">Gentle Encouragement</option>
-                    <option value="moderate">Balanced Push</option>
-                    <option value="intense">Intense Motivation</option>
-                    <option value="aggressive">Aggressive Challenge Mode</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Preferred Daily Check-in Time
-                  </label>
-                  <input
-                    type="time"
-                    value={feedback.dailyCheckInTime}
-                    onChange={(e) => setFeedback({ ...feedback, dailyCheckInTime: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">When should FitBuddy check in with you daily?</p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Step 5: Final Thoughts */}
-          {currentStep === 5 && (
-            <div className="space-y-6">
-              <div className="text-center mb-6">
-                <Star className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
-                <h2 className="text-3xl font-bold text-gray-900 mb-2">Almost Done!</h2>
-                <p className="text-gray-600">
-                  Just a few more questions to make your experience perfect
-                </p>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Which feature are you most excited about?
-                  </label>
-                  <select
-                    value={feedback.mostExcitedFeature}
-                    onChange={(e) => setFeedback({ ...feedback, mostExcitedFeature: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  >
-                    <option value="">Select feature...</option>
-                    <option value="reddy">Reddy AI Coach</option>
-                    <option value="diet">Diet Plan Tracking</option>
-                    <option value="companion">AI Companion Matching</option>
-                    <option value="workout">Workout Plans (Coming Soon)</option>
-                    <option value="all">All of them!</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Any suggestions for improvement?
-                  </label>
-                  <textarea
-                    value={feedback.suggestionsForImprovement}
-                    onChange={(e) => setFeedback({ ...feedback, suggestionsForImprovement: e.target.value })}
-                    rows={3}
-                    placeholder="What could we do better?"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Would you recommend ReddyFit to a friend?
-                  </label>
-                  <div className="flex gap-3">
-                    {[
-                      { value: 'definitely', label: 'Definitely!', emoji: '🎉' },
-                      { value: 'probably', label: 'Probably', emoji: '👍' },
-                      { value: 'maybe', label: 'Maybe', emoji: '🤔' },
-                      { value: 'not_yet', label: 'Not Yet', emoji: '⏰' }
-                    ].map(option => (
-                      <label key={option.value} className="flex-1">
-                        <input
-                          type="radio"
-                          name="recommend"
-                          value={option.value}
-                          checked={feedback.wouldRecommend === option.value}
-                          onChange={(e) => setFeedback({ ...feedback, wouldRecommend: e.target.value })}
-                          className="sr-only"
-                        />
-                        <div className={`p-3 border-2 rounded-lg text-center cursor-pointer transition-all ${
-                          feedback.wouldRecommend === option.value
-                            ? 'border-orange-600 bg-orange-50'
-                            : 'border-gray-200 hover:border-orange-300'
-                        }`}>
-                          <div className="text-2xl mb-1">{option.emoji}</div>
-                          <div className="text-xs font-medium">{option.label}</div>
-                        </div>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Anything else you'd like to share?
-                  </label>
-                  <textarea
-                    value={feedback.additionalComments}
-                    onChange={(e) => setFeedback({ ...feedback, additionalComments: e.target.value })}
-                    rows={4}
-                    placeholder="We read every single comment! ❤️"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Navigation Buttons */}
-          <div className="flex gap-4 mt-8">
-            {currentStep > 1 && (
-              <button
-                onClick={() => setCurrentStep(currentStep - 1)}
-                className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+            return (
+              <div
+                key={feature.id}
+                className="animate-slide-up"
+                style={{ animationDelay: `${index * 100}ms` }}
               >
-                Previous
-              </button>
-            )}
+                <button
+                  onClick={() => toggleFeature(feature.id)}
+                  className={`w-full text-left bg-white rounded-2xl p-6 shadow-md hover:shadow-xl transition-all duration-300 border-2 ${
+                    isSelected
+                      ? 'border-orange-500 ring-4 ring-orange-100 scale-105'
+                      : 'border-transparent hover:border-gray-200'
+                  }`}
+                >
+                  <div className="flex items-start gap-4">
+                    <div className={`w-16 h-16 bg-gradient-to-br ${feature.gradient} rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg`}>
+                      <feature.icon className="w-8 h-8 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-lg font-bold text-gray-900">
+                          {feature.name}
+                        </h3>
+                        {isSelected && (
+                          <CheckCircle2 className="w-6 h-6 text-orange-600 animate-scale-in" />
+                        )}
+                      </div>
+                      <p className="text-sm text-gray-600">
+                        {feature.description}
+                      </p>
+                    </div>
+                  </div>
+                </button>
+              </div>
+            );
+          })}
+        </div>
 
-            {currentStep < totalSteps ? (
-              <button
-                onClick={() => setCurrentStep(currentStep + 1)}
-                disabled={!canProceed()}
-                className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Next Step
-                <ArrowRight className="w-5 h-5" />
-              </button>
-            ) : (
-              <button
-                onClick={handleSubmit}
-                disabled={!canProceed() || submitting}
-                className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-600 to-red-600 text-white rounded-lg hover:from-orange-700 hover:to-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {submitting ? (
-                  <>
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Submitting...
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle className="w-5 h-5" />
-                    Complete & Start Your Journey!
-                  </>
-                )}
-              </button>
-            )}
+        {/* Additional Comments */}
+        <div className="bg-white rounded-2xl p-6 shadow-md mb-8 animate-slide-up" style={{ animationDelay: '700ms' }}>
+          <label className="block text-lg font-bold text-gray-900 mb-3">
+            Any suggestions or ideas? (Optional)
+          </label>
+          <textarea
+            value={feedback.additionalComments}
+            onChange={(e) => setFeedback({ ...feedback, additionalComments: e.target.value })}
+            rows={4}
+            placeholder="Share your thoughts, feature requests, or any feedback you have for us..."
+            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none text-gray-700 placeholder-gray-400"
+          />
+        </div>
+
+        {/* Selected Count */}
+        {feedback.selectedFeatures.length > 0 && (
+          <div className="text-center mb-6 animate-fade-in">
+            <p className="text-gray-600">
+              You've selected <span className="font-bold text-orange-600">{feedback.selectedFeatures.length}</span> feature{feedback.selectedFeatures.length > 1 ? 's' : ''}
+            </p>
           </div>
+        )}
+
+        {/* Submit Button */}
+        <div className="text-center animate-slide-up" style={{ animationDelay: '800ms' }}>
+          <button
+            onClick={handleSubmit}
+            disabled={submitting}
+            className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white text-lg font-bold rounded-full hover:from-orange-600 hover:to-red-600 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105"
+          >
+            {submitting ? (
+              <>
+                <div className="w-6 h-6 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+                Submitting...
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-6 h-6" />
+                Start Your Fitness Journey
+              </>
+            )}
+          </button>
+          <p className="text-sm text-gray-500 mt-4">
+            All fields are optional • Skip to continue anytime
+          </p>
         </div>
       </div>
+
+      {/* CSS Animations */}
+      <style>{`
+        @keyframes fade-in-down {
+          from {
+            opacity: 0;
+            transform: translateY(-20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes slide-up {
+          from {
+            opacity: 0;
+            transform: translateY(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes scale-in {
+          from {
+            opacity: 0;
+            transform: scale(0.5);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+
+        @keyframes fade-in {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+
+        .animate-fade-in-down {
+          animation: fade-in-down 0.6s ease-out;
+        }
+
+        .animate-slide-up {
+          animation: slide-up 0.6s ease-out backwards;
+        }
+
+        .animate-scale-in {
+          animation: scale-in 0.3s ease-out;
+        }
+
+        .animate-fade-in {
+          animation: fade-in 0.4s ease-out;
+        }
+      `}</style>
     </div>
   );
 }
