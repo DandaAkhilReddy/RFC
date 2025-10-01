@@ -97,8 +97,9 @@ export default function UserFeedbackForm({ onComplete }: UserFeedbackFormProps) 
 
     setSubmitting(true);
     try {
-      const docRef = doc(db, 'user_feedback', user.email);
-      await setDoc(docRef, {
+      // Save feedback to user_feedback collection
+      const feedbackRef = doc(db, Collections.USER_FEEDBACK, user.email);
+      await setDoc(feedbackRef, {
         ...feedback,
         userEmail: user.email,
         userName: user.displayName,
@@ -106,13 +107,14 @@ export default function UserFeedbackForm({ onComplete }: UserFeedbackFormProps) 
         version: '1.0'
       });
 
-      // Mark onboarding as complete
-      const profileRef = doc(db, Collections.USER_SETTINGS, user.email);
-      await setDoc(profileRef, {
+      // Mark feedback as complete in users collection
+      const userRef = doc(db, Collections.USERS, user.email);
+      await setDoc(userRef, {
         feedbackCompleted: true,
         updatedAt: new Date().toISOString()
       }, { merge: true });
 
+      console.log('Feedback submitted successfully');
       onComplete();
     } catch (error) {
       console.error('Error submitting feedback:', error);

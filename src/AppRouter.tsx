@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from './components/AuthProvider';
-import { api } from './lib/api';
+import { db, Collections } from './lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 import LandingPage from './App';
 import UserFeedbackForm from './components/UserFeedbackForm';
 import OnboardingQuestionnaire from './components/OnboardingQuestionnaire';
@@ -56,17 +57,29 @@ export default function AppRouter() {
 
     try {
       console.log('Checking onboarding status for:', user.email);
-      const profile = await api.getUserProfile({ email: user.email });
-      console.log('User profile:', profile);
 
-      const feedbackDone = profile?.feedbackCompleted || false;
-      const onboardingDone = profile?.onboarding_completed || false;
+      // Check user document in Firestore
+      const userDocRef = doc(db, Collections.USERS, user.email);
+      const userDoc = await getDoc(userDocRef);
 
-      console.log('Feedback completed:', feedbackDone);
-      console.log('Onboarding completed:', onboardingDone);
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        console.log('User data:', userData);
 
-      setFeedbackComplete(feedbackDone);
-      setOnboardingComplete(onboardingDone);
+        const feedbackDone = userData.feedbackCompleted || false;
+        const onboardingDone = userData.onboardingCompleted || false;
+
+        console.log('Feedback completed:', feedbackDone);
+        console.log('Onboarding completed:', onboardingDone);
+
+        setFeedbackComplete(feedbackDone);
+        setOnboardingComplete(onboardingDone);
+      } else {
+        console.log('User document not found, showing feedback form');
+        // For new users, show feedback form first
+        setFeedbackComplete(false);
+        setOnboardingComplete(false);
+      }
     } catch (error) {
       console.error('Error checking onboarding:', error);
       // For new users, show feedback form first

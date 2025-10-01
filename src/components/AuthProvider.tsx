@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { User, signInWithPopup, signInWithRedirect, getRedirectResult, signOut as firebaseSignOut, onAuthStateChanged } from 'firebase/auth';
-import { auth, googleProvider } from '../lib/firebase';
-import { api } from '../lib/api';
+import { auth, googleProvider, db, Collections } from '../lib/firebase';
+import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 
 interface AuthContextType {
   user: User | null;
@@ -50,34 +50,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
           console.log('User authenticated:', firebaseUser.email);
 
-          // Check if user profile exists
-          const profile = await api.getUserProfile({ email: firebaseUser.email });
+          // Check if user exists in Firestore
+          const userDocRef = doc(db, Collections.USERS, firebaseUser.email);
+          const userDoc = await getDoc(userDocRef);
 
-          // Create profile if it doesn't exist
-          if (!profile) {
-            console.log('Creating new user profile...');
-            const result = await api.upsertUserProfile({
+          // Create or update user document
+          if (!userDoc.exists()) {
+            console.log('Creating new user in Firestore...');
+            await setDoc(userDocRef, {
               email: firebaseUser.email,
-              firebase_uid: firebaseUser.uid,
-              full_name: firebaseUser.displayName || '',
-              avatar_url: firebaseUser.photoURL || '',
+              displayName: firebaseUser.displayName || '',
+              photoURL: firebaseUser.photoURL || '',
+              createdAt: new Date().toISOString(),
+              onboardingCompleted: false,
+              feedbackCompleted: false
             });
-            console.log('User profile created successfully:', result);
+            console.log('User created successfully');
           } else {
-            console.log('User profile already exists:', profile);
-
-            // Update profile with latest Firebase info if needed
-            if (profile.firebase_uid !== firebaseUser.uid ||
-                profile.full_name !== firebaseUser.displayName ||
-                profile.avatar_url !== firebaseUser.photoURL) {
-              console.log('Updating user profile with latest Firebase data...');
-              await api.upsertUserProfile({
-                email: firebaseUser.email,
-                firebase_uid: firebaseUser.uid,
-                full_name: firebaseUser.displayName || profile.full_name || '',
-                avatar_url: firebaseUser.photoURL || profile.avatar_url || '',
-              });
-              console.log('User profile updated');
+            console.log('User already exists:', userDoc.data());
+            // Update display name and photo if changed
+            const userData = userDoc.data();
+            if (userData.displayName !== firebaseUser.displayName ||
+                userData.photoURL !== firebaseUser.photoURL) {
+              await setDoc(userDocRef, {
+                displayName: firebaseUser.displayName || '',
+                photoURL: firebaseUser.photoURL || '',
+                updatedAt: new Date().toISOString()
+              }, { merge: true });
             }
           }
         } catch (error) {
