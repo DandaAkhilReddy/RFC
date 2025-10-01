@@ -2,7 +2,9 @@ import { app, HttpRequest, HttpResponseInit, InvocationContext } from "@azure/fu
 import { getConnection, sql } from '../dbConfig';
 
 export async function usersHandler(request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> {
-  const action = request.params.action;
+  const action = request.params.action || '';
+
+  context.log(`Processing request: ${request.method} /api/users/${action}`);
 
   // CORS headers
   const headers = {

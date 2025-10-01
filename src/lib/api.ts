@@ -1,6 +1,6 @@
 // API client for Azure Functions backend
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
+// Using relative path for Static Web App integrated API
+const API_BASE_URL = '/api';
 
 export interface UserProfile {
   id: string;
