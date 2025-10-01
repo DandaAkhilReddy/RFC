@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { User, signInWithPopup, signOut as firebaseSignOut, onAuthStateChanged } from 'firebase/auth';
 import { auth, googleProvider } from '../lib/firebase';
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 
 interface AuthContextType {
   user: User | null;
@@ -21,20 +21,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(firebaseUser);
       setLoading(false);
 
-      if (firebaseUser) {
-        const { data: profile } = await supabase
-          .from('user_profiles')
-          .select('*')
-          .eq('email', firebaseUser.email)
-          .maybeSingle();
+      if (firebaseUser && firebaseUser.email) {
+        try {
+          // Check if user profile exists
+          const profile = await api.getUserProfile({ email: firebaseUser.email });
 
-        if (!profile && firebaseUser.email) {
-          await supabase
-            .from('user_profiles')
-            .insert({
+          // Create profile if it doesn't exist
+          if (!profile) {
+            await api.upsertUserProfile({
               email: firebaseUser.email,
+              firebase_uid: firebaseUser.uid,
               full_name: firebaseUser.displayName || '',
+              avatar_url: firebaseUser.photoURL || '',
             });
+          }
+        } catch (error) {
+          console.error('Error managing user profile:', error);
         }
       }
     });

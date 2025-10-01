@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { CheckCircle2, Sparkles } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 import { useAuth } from './AuthProvider';
 
 export default function OnboardingQuestionnaire({ onComplete }: { onComplete: () => void }) {
@@ -25,42 +25,34 @@ export default function OnboardingQuestionnaire({ onComplete }: { onComplete: ()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    if (!user || !user.email) return;
 
     setIsSubmitting(true);
 
     try {
-      const { error: profileError } = await supabase
-        .from('user_profiles')
-        .upsert({
-          id: user.id,
-          email: user.email!,
-          full_name: formData.fullName,
-          gender: formData.gender,
-          avatar_url: user.user_metadata.avatar_url,
-          onboarding_completed: true,
-          updated_at: new Date().toISOString(),
-        });
+      // Update user profile
+      await api.upsertUserProfile({
+        email: user.email,
+        firebase_uid: user.uid,
+        full_name: formData.fullName,
+        gender: formData.gender,
+        avatar_url: user.photoURL || '',
+      });
 
-      if (profileError) throw profileError;
-
-      const { error: responseError } = await supabase
-        .from('onboarding_responses')
-        .insert({
-          user_id: user.id,
-          fitness_goal: formData.fitnessGoal,
-          current_fitness_level: formData.currentLevel,
-          workout_frequency: formData.workoutFrequency,
-          diet_preference: formData.dietPreference,
-          motivation: formData.motivation,
-          biggest_challenge: formData.biggestChallenge,
-          how_found_us: formData.howFoundUs,
-          feature_interest: formData.featureInterest,
-          willing_to_pay: formData.willingToPay,
-          price_range: formData.priceRange,
-        });
-
-      if (responseError) throw responseError;
+      // Submit onboarding responses
+      await api.submitOnboarding({
+        email: user.email,
+        fitness_goal: formData.fitnessGoal,
+        current_fitness_level: formData.currentLevel,
+        workout_frequency: formData.workoutFrequency,
+        diet_preference: formData.dietPreference,
+        motivation: formData.motivation,
+        biggest_challenge: formData.biggestChallenge,
+        how_found_us: formData.howFoundUs,
+        feature_interest: formData.featureInterest,
+        willing_to_pay: formData.willingToPay,
+        price_range: formData.priceRange,
+      });
 
       onComplete();
     } catch (error) {
