@@ -168,27 +168,70 @@ export default function SettingsPage({ onBack }: SettingsPageProps) {
   };
 
   const handleImageUpload = async (file: File, type: 'profile' | 'cover') => {
-    if (!user?.email) return;
+    console.log(`[SettingsPage] Starting ${type} image upload:`, {
+      fileName: file.name,
+      fileSize: file.size,
+      fileType: file.type
+    });
+
+    if (!user?.email) {
+      console.error('[SettingsPage] No user email - cannot upload');
+      alert('❌ User not authenticated. Please sign in again.');
+      return;
+    }
+
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      console.error('[SettingsPage] Invalid file type:', file.type);
+      alert('❌ Invalid file type. Please upload a JPEG, PNG, or WebP image.');
+      return;
+    }
+
+    // Validate file size (10MB max)
+    const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+    if (file.size > maxSize) {
+      console.error('[SettingsPage] File too large:', file.size);
+      alert(`❌ File size must be under 10MB. Your file is ${(file.size / 1024 / 1024).toFixed(2)}MB.`);
+      return;
+    }
 
     const setUploading = type === 'profile' ? setUploadingProfile : setUploadingCover;
     setUploading(true);
 
     try {
+      console.log(`[SettingsPage] Step 1: Determining container for ${type} photo`);
       const containerName = type === 'profile'
         ? BlobContainers.PROFILE_PICTURES
         : BlobContainers.COVER_PHOTOS;
 
+      console.log(`[SettingsPage] Step 2: Uploading to container:`, containerName);
       const fileName = `${type}_${Date.now()}.jpg`;
       const downloadURL = await uploadImageToAzure(file, containerName, user.email, fileName);
+
+      console.log(`[SettingsPage] Step 3: Upload successful, URL:`, downloadURL);
 
       if (type === 'profile') {
         setSettings(prev => ({ ...prev, profilePicture: downloadURL }));
       } else {
         setSettings(prev => ({ ...prev, coverPicture: downloadURL }));
       }
-    } catch (error) {
-      console.error('Error uploading image:', error);
-      alert('Failed to upload image');
+
+      console.log(`[SettingsPage] ✅ ${type} photo updated successfully`);
+      alert(`✅ ${type === 'profile' ? 'Profile' : 'Cover'} photo uploaded successfully!`);
+    } catch (error: any) {
+      console.error(`[SettingsPage] ❌ Error uploading ${type} image:`, error);
+      console.error('[SettingsPage] Error code:', error.code);
+      console.error('[SettingsPage] Error message:', error.message);
+
+      let errorMessage = 'An unexpected error occurred.';
+      if (error.message?.includes('Failed to upload')) {
+        errorMessage = 'Failed to upload to storage. Please check your internet connection.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      alert(`❌ Failed to upload ${type} photo\n\n${errorMessage}\n\nPlease try again or contact support.`);
     } finally {
       setUploading(false);
     }
