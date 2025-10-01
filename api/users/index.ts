@@ -20,10 +20,13 @@ export async function usersHandler(request: HttpRequest, context: InvocationCont
   }
 
   try {
+    context.log('Getting database connection...');
     const pool = await getConnection();
+    context.log('Database connection successful');
 
     // Get user by email or firebase_uid
     if (request.method === 'GET' && action === 'profile') {
+      context.log('Fetching user profile');
       const email = request.query.get('email');
       const firebaseUid = request.query.get('firebase_uid');
 
@@ -52,10 +55,13 @@ export async function usersHandler(request: HttpRequest, context: InvocationCont
 
     // Create or update user profile
     if (request.method === 'POST' && action === 'profile') {
+      context.log('Creating/updating user profile');
       const body = await request.json() as any;
+      context.log('Request body:', JSON.stringify(body));
       const { email, firebase_uid, full_name, gender, avatar_url } = body;
 
       if (!email) {
+        context.log('Error: Email is required');
         return {
           status: 400,
           headers,
@@ -64,12 +70,14 @@ export async function usersHandler(request: HttpRequest, context: InvocationCont
       }
 
       // Check if user exists
+      context.log('Checking if user exists:', email);
       const existingUser = await pool.request()
         .input('email', sql.NVarChar, email)
         .query('SELECT id FROM user_profiles WHERE email = @email');
 
       if (existingUser.recordset.length > 0) {
         // Update existing user
+        context.log('User exists, updating:', existingUser.recordset[0].id);
         await pool.request()
           .input('email', sql.NVarChar, email)
           .input('firebase_uid', sql.NVarChar, firebase_uid)
@@ -85,6 +93,7 @@ export async function usersHandler(request: HttpRequest, context: InvocationCont
             WHERE email = @email
           `);
 
+        context.log('Profile updated successfully');
         return {
           status: 200,
           headers,
@@ -92,6 +101,7 @@ export async function usersHandler(request: HttpRequest, context: InvocationCont
         };
       } else {
         // Insert new user
+        context.log('Creating new user profile');
         const result = await pool.request()
           .input('email', sql.NVarChar, email)
           .input('firebase_uid', sql.NVarChar, firebase_uid)
@@ -104,6 +114,7 @@ export async function usersHandler(request: HttpRequest, context: InvocationCont
             VALUES (@email, @firebase_uid, @full_name, @gender, @avatar_url)
           `);
 
+        context.log('Profile created successfully:', result.recordset[0].id);
         return {
           status: 201,
           headers,
