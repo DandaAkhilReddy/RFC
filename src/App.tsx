@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Heart, Users, Target, Sparkles, TrendingUp, Shield, Calendar, Instagram, Twitter, Facebook, Linkedin, Mail, CheckCircle2, ArrowRight } from 'lucide-react';
-import { supabase } from './lib/supabase';
 import { useAuth } from './components/AuthProvider';
 import Logo from './components/Logo';
 
@@ -11,66 +10,23 @@ export default function LandingPage() {
   const [gender, setGender] = useState<'male' | 'female'>('male');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState('');
-  const [waitlistCount, setWaitlistCount] = useState(0);
-
-  useEffect(() => {
-    fetchWaitlistCount();
-  }, []);
-
-  const fetchWaitlistCount = async () => {
-    const { count } = await supabase
-      .from('waitlist')
-      .select('*', { count: 'exact', head: true });
-    setWaitlistCount(count || 0);
-  };
+  const waitlistCount = 127; // Static count for now
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setSubmitMessage('');
 
-    try {
-      const { data: existingUser } = await supabase
-        .from('waitlist')
-        .select('email')
-        .eq('email', email)
-        .maybeSingle();
+    // Simply redirect to Google sign-in instead of waitlist
+    setSubmitMessage(`Thanks ${fullName}! Please sign in with Google to get started.`);
+    setFullName('');
+    setEmail('');
+    setIsSubmitting(false);
 
-      if (existingUser) {
-        setSubmitMessage("You're already on the waitlist!");
-        setIsSubmitting(false);
-        return;
-      }
-
-      const { data: allUsers, error: countError } = await supabase
-        .from('waitlist')
-        .select('position_in_queue')
-        .order('position_in_queue', { ascending: false })
-        .limit(1);
-
-      const nextPosition = (allUsers && allUsers[0]?.position_in_queue) ? allUsers[0].position_in_queue + 1 : 1;
-
-      const { error } = await supabase
-        .from('waitlist')
-        .insert([{
-          full_name: fullName,
-          email,
-          gender,
-          position_in_queue: nextPosition
-        }]);
-
-      if (error) throw error;
-
-      setSubmitMessage(`Success! You're #${nextPosition} on the waitlist, ${fullName}! Check your email for updates!`);
-      setFullName('');
-      setEmail('');
-      fetchWaitlistCount();
-    } catch (error) {
-      console.error('Error:', error);
-      setSubmitMessage('Something went wrong. Please try again.');
-    } finally {
-      setIsSubmitting(false);
-    }
+    // Auto redirect to sign in after 2 seconds
+    setTimeout(() => {
+      signInWithGoogle();
+    }, 2000);
   };
 
   return (
