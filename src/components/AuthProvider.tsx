@@ -56,15 +56,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // Create profile if it doesn't exist
           if (!profile) {
             console.log('Creating new user profile...');
-            await api.upsertUserProfile({
+            const result = await api.upsertUserProfile({
               email: firebaseUser.email,
               firebase_uid: firebaseUser.uid,
               full_name: firebaseUser.displayName || '',
               avatar_url: firebaseUser.photoURL || '',
             });
-            console.log('User profile created successfully');
+            console.log('User profile created successfully:', result);
           } else {
-            console.log('User profile already exists');
+            console.log('User profile already exists:', profile);
+
+            // Update profile with latest Firebase info if needed
+            if (profile.firebase_uid !== firebaseUser.uid ||
+                profile.full_name !== firebaseUser.displayName ||
+                profile.avatar_url !== firebaseUser.photoURL) {
+              console.log('Updating user profile with latest Firebase data...');
+              await api.upsertUserProfile({
+                email: firebaseUser.email,
+                firebase_uid: firebaseUser.uid,
+                full_name: firebaseUser.displayName || profile.full_name || '',
+                avatar_url: firebaseUser.photoURL || profile.avatar_url || '',
+              });
+              console.log('User profile updated');
+            }
           }
         } catch (error) {
           console.error('Error managing user profile:', error);

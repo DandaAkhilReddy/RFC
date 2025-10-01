@@ -1,195 +1,49 @@
-import { app, HttpRequest, HttpResponseInit, InvocationContext } from "@azure/functions";
-import { getConnection, sql } from '../dbConfig';
+import { AzureFunction, Context, HttpRequest } from "@azure/functions";
+import * as sql from 'mssql';
 
-export async function usersHandler(request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> {
-  const action = request.params.action || '';
+const config: sql.config = {
+  server: process.env.AZURE_SQL_SERVER || '',
+  database: process.env.AZURE_SQL_DATABASE || '',
+  user: process.env.AZURE_SQL_USER || '',
+  password: process.env.AZURE_SQL_PASSWORD || '',
+  options: {
+    encrypt: true,
+    trustServerCertificate: false,
+  }
+};
 
-  context.log(`Processing request: ${request.method} /api/users/${action}`);
-
-  // CORS headers
+const httpTrigger: AzureFunction = async function (context: Context, req: HttpRequest): Promise<void> {
+  context.log('HTTP trigger function processed a request.');
+  
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Headers': 'Content-Type',
     'Content-Type': 'application/json'
   };
 
-  // Handle CORS preflight
-  if (request.method === 'OPTIONS') {
-    return { status: 200, headers };
+  if (req.method === 'OPTIONS') {
+    context.res = { status: 200, headers };
+    return;
   }
 
   try {
-    context.log('Getting database connection...');
-    const pool = await getConnection();
-    context.log('Database connection successful');
-
-    // Get user by email or firebase_uid
-    if (request.method === 'GET' && action === 'profile') {
-      context.log('Fetching user profile');
-      const email = request.query.get('email');
-      const firebaseUid = request.query.get('firebase_uid');
-
-      if (!email && !firebaseUid) {
-        return {
-          status: 400,
-          headers,
-          body: JSON.stringify({ error: 'Email or firebase_uid required' })
-        };
-      }
-
-      const result = await pool.request()
-        .input('email', sql.NVarChar, email)
-        .input('firebase_uid', sql.NVarChar, firebaseUid)
-        .query(`
-          SELECT * FROM user_profiles
-          WHERE email = @email OR firebase_uid = @firebase_uid
-        `);
-
-      return {
-        status: 200,
-        headers,
-        body: JSON.stringify(result.recordset[0] || null)
-      };
-    }
-
-    // Create or update user profile
-    if (request.method === 'POST' && action === 'profile') {
-      context.log('Creating/updating user profile');
-      const body = await request.json() as any;
-      context.log('Request body:', JSON.stringify(body));
-      const { email, firebase_uid, full_name, gender, avatar_url } = body;
-
-      if (!email) {
-        context.log('Error: Email is required');
-        return {
-          status: 400,
-          headers,
-          body: JSON.stringify({ error: 'Email is required' })
-        };
-      }
-
-      // Check if user exists
-      context.log('Checking if user exists:', email);
-      const existingUser = await pool.request()
-        .input('email', sql.NVarChar, email)
-        .query('SELECT id FROM user_profiles WHERE email = @email');
-
-      if (existingUser.recordset.length > 0) {
-        // Update existing user
-        context.log('User exists, updating:', existingUser.recordset[0].id);
-        await pool.request()
-          .input('email', sql.NVarChar, email)
-          .input('firebase_uid', sql.NVarChar, firebase_uid)
-          .input('full_name', sql.NVarChar, full_name)
-          .input('gender', sql.NVarChar, gender)
-          .input('avatar_url', sql.NVarChar, avatar_url)
-          .query(`
-            UPDATE user_profiles
-            SET firebase_uid = @firebase_uid,
-                full_name = @full_name,
-                gender = @gender,
-                avatar_url = @avatar_url
-            WHERE email = @email
-          `);
-
-        context.log('Profile updated successfully');
-        return {
-          status: 200,
-          headers,
-          body: JSON.stringify({ message: 'Profile updated', id: existingUser.recordset[0].id })
-        };
-      } else {
-        // Insert new user
-        context.log('Creating new user profile');
-        const result = await pool.request()
-          .input('email', sql.NVarChar, email)
-          .input('firebase_uid', sql.NVarChar, firebase_uid)
-          .input('full_name', sql.NVarChar, full_name)
-          .input('gender', sql.NVarChar, gender)
-          .input('avatar_url', sql.NVarChar, avatar_url)
-          .query(`
-            INSERT INTO user_profiles (email, firebase_uid, full_name, gender, avatar_url)
-            OUTPUT INSERTED.id
-            VALUES (@email, @firebase_uid, @full_name, @gender, @avatar_url)
-          `);
-
-        context.log('Profile created successfully:', result.recordset[0].id);
-        return {
-          status: 201,
-          headers,
-          body: JSON.stringify({ message: 'Profile created', id: result.recordset[0].id })
-        };
-      }
-    }
-
-    // Get all users (admin only - add auth check in production)
-    if (request.method === 'GET' && action === 'all') {
-      const result = await pool.request().query(`
-        SELECT
-          up.*,
-          orr.fitness_goal,
-          orr.current_fitness_level,
-          orr.workout_frequency,
-          orr.diet_preference,
-          orr.motivation,
-          orr.biggest_challenge,
-          orr.how_found_us,
-          orr.feature_interest,
-          orr.willing_to_pay,
-          orr.price_range
-        FROM user_profiles up
-        LEFT JOIN onboarding_responses orr ON up.id = orr.user_id
-        ORDER BY up.created_at DESC
-      `);
-
-      return {
-        status: 200,
-        headers,
-        body: JSON.stringify(result.recordset)
-      };
-    }
-
-    // Update onboarding status
-    if (request.method === 'PUT' && action === 'onboarding-status') {
-      const body = await request.json() as any;
-      const { email, completed } = body;
-
-      await pool.request()
-        .input('email', sql.NVarChar, email)
-        .input('completed', sql.Bit, completed ? 1 : 0)
-        .query(`
-          UPDATE user_profiles
-          SET onboarding_completed = @completed
-          WHERE email = @email
-        `);
-
-      return {
-        status: 200,
-        headers,
-        body: JSON.stringify({ message: 'Onboarding status updated' })
-      };
-    }
-
-    return {
-      status: 404,
+    const pool = await sql.connect(config);
+    const result = await pool.request().query('SELECT * FROM user_profiles');
+    
+    context.res = {
+      status: 200,
       headers,
-      body: JSON.stringify({ error: 'Endpoint not found' })
+      body: JSON.stringify(result.recordset)
     };
-
   } catch (error: any) {
-    context.error('Database error:', error);
-    return {
+    context.log.error('Error:', error);
+    context.res = {
       status: 500,
       headers,
-      body: JSON.stringify({ error: 'Internal server error', details: error.message })
+      body: JSON.stringify({ error: error.message })
     };
   }
-}
+};
 
-app.http('users', {
-  methods: ['GET', 'POST', 'PUT', 'OPTIONS'],
-  authLevel: 'anonymous',
-  route: 'users/{action?}',
-  handler: usersHandler
-});
+export default httpTrigger;

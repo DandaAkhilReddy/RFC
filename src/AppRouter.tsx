@@ -53,10 +53,16 @@ export default function AppRouter() {
     if (!user || !user.email) return;
 
     try {
+      console.log('Checking onboarding status for:', user.email);
       const profile = await api.getUserProfile({ email: user.email });
-      setOnboardingComplete(profile?.onboarding_completed || false);
+      console.log('User profile:', profile);
+
+      const isComplete = profile?.onboarding_completed || false;
+      console.log('Onboarding completed:', isComplete);
+      setOnboardingComplete(isComplete);
     } catch (error) {
       console.error('Error checking onboarding:', error);
+      setOnboardingComplete(false);
     } finally {
       setCheckingOnboarding(false);
     }
@@ -87,7 +93,11 @@ export default function AppRouter() {
   }
 
   if (!onboardingComplete) {
-    return <OnboardingQuestionnaire onComplete={() => setOnboardingComplete(true)} />;
+    return <OnboardingQuestionnaire onComplete={async () => {
+      console.log('Onboarding completed, re-checking status...');
+      setCheckingOnboarding(true);
+      await checkOnboardingStatus();
+    }} />;
   }
 
   return <Dashboard />;

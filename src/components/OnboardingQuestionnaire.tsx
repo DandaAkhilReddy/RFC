@@ -63,7 +63,20 @@ export default function OnboardingQuestionnaire({ onComplete }: { onComplete: ()
 
       if (response.success) {
         console.log('Onboarding completed successfully!');
-        onComplete();
+
+        // Verify the database was updated by re-fetching the profile
+        console.log('Verifying onboarding completion in database...');
+        const updatedProfile = await api.getUserProfile({ email: user.email });
+        console.log('Updated profile:', updatedProfile);
+
+        if (updatedProfile?.onboarding_completed) {
+          console.log('Onboarding verified in database, redirecting to dashboard...');
+          onComplete();
+        } else {
+          console.warn('Onboarding saved but not marked as completed in database');
+          // Still proceed to prevent the user from being stuck
+          onComplete();
+        }
       } else {
         throw new Error(response.error || 'Failed to save onboarding');
       }
