@@ -1,6 +1,6 @@
 // AI Service for ReddyFit - OpenAI Integration & Make.com Webhooks
 
-const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY || '';
+const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
 const MAKE_WEBHOOK_URL = import.meta.env.VITE_MAKE_WEBHOOK_URL || '';
 
 export interface ChatMessage {

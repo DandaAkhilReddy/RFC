@@ -25,6 +25,9 @@ import {
   CheckCircle2
 } from 'lucide-react';
 import { useAuth } from './AuthProvider';
+import { sendChatMessage, type ChatMessage, type UserContext } from '../lib/aiService';
+import { recognizeSpeechFromBlob, checkMicrophoneAvailability } from '../lib/azureSpeech';
+import { analyzeProgressPhotoWithGemini, analyzeMealPhotoWithGemini } from '../lib/geminiService';
 
 interface DailyLog {
   date: string;
@@ -172,29 +175,54 @@ export default function UserDashboard() {
   };
 
   const sendAudioToAI = async (audioBlob: Blob) => {
-    // Add user message placeholder
-    setChatMessages(prev => [...prev, {
-      role: 'user',
-      content: '🎤 Voice message...',
-      timestamp: new Date()
-    }]);
-
     setIsTyping(true);
 
     try {
-      // In production, this will call your Make.com webhook or OpenAI API
-      // For now, simulating AI response
-      setTimeout(() => {
-        const aiResponse = generateAIResponse('voice recording received');
-        setChatMessages(prev => [...prev, {
-          role: 'assistant',
-          content: aiResponse,
-          timestamp: new Date()
-        }]);
-        setIsTyping(false);
-      }, 2000);
+      // Transcribe audio using Azure Speech Service
+      const transcribedText = await recognizeSpeechFromBlob(audioBlob);
+
+      // Add transcribed user message
+      setChatMessages(prev => [...prev, {
+        role: 'user',
+        content: `🎤 ${transcribedText}`,
+        timestamp: new Date()
+      }]);
+
+      // Build user context for AI
+      const userContext: UserContext = {
+        name: userData.name,
+        email: user?.email || '',
+        startWeight: userData.startWeight,
+        currentWeight: userData.currentWeight,
+        targetWeight: userData.targetWeight,
+        fitnessGoal: userData.fitnessGoal,
+        currentLevel: userData.currentLevel,
+        dailyCalories: userData.dailyCalories,
+        dailyProtein: userData.dailyProtein
+      };
+
+      // Convert chat history to ChatMessage format
+      const conversationHistory: ChatMessage[] = chatMessages.map(msg => ({
+        role: msg.role,
+        content: msg.content
+      }));
+
+      // Get AI response
+      const aiResponse = await sendChatMessage(transcribedText, userContext, conversationHistory);
+
+      setChatMessages(prev => [...prev, {
+        role: 'assistant',
+        content: aiResponse,
+        timestamp: new Date()
+      }]);
+      setIsTyping(false);
     } catch (error) {
       console.error('Error processing audio:', error);
+      setChatMessages(prev => [...prev, {
+        role: 'assistant',
+        content: 'Sorry, I couldn\'t process the audio. Please try again or type your message.',
+        timestamp: new Date()
+      }]);
       setIsTyping(false);
     }
   };
@@ -206,6 +234,11 @@ export default function UserDashboard() {
     setInputMessage('');
 
     // Add user message
+    const newUserMessage: ChatMessage = {
+      role: 'user',
+      content: userMessage
+    };
+
     setChatMessages(prev => [...prev, {
       role: 'user',
       content: userMessage,
@@ -215,8 +248,27 @@ export default function UserDashboard() {
     setIsTyping(true);
 
     try {
-      // Call OpenAI API or Make.com webhook
-      const aiResponse = await callAIAPI(userMessage);
+      // Build user context for AI
+      const userContext: UserContext = {
+        name: userData.name,
+        email: user?.email || '',
+        startWeight: userData.startWeight,
+        currentWeight: userData.currentWeight,
+        targetWeight: userData.targetWeight,
+        fitnessGoal: userData.fitnessGoal,
+        currentLevel: userData.currentLevel,
+        dailyCalories: userData.dailyCalories,
+        dailyProtein: userData.dailyProtein
+      };
+
+      // Convert chat history to ChatMessage format
+      const conversationHistory: ChatMessage[] = chatMessages.map(msg => ({
+        role: msg.role,
+        content: msg.content
+      }));
+
+      // Call real OpenAI API
+      const aiResponse = await sendChatMessage(userMessage, userContext, conversationHistory);
 
       setChatMessages(prev => [...prev, {
         role: 'assistant',
@@ -228,54 +280,13 @@ export default function UserDashboard() {
       console.error('Error calling AI:', error);
       setChatMessages(prev => [...prev, {
         role: 'assistant',
-        content: 'Sorry, I encountered an error. Please try again.',
+        content: 'Sorry, I encountered an error connecting to the AI. Please try again.',
         timestamp: new Date()
       }]);
       setIsTyping(false);
     }
   };
 
-  const callAIAPI = async (message: string): Promise<string> => {
-    // TODO: Replace with actual OpenAI API call or Make.com webhook
-    // For now, generate contextual responses
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(generateAIResponse(message));
-      }, 1500);
-    });
-  };
-
-  const generateAIResponse = (message: string): string => {
-    const lowerMessage = message.toLowerCase();
-
-    // Contextual responses based on keywords
-    if (lowerMessage.includes('weight') || lowerMessage.includes('kg')) {
-      return `Great question about weight! Based on your goal (${userData.targetWeight}kg), you're currently at ${userData.currentWeight}kg. That's ${remainingLoss.toFixed(1)}kg to go!\n\n📊 To lose this safely:\n- Continue your ${userData.dailyCalories} cal/day diet\n- Maintain ${userData.dailyProtein}g protein\n- Stay consistent with workouts\n\nYou've got ${daysRemaining} days to reach your goal. That's about ${(remainingLoss / (daysRemaining / 7)).toFixed(2)}kg per week - very achievable! 💪`;
-    }
-
-    if (lowerMessage.includes('meal') || lowerMessage.includes('food') || lowerMessage.includes('eat')) {
-      return `Let's talk nutrition! 🍽️\n\n**Your daily targets:**\n- Calories: ${userData.dailyCalories} cal\n- Protein: ${userData.dailyProtein}g\n- Stay hydrated: 3-4L water\n\n**Today's intake:**\n- ${todayLog.caloriesEaten} cal (${userData.dailyCalories - todayLog.caloriesEaten} remaining)\n- ${todayLog.proteinEaten}g protein (${userData.dailyProtein - todayLog.proteinEaten}g to go)\n\n📸 Upload meal photos and I'll help you track macros!`;
-    }
-
-    if (lowerMessage.includes('workout') || lowerMessage.includes('exercise') || lowerMessage.includes('train')) {
-      return `Time to crush it! 💪\n\n**Your workout plan:**\n- Morning: 30-min cardio (fasted)\n- Evening: Strength training (PPL split)\n- Rest day: Active recovery\n\n**This week:** ${totalWorkouts} workouts completed\n**Streak:** ${currentStreak} days 🔥\n\nWhich workout are you doing today? I can suggest exercises and track your sets!`;
-    }
-
-    if (lowerMessage.includes('progress') || lowerMessage.includes('photo') || lowerMessage.includes('picture')) {
-      return `Progress photos are KEY! 📸\n\n**Benefits:**\n- Visual tracking beats scale numbers\n- AI can estimate body fat %\n- Compare weekly changes\n- Motivation booster!\n\n**Pro tips:**\n- Same time daily (morning, fasted)\n- Same lighting & angle\n- Weekly front/side/back\n- Track measurements too\n\nUpload today's photo and I'll analyze your progress!`;
-    }
-
-    if (lowerMessage.includes('motivat') || lowerMessage.includes('give up') || lowerMessage.includes('hard')) {
-      return `I hear you! 💙 Transformation isn't easy, but YOU'RE DOING IT!\n\n**Remember:**\n✨ You've already lost ${totalLoss.toFixed(1)}kg\n🔥 ${currentStreak} day streak - that's dedication!\n💪 ${totalWorkouts} workouts - you're building discipline\n\n**Why you started:**\n${userData.fitnessGoal}\n\nEvery day you show up = one day closer to your dream physique. The pain is temporary, but the six-pack is forever! 🏆\n\nWhat's one small win you can celebrate today?`;
-    }
-
-    if (lowerMessage.includes('sleep') || lowerMessage.includes('tired') || lowerMessage.includes('rest')) {
-      return `Sleep is CRUCIAL for fat loss! 😴\n\n**Why it matters:**\n- Muscle recovery & growth\n- Hormone regulation (leptin, ghrelin)\n- Energy for workouts\n- Reduced cravings\n\n**Your sleep:** ${todayLog.sleepHours || 0} hours last night\n**Target:** 7-9 hours\n\n💡 Tips:\n- No screens 1hr before bed\n- Cool room (18-20°C)\n- Consistent schedule\n- Magnesium supplement\n\nHow's your sleep quality been?`;
-    }
-
-    // Default helpful response
-    return `I'm here to help with your fitness journey! 🚀\n\n**I can assist with:**\n🎯 Daily tracking & accountability\n📊 Progress analysis & insights\n🍽️ Nutrition planning & macro tracking\n💪 Workout suggestions & form tips\n📸 Body composition analysis from photos\n🧘 Recovery & lifestyle advice\n\n**Quick actions:**\n- "Log today's weight"\n- "What should I eat?"\n- "Show my progress"\n- "I need motivation"\n\nWhat would you like to focus on?`;
-  };
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'progress' | 'meal' | 'workout') => {
     const file = e.target.files?.[0];
@@ -285,10 +296,22 @@ export default function UserDashboard() {
     reader.onloadend = async () => {
       const imageData = reader.result as string;
 
+      // Build user context for AI
+      const userContext: UserContext = {
+        name: userData.name,
+        email: user?.email || '',
+        startWeight: userData.startWeight,
+        currentWeight: userData.currentWeight,
+        targetWeight: userData.targetWeight,
+        fitnessGoal: userData.fitnessGoal,
+        currentLevel: userData.currentLevel,
+        dailyCalories: userData.dailyCalories,
+        dailyProtein: userData.dailyProtein
+      };
+
       if (type === 'progress') {
         setTodayLog({ ...todayLog, progressPhoto: imageData });
 
-        // Simulate AI analysis
         setChatMessages(prev => [...prev, {
           role: 'user',
           content: '📸 Uploaded progress photo',
@@ -297,8 +320,22 @@ export default function UserDashboard() {
 
         setIsTyping(true);
 
-        setTimeout(() => {
-          const aiAnalysis = `Great progress photo! 📸\n\n**AI Body Analysis:**\n🎯 Estimated body fat: ~18-20%\n💪 Muscle definition: Improving!\n📊 Posture: Good alignment\n\n**Changes detected:**\n- Visible reduction in midsection\n- Better shoulder definition\n- Core engagement improved\n\n**Recommendations:**\n✅ Keep up current calorie deficit\n✅ Increase ab-focused workouts\n✅ Consider adding HIIT sessions\n\n**Next milestone:** 2-3% body fat reduction = visible abs! Keep going! 🔥`;
+        try {
+          // Call Gemini Vision API for progress photo analysis
+          const analysis = await analyzeProgressPhotoWithGemini(imageData, userContext, todayLog.aiAnalysis);
+
+          const aiAnalysis = `Great progress photo! 📸\n\n**AI Body Analysis:**\n🎯 Estimated body fat: ~${analysis.bodyFat}%\n💪 Muscle mass: ${analysis.muscleMass}\n📊 Posture: ${analysis.posture}\n${analysis.faceAnalysis ? `\n😊 Face analysis: ${analysis.faceAnalysis}` : ''}\n\n**Recommendations:**\n${analysis.recommendations.map(rec => `✅ ${rec}`).join('\n')}\n\n${analysis.comparison ? `**Comparison:** ${analysis.comparison}\n\n` : ''}Keep up the great work! 🔥`;
+
+          // Save AI analysis to log
+          setTodayLog(prev => ({
+            ...prev,
+            aiAnalysis: {
+              bodyFat: analysis.bodyFat,
+              muscleMass: analysis.muscleMass as any,
+              posture: analysis.posture,
+              recommendations: analysis.recommendations
+            }
+          }));
 
           setChatMessages(prev => [...prev, {
             role: 'assistant',
@@ -306,7 +343,15 @@ export default function UserDashboard() {
             timestamp: new Date()
           }]);
           setIsTyping(false);
-        }, 2000);
+        } catch (error) {
+          console.error('Error analyzing progress photo:', error);
+          setChatMessages(prev => [...prev, {
+            role: 'assistant',
+            content: 'Sorry, I encountered an error analyzing your photo. Please try again.',
+            timestamp: new Date()
+          }]);
+          setIsTyping(false);
+        }
 
       } else if (type === 'meal') {
         setTodayLog({ ...todayLog, mealPhotos: [...todayLog.mealPhotos, imageData] });
@@ -319,8 +364,11 @@ export default function UserDashboard() {
 
         setIsTyping(true);
 
-        setTimeout(() => {
-          const mealAnalysis = `Nice meal! Let me analyze it... 🔍\n\n**Estimated nutrition:**\n🔥 Calories: ~450 cal\n🥩 Protein: ~35g\n🍚 Carbs: ~40g\n🥑 Fats: ~18g\n\n**Meal quality:** ⭐⭐⭐⭐ (4/5)\n✅ Good protein source\n✅ Balanced macros\n⚠️ Watch portion size\n\n**Remaining today:**\n- ${userData.dailyCalories - (todayLog.caloriesEaten + 450)} cal\n- ${userData.dailyProtein - (todayLog.proteinEaten + 35)}g protein\n\nLogged to your daily tracker! 📊`;
+        try {
+          // Call Gemini Vision API for meal analysis
+          const mealData = await analyzeMealPhotoWithGemini(imageData, userContext);
+
+          const mealAnalysis = `Nice meal! Let me analyze it... 🔍\n\n**Estimated nutrition:**\n🔥 Calories: ~${mealData.calories} cal\n🥩 Protein: ~${mealData.protein}g\n🍚 Carbs: ~${mealData.carbs}g\n🥑 Fats: ~${mealData.fats}g\n\n**Meal quality:** ${'⭐'.repeat(mealData.quality)} (${mealData.quality}/5)\n\n**Foods identified:**\n${mealData.foods.map(food => `• ${food}`).join('\n')}\n\n**Tips:**\n${mealData.recommendations.map(rec => `✅ ${rec}`).join('\n')}\n\n**Remaining today:**\n- ${userData.dailyCalories - (todayLog.caloriesEaten + mealData.calories)} cal\n- ${userData.dailyProtein - (todayLog.proteinEaten + mealData.protein)}g protein\n\nLogged to your daily tracker! 📊`;
 
           setChatMessages(prev => [...prev, {
             role: 'assistant',
@@ -328,15 +376,23 @@ export default function UserDashboard() {
             timestamp: new Date()
           }]);
 
-          // Update daily log
+          // Update daily log with real data
           setTodayLog(prev => ({
             ...prev,
-            caloriesEaten: prev.caloriesEaten + 450,
-            proteinEaten: prev.proteinEaten + 35
+            caloriesEaten: prev.caloriesEaten + mealData.calories,
+            proteinEaten: prev.proteinEaten + mealData.protein
           }));
 
           setIsTyping(false);
-        }, 2000);
+        } catch (error) {
+          console.error('Error analyzing meal photo:', error);
+          setChatMessages(prev => [...prev, {
+            role: 'assistant',
+            content: 'Sorry, I encountered an error analyzing your meal. Please try again.',
+            timestamp: new Date()
+          }]);
+          setIsTyping(false);
+        }
       }
     };
 
