@@ -32,7 +32,7 @@ export default function MainDashboard() {
   const mainFeatures = [
     {
       id: 'reddy',
-      name: 'Reddy AI Agent',
+      name: 'Agent Reddy',
       description: 'Your personal AI fitness coach - Chat, voice help & guidance',
       icon: Bot,
       color: 'from-orange-500 to-red-500',
@@ -40,15 +40,15 @@ export default function MainDashboard() {
     },
     {
       id: 'fitbuddy',
-      name: 'FitBuddy AI Agent',
-      description: 'Daily accountability companion & motivation partner',
-      icon: MessageCircle,
+      name: 'Agent FitBuddy',
+      description: 'Image analysis & body fat calculator - Once per week, 10min processing',
+      icon: Camera,
       color: 'from-green-500 to-emerald-500',
       available: true
     },
     {
       id: 'cupid',
-      name: 'Cupid AI Agent',
+      name: 'Agent Cupid',
       description: 'Smart fitness partner matching for accountability',
       icon: Heart,
       color: 'from-pink-500 to-purple-500',

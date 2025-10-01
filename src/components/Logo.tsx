@@ -1,3 +1,9 @@
+/**
+ * ReddyFit Logo Component
+ * Features: Love (heart) + Fitness (dumbbell) + RFC branding
+ * @module components/Logo
+ */
+
 interface LogoProps {
   size?: number;
   className?: string;
@@ -15,42 +21,46 @@ export default function Logo({ size = 48, className = '', showText = true }: Log
         xmlns="http://www.w3.org/2000/svg"
         className="drop-shadow-lg"
       >
+        {/* Main Circle Background */}
         <circle cx="50" cy="50" r="48" fill="url(#logoGradient)" />
 
-        <path
-          d="M30 25 L30 75 L42 75 L42 55 L50 55 L62 75 L76 75 L62 52 C68 50 72 44 72 36 C72 26 64 25 56 25 L30 25 Z M42 35 L54 35 C58 35 60 37 60 40 C60 43 58 45 54 45 L42 45 L42 35 Z"
+        {/* RFC Letter - Stylized */}
+        <text
+          x="50"
+          y="58"
+          fontSize="32"
+          fontWeight="900"
           fill="white"
-          strokeWidth="2"
-          stroke="white"
-          strokeLinejoin="round"
-        />
+          textAnchor="middle"
+          fontFamily="system-ui, -apple-system, sans-serif"
+        >
+          RFC
+        </text>
 
-        <circle cx="24" cy="50" r="8" fill="#ef4444" />
-        <rect x="20" y="46" width="8" height="8" fill="#ef4444" />
-
-        <circle cx="76" cy="50" r="8" fill="#ef4444" />
-        <rect x="72" y="46" width="8" height="8" fill="#ef4444" />
-
+        {/* Heart Symbol (Love) - Top Right */}
         <path
-          d="M35 82 Q40 78 45 82"
-          stroke="#10b981"
-          strokeWidth="3"
-          strokeLinecap="round"
-          fill="none"
-        />
-        <path
-          d="M55 82 Q60 78 65 82"
-          stroke="#10b981"
-          strokeWidth="3"
-          strokeLinecap="round"
-          fill="none"
+          d="M 72 22 C 68 18 62 18 60 22 C 58 18 52 18 48 22 C 44 26 44 32 48 36 L 60 48 L 72 36 C 76 32 76 26 72 22 Z"
+          fill="#ec4899"
+          opacity="0.9"
         />
 
+        {/* Dumbbell (Fitness) - Top Left */}
+        <g opacity="0.9">
+          <circle cx="28" cy="28" r="5" fill="#10b981" />
+          <rect x="28" y="26" width="14" height="4" fill="#10b981" />
+          <circle cx="42" cy="28" r="5" fill="#10b981" />
+        </g>
+
+        {/* Decorative Elements */}
+        <circle cx="20" cy="75" r="3" fill="white" opacity="0.3" />
+        <circle cx="80" cy="75" r="3" fill="white" opacity="0.3" />
+
+        {/* Gradient Definition */}
         <defs>
           <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#f97316" />
             <stop offset="50%" stopColor="#dc2626" />
-            <stop offset="100%" stopColor="#be123c" />
+            <stop offset="100%" stopColor="#ec4899" />
           </linearGradient>
         </defs>
       </svg>
@@ -60,8 +70,8 @@ export default function Logo({ size = 48, className = '', showText = true }: Log
           <span className="text-2xl font-black bg-gradient-to-r from-orange-500 via-red-500 to-pink-600 bg-clip-text text-transparent">
             ReddyFit
           </span>
-          <span className="text-sm font-bold text-gray-700">
-            Club
+          <span className="text-xs font-bold text-gray-600 tracking-wider">
+            CLUB RFC
           </span>
         </div>
       )}

@@ -23,7 +23,7 @@ export default function CupidAIAgent({ onBack }: CupidAIAgentProps) {
                 <Heart className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Cupid AI Agent</h1>
+                <h1 className="text-2xl font-bold text-gray-900">Agent Cupid</h1>
                 <p className="text-sm text-gray-500">Smart Fitness Partner Matching</p>
               </div>
             </div>
