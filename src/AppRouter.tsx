@@ -62,7 +62,8 @@ export default function AppRouter() {
       setOnboardingComplete(isComplete);
     } catch (error) {
       console.error('Error checking onboarding:', error);
-      setOnboardingComplete(false);
+      // Skip onboarding for now - go straight to dashboard
+      setOnboardingComplete(true);
     } finally {
       setCheckingOnboarding(false);
     }

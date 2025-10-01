@@ -25,8 +25,7 @@ import {
   CheckCircle2
 } from 'lucide-react';
 import { useAuth } from './AuthProvider';
-import { sendChatMessage, type ChatMessage, type UserContext } from '../lib/aiService';
-import { recognizeSpeechFromBlob, checkMicrophoneAvailability } from '../lib/azureSpeech';
+import { sendChatMessage, transcribeAudio, type ChatMessage, type UserContext } from '../lib/aiService';
 import { analyzeProgressPhotoWithGemini, analyzeMealPhotoWithGemini } from '../lib/geminiService';
 
 interface DailyLog {
@@ -144,17 +143,28 @@ export default function UserDashboard() {
   // Voice recording handlers
   const startRecording = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          sampleRate: 16000
+        }
+      });
+
+      // Use webm format for better compatibility
+      const options = { mimeType: 'audio/webm' };
+      const mediaRecorder = new MediaRecorder(stream, options);
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
 
       mediaRecorder.ondataavailable = (event) => {
-        audioChunksRef.current.push(event.data);
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
       };
 
       mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         await sendAudioToAI(audioBlob);
         stream.getTracks().forEach(track => track.stop());
       };
@@ -163,7 +173,11 @@ export default function UserDashboard() {
       setIsRecording(true);
     } catch (error) {
       console.error('Error accessing microphone:', error);
-      alert('Could not access microphone. Please check permissions.');
+      setChatMessages(prev => [...prev, {
+        role: 'assistant',
+        content: '🎤 Could not access microphone. Please check your browser permissions and try again.',
+        timestamp: new Date()
+      }]);
     }
   };
 
@@ -178,8 +192,8 @@ export default function UserDashboard() {
     setIsTyping(true);
 
     try {
-      // Transcribe audio using Azure Speech Service
-      const transcribedText = await recognizeSpeechFromBlob(audioBlob);
+      // Transcribe audio using OpenAI Whisper API
+      const transcribedText = await transcribeAudio(audioBlob);
 
       // Add transcribed user message
       setChatMessages(prev => [...prev, {
@@ -414,29 +428,44 @@ export default function UserDashboard() {
   const ChatView = () => (
     <div className="flex flex-col h-[calc(100vh-200px)]">
       {/* Chat Messages */}
-      <div className="flex-1 overflow-y-auto space-y-4 mb-4">
+      <div className="flex-1 overflow-y-auto space-y-6 mb-6 px-4">
         {chatMessages.map((msg, idx) => (
-          <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-[80%] rounded-2xl px-4 py-3 ${
-              msg.role === 'user'
-                ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
-                : 'bg-white shadow-md text-gray-800'
-            }`}>
-              <p className="text-sm whitespace-pre-line">{msg.content}</p>
-              <p className={`text-xs mt-1 ${msg.role === 'user' ? 'text-purple-100' : 'text-gray-400'}`}>
+          <div key={idx} className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+            {msg.role === 'assistant' && (
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+                <Zap className="w-5 h-5 text-white" />
+              </div>
+            )}
+            <div className={`max-w-[75%] ${msg.role === 'user' ? 'order-first' : ''}`}>
+              <div className={`rounded-3xl px-6 py-4 ${
+                msg.role === 'user'
+                  ? 'bg-gradient-to-br from-blue-500 to-purple-600 text-white shadow-lg shadow-blue-200'
+                  : 'bg-white text-gray-800 shadow-xl border border-gray-100'
+              }`}>
+                <p className="text-sm leading-relaxed whitespace-pre-line font-medium">{msg.content}</p>
+              </div>
+              <p className={`text-xs mt-2 px-2 ${msg.role === 'user' ? 'text-right text-gray-400' : 'text-gray-400'}`}>
                 {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </p>
             </div>
+            {msg.role === 'user' && (
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+                <User className="w-5 h-5 text-white" />
+              </div>
+            )}
           </div>
         ))}
 
         {isTyping && (
-          <div className="flex justify-start">
-            <div className="bg-white shadow-md rounded-2xl px-4 py-3">
+          <div className="flex gap-3 justify-start">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+              <Zap className="w-5 h-5 text-white" />
+            </div>
+            <div className="bg-white shadow-xl border border-gray-100 rounded-3xl px-6 py-4">
               <div className="flex space-x-2">
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                <div className="w-3 h-3 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                <div className="w-3 h-3 bg-pink-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                <div className="w-3 h-3 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
               </div>
             </div>
           </div>
@@ -445,83 +474,96 @@ export default function UserDashboard() {
         <div ref={chatEndRef} />
       </div>
 
-      {/* Quick Action Buttons */}
-      <div className="mb-4 flex gap-2 overflow-x-auto pb-2">
-        <button
-          onClick={() => setInputMessage('What should I eat today?')}
-          className="px-4 py-2 bg-orange-100 text-orange-700 rounded-full text-sm font-medium whitespace-nowrap hover:bg-orange-200 transition-all"
-        >
-          🍽️ Meal suggestions
-        </button>
-        <button
-          onClick={() => setInputMessage('Show my progress')}
-          className="px-4 py-2 bg-blue-100 text-blue-700 rounded-full text-sm font-medium whitespace-nowrap hover:bg-blue-200 transition-all"
-        >
-          📊 View progress
-        </button>
-        <button
-          onClick={() => setInputMessage('I need motivation')}
-          className="px-4 py-2 bg-pink-100 text-pink-700 rounded-full text-sm font-medium whitespace-nowrap hover:bg-pink-200 transition-all"
-        >
-          💪 Motivate me
-        </button>
-        <button
-          onClick={() => setInputMessage('Log today')}
-          className="px-4 py-2 bg-green-100 text-green-700 rounded-full text-sm font-medium whitespace-nowrap hover:bg-green-200 transition-all"
-        >
-          ✅ Quick log
-        </button>
+      {/* Quick Action Pills */}
+      <div className="mb-6 px-4">
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+          <button
+            onClick={() => setInputMessage('What should I eat today?')}
+            className="px-5 py-2.5 bg-gradient-to-r from-orange-400 to-red-500 text-white rounded-full text-sm font-semibold whitespace-nowrap hover:shadow-lg hover:scale-105 transition-all"
+          >
+            🍽️ Meal Plan
+          </button>
+          <button
+            onClick={() => setInputMessage('Show my progress')}
+            className="px-5 py-2.5 bg-gradient-to-r from-blue-400 to-purple-500 text-white rounded-full text-sm font-semibold whitespace-nowrap hover:shadow-lg hover:scale-105 transition-all"
+          >
+            📊 Progress
+          </button>
+          <button
+            onClick={() => setInputMessage('I need motivation')}
+            className="px-5 py-2.5 bg-gradient-to-r from-pink-400 to-rose-500 text-white rounded-full text-sm font-semibold whitespace-nowrap hover:shadow-lg hover:scale-105 transition-all"
+          >
+            💪 Motivate
+          </button>
+          <button
+            onClick={() => setInputMessage('Create workout plan')}
+            className="px-5 py-2.5 bg-gradient-to-r from-green-400 to-emerald-500 text-white rounded-full text-sm font-semibold whitespace-nowrap hover:shadow-lg hover:scale-105 transition-all"
+          >
+            🏋️ Workout
+          </button>
+        </div>
       </div>
 
       {/* Input Area */}
-      <div className="bg-white rounded-2xl shadow-lg p-4">
-        <div className="flex items-center gap-3">
-          {/* Photo Upload */}
-          <label className="p-3 hover:bg-gray-100 rounded-xl cursor-pointer transition-all">
-            <ImageIcon className="w-5 h-5 text-gray-600" />
+      <div className="px-4">
+        <div className="bg-white rounded-3xl shadow-2xl p-4 border border-gray-100">
+          <div className="flex items-center gap-3">
+            {/* Photo Upload */}
+            <label className="p-3 hover:bg-gradient-to-br hover:from-purple-50 hover:to-pink-50 rounded-2xl cursor-pointer transition-all group">
+              <ImageIcon className="w-6 h-6 text-gray-400 group-hover:text-purple-500 transition-colors" />
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => handlePhotoUpload(e, 'progress')}
+                className="hidden"
+              />
+            </label>
+
+            {/* Voice Recording */}
+            <button
+              onClick={isRecording ? stopRecording : startRecording}
+              className={`p-3 rounded-2xl transition-all ${
+                isRecording
+                  ? 'bg-gradient-to-br from-red-500 to-pink-500 text-white animate-pulse shadow-lg shadow-red-200'
+                  : 'hover:bg-gradient-to-br hover:from-purple-50 hover:to-pink-50 text-gray-400 hover:text-purple-500'
+              }`}
+            >
+              <Mic className="w-6 h-6" />
+            </button>
+
+            {/* Text Input */}
             <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => handlePhotoUpload(e, 'progress')}
-              className="hidden"
+              type="text"
+              value={inputMessage}
+              onChange={(e) => setInputMessage(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+              placeholder="Ask me anything..."
+              className="flex-1 px-5 py-3 bg-gradient-to-r from-gray-50 to-purple-50 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-400 focus:bg-white transition-all text-gray-700 placeholder-gray-400"
             />
-          </label>
 
-          {/* Voice Recording */}
-          <button
-            onClick={isRecording ? stopRecording : startRecording}
-            className={`p-3 rounded-xl transition-all ${
-              isRecording
-                ? 'bg-red-500 text-white animate-pulse'
-                : 'hover:bg-gray-100 text-gray-600'
-            }`}
-          >
-            <Mic className="w-5 h-5" />
-          </button>
+            {/* Send Button */}
+            <button
+              onClick={sendMessage}
+              disabled={!inputMessage.trim()}
+              className="p-3 bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-2xl hover:shadow-xl hover:shadow-purple-200 hover:scale-105 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
+            >
+              <Send className="w-6 h-6" />
+            </button>
+          </div>
 
-          {/* Text Input */}
-          <input
-            type="text"
-            value={inputMessage}
-            onChange={(e) => setInputMessage(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-            placeholder="Type your message or question..."
-            className="flex-1 px-4 py-3 bg-gray-50 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
-          />
-
-          {/* Send Button */}
-          <button
-            onClick={sendMessage}
-            disabled={!inputMessage.trim()}
-            className="p-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Send className="w-5 h-5" />
-          </button>
+          <div className="flex items-center justify-center gap-2 mt-3">
+            {isRecording ? (
+              <div className="flex items-center gap-2 text-red-500 animate-pulse">
+                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                <p className="text-xs font-medium">Recording... Tap mic to stop</p>
+              </div>
+            ) : (
+              <p className="text-xs text-gray-400">
+                💬 Voice, text, or upload photos for instant AI analysis
+              </p>
+            )}
+          </div>
         </div>
-
-        <p className="text-xs text-gray-400 mt-2 text-center">
-          {isRecording ? '🔴 Recording... Tap mic to stop' : 'Ask anything about fitness, nutrition, or your progress'}
-        </p>
       </div>
     </div>
   );
