@@ -16,6 +16,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
+  console.log('AuthProvider state:', { user: user?.email, loading });
+
   useEffect(() => {
     let mounted = true;
 

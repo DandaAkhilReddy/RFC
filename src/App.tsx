@@ -4,13 +4,15 @@ import { useAuth } from './components/AuthProvider';
 import Logo from './components/Logo';
 
 export default function LandingPage() {
-  const { signInWithGoogle } = useAuth();
+  const { signInWithGoogle, user } = useAuth();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [gender, setGender] = useState<'male' | 'female'>('male');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState('');
   const waitlistCount = 127; // Static count for now
+
+  console.log('LandingPage rendered - current user:', user?.email || 'none');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

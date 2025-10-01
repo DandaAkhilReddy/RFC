@@ -10,12 +10,31 @@ import AdminPanel from './components/AdminPanel';
 const ADMIN_EMAILS = ['akhilreddyd3@gmail.com'];
 
 export default function AppRouter() {
-  const { user, loading } = useAuth();
+  const { user, loading, signOut } = useAuth();
   const [onboardingComplete, setOnboardingComplete] = useState(false);
   const [checkingOnboarding, setCheckingOnboarding] = useState(true);
   const [showAdmin, setShowAdmin] = useState(false);
 
+  console.log('AppRouter state:', {
+    hasUser: !!user,
+    userEmail: user?.email,
+    loading,
+    checkingOnboarding,
+    onboardingComplete,
+    showAdmin
+  });
+
   useEffect(() => {
+    // Handle sign out URL parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('signout') === 'true') {
+      console.log('Sign out parameter detected, signing out...');
+      signOut().then(() => {
+        window.location.href = '/';
+      });
+      return;
+    }
+
     if (user) {
       checkOnboardingStatus();
       // Check if user is admin
@@ -54,9 +73,13 @@ export default function AppRouter() {
     );
   }
 
+  // Always show landing page if user is not authenticated
   if (!user) {
+    console.log('Showing LandingPage - user not authenticated');
     return <LandingPage />;
   }
+
+  console.log('User is authenticated, checking next step...');
 
   // Show admin panel if user is admin and on /admin route
   if (showAdmin && user.email && ADMIN_EMAILS.includes(user.email)) {
