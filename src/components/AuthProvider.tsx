@@ -17,18 +17,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check for redirect result first
-    getRedirectResult(auth)
-      .then((result) => {
-        if (result?.user) {
+    let mounted = true;
+
+    // Check for redirect result with timeout
+    const checkRedirectResult = async () => {
+      try {
+        const result = await Promise.race([
+          getRedirectResult(auth),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Redirect check timeout')), 3000))
+        ]);
+        if (mounted && result?.user) {
           console.log('Sign-in redirect successful:', result.user.email);
         }
-      })
-      .catch((error) => {
-        console.error('Redirect sign-in error:', error);
-      });
+      } catch (error: any) {
+        if (mounted && error.message !== 'Redirect check timeout') {
+          console.error('Redirect sign-in error:', error);
+        }
+      }
+    };
+
+    checkRedirectResult();
 
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (!mounted) return;
+
       setUser(firebaseUser);
       setLoading(false);
 
@@ -58,7 +70,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      mounted = false;
+      unsubscribe();
+    };
   }, []);
 
   const signInWithGoogle = async () => {
