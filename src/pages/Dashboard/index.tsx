@@ -77,10 +77,6 @@ export default function MainDashboard() {
     fetchUserSettings();
   }, [user]);
 
-  const handleCalorieUpdate = (newCalories: number) => {
-    setUserSettings({ ...userSettings, calorieGoal: newCalories });
-  };
-
   const saveCalorieGoal = async () => {
     if (!user?.email) return;
 
@@ -354,10 +350,7 @@ export default function MainDashboard() {
           </div>
 
           {/* Health Stats - From Settings */}
-          <div
-            className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-            onClick={() => setCurrentPage('settings')}
-          >
+          <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <p className="text-sm text-gray-600 mb-1">Health Stats</p>

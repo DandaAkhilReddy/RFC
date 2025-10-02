@@ -1,6 +1,16 @@
+# 🔥 FIREBASE SETUP REQUIRED
+
+## You MUST set up Firebase Security Rules!
+
+Go to: https://console.firebase.google.com/project/reddyfit-dcf41/firestore/rules
+
+Add these rules:
+
+```
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Allow authenticated users to read/write their own data
     match /users/{email} {
       allow read, write: if request.auth != null && request.auth.token.email == email;
     }
@@ -20,17 +30,25 @@ service cloud.firestore {
     match /workouts/{workoutId} {
       allow read, write: if request.auth != null;
     }
-    
-    match /progress_photos/{docId} {
-      allow read, write: if request.auth != null;
-    }
-    
-    match /matches/{matchId} {
-      allow read, write: if request.auth != null;
-    }
-    
-    match /chat_messages/{chatId}/{document=**} {
+  }
+}
+```
+
+Click "Publish" to save!
+
+## Also Add Storage Rules:
+
+Go to: https://console.firebase.google.com/project/reddyfit-dcf41/storage/rules
+
+```
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{allPaths=**} {
       allow read, write: if request.auth != null;
     }
   }
 }
+```
+
+WITHOUT THESE RULES, NOTHING WILL SAVE!

@@ -21,73 +21,74 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let mounted = true;
 
-    // Check for redirect result with timeout
-    const checkRedirectResult = async () => {
+    const initAuth = async () => {
+      // First check for redirect result (this happens after Google login redirect)
       try {
-        const result = await Promise.race([
-          getRedirectResult(auth),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('Redirect check timeout')), 3000))
-        ]);
-        if (mounted && result?.user) {
+        const result = await getRedirectResult(auth);
+        if (result?.user) {
           console.log('Sign-in redirect successful:', result.user.email);
         }
       } catch (error: any) {
-        if (mounted && error.message !== 'Redirect check timeout') {
-          console.error('Redirect sign-in error:', error);
-        }
+        console.error('Redirect sign-in error:', error);
       }
-    };
 
-    checkRedirectResult();
+      // Then set up the auth state listener
+      const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+        if (!mounted) return;
 
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (!mounted) return;
+        console.log('Auth state changed:', firebaseUser?.email || 'no user');
 
-      setUser(firebaseUser);
-      setLoading(false);
+        if (firebaseUser && firebaseUser.email) {
+          try {
+            // Check if user exists in Firestore
+            const userDocRef = doc(db, Collections.USERS, firebaseUser.email);
+            const userDoc = await getDoc(userDocRef);
 
-      if (firebaseUser && firebaseUser.email) {
-        try {
-          console.log('User authenticated:', firebaseUser.email);
-
-          // Check if user exists in Firestore
-          const userDocRef = doc(db, Collections.USERS, firebaseUser.email);
-          const userDoc = await getDoc(userDocRef);
-
-          // Create or update user document
-          if (!userDoc.exists()) {
-            console.log('Creating new user in Firestore...');
-            await setDoc(userDocRef, {
-              email: firebaseUser.email,
-              displayName: firebaseUser.displayName || '',
-              photoURL: firebaseUser.photoURL || '',
-              createdAt: new Date().toISOString(),
-              onboardingCompleted: false,
-              feedbackCompleted: false
-            });
-            console.log('User created successfully');
-          } else {
-            console.log('User already exists:', userDoc.data());
-            // Update display name and photo if changed
-            const userData = userDoc.data();
-            if (userData.displayName !== firebaseUser.displayName ||
-                userData.photoURL !== firebaseUser.photoURL) {
+            // Create or update user document
+            if (!userDoc.exists()) {
+              console.log('Creating new user in Firestore...');
               await setDoc(userDocRef, {
+                email: firebaseUser.email,
                 displayName: firebaseUser.displayName || '',
                 photoURL: firebaseUser.photoURL || '',
-                updatedAt: new Date().toISOString()
-              }, { merge: true });
+                createdAt: new Date().toISOString(),
+                onboardingCompleted: false,
+                feedbackCompleted: false
+              });
+              console.log('User created successfully');
+            } else {
+              console.log('User already exists:', userDoc.data());
+              // Update display name and photo if changed
+              const userData = userDoc.data();
+              if (userData.displayName !== firebaseUser.displayName ||
+                  userData.photoURL !== firebaseUser.photoURL) {
+                await setDoc(userDocRef, {
+                  displayName: firebaseUser.displayName || '',
+                  photoURL: firebaseUser.photoURL || '',
+                  updatedAt: new Date().toISOString()
+                }, { merge: true });
+              }
             }
+          } catch (error) {
+            console.error('Error managing user profile:', error);
           }
-        } catch (error) {
-          console.error('Error managing user profile:', error);
         }
-      }
-    });
+
+        // Set user and stop loading AFTER Firestore operations complete
+        if (mounted) {
+          setUser(firebaseUser);
+          setLoading(false);
+        }
+      });
+
+      return unsubscribe;
+    };
+
+    const unsubscribePromise = initAuth();
 
     return () => {
       mounted = false;
-      unsubscribe();
+      unsubscribePromise.then(unsubscribe => unsubscribe());
     };
   }, []);
 

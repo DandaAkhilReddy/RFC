@@ -1,0 +1,11 @@
+{
+  "$schema": "https://aka.ms/azure/static-web-apps-cli/schema",
+  "configurations": {
+    "ReddyfitWebsiteready": {
+      "appLocation": "./dist",
+      "appName": "ReddyfitWebsiteready",
+      "resourceGroup": "sixpack-rg",
+      "outputLocation": "./dist"
+    }
+  }
+}

@@ -1,6 +1,7 @@
-// AI Service for ReddyFit - OpenAI Integration & Make.com Webhooks
+// AI Service for ReddyFit - OpenAI Integration & Make.com Webhooks & Gemini
 
 const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 const MAKE_WEBHOOK_URL = import.meta.env.VITE_MAKE_WEBHOOK_URL || '';
 
 export interface ChatMessage {
@@ -32,9 +33,14 @@ export async function sendChatMessage(
       return await sendToMakeWebhook(message, userContext, conversationHistory);
     }
 
+    // Try Gemini first (free)
+    if (GEMINI_API_KEY) {
+      return await sendGeminiMessage(message, userContext, conversationHistory);
+    }
+
     // Otherwise use OpenAI directly
     if (!OPENAI_API_KEY) {
-      throw new Error('OpenAI API key not configured');
+      throw new Error('AI API key not configured. Please add VITE_GEMINI_API_KEY or VITE_OPENAI_API_KEY to .env');
     }
 
     const systemPrompt = `You are an expert AI fitness coach for ReddyFit. You're helping ${userContext.name} reach their fitness goal.
@@ -131,6 +137,96 @@ async function sendToMakeWebhook(
 
   } catch (error) {
     console.error('Error calling Make.com webhook:', error);
+    throw error;
+  }
+}
+
+// Gemini Chat Integration (Free API)
+async function sendGeminiMessage(
+  message: string,
+  userContext: UserContext,
+  conversationHistory: ChatMessage[]
+): Promise<string> {
+  try {
+    const systemPrompt = `You are Reddy, an expert AI fitness coach for ReddyFit. You're helping ${userContext.name} reach their fitness goal.
+
+USER PROFILE:
+- Name: ${userContext.name}
+- Current Weight: ${userContext.currentWeight}kg
+- Start Weight: ${userContext.startWeight}kg
+- Target Weight: ${userContext.targetWeight}kg
+- Goal: ${userContext.fitnessGoal}
+- Fitness Level: ${userContext.currentLevel}
+- Daily Calorie Target: ${userContext.dailyCalories} cal
+- Daily Protein Target: ${userContext.dailyProtein}g
+
+YOUR RESPONSIBILITIES:
+1. Provide personalized fitness and nutrition advice
+2. Track progress and celebrate wins
+3. Motivate and encourage during difficult times
+4. Answer questions about workouts, meals, and recovery
+5. Help with daily logging and accountability
+
+RESPONSE STYLE:
+- Be friendly, motivating, and supportive
+- Use emojis appropriately 💪🔥
+- Give actionable, specific advice
+- Keep responses concise (2-4 paragraphs max)
+- Use bullet points (•) for lists
+- DO NOT use asterisks for bold or italic formatting
+- Use ALL CAPS for section headers instead of markdown
+- Reference their specific goals and progress
+- Format responses clearly with line breaks between sections
+
+CURRENT PROGRESS:
+- Lost: ${(userContext.startWeight - userContext.currentWeight).toFixed(1)}kg
+- Remaining: ${(userContext.currentWeight - userContext.targetWeight).toFixed(1)}kg
+- Progress: ${(((userContext.startWeight - userContext.currentWeight) / (userContext.startWeight - userContext.targetWeight)) * 100).toFixed(1)}%`;
+
+    // Build conversation
+    const conversationText = conversationHistory
+      .slice(-10) // Last 10 messages for context
+      .map(msg => `${msg.role === 'user' ? 'User' : 'Reddy'}: ${msg.content}`)
+      .join('\n\n');
+
+    const fullPrompt = `${systemPrompt}\n\nConversation:\n${conversationText}\n\nUser: ${message}\n\nReddy:`;
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text: fullPrompt
+            }]
+          }],
+          generationConfig: {
+            temperature: 0.8,
+            topK: 40,
+            topP: 0.95,
+            maxOutputTokens: 500,
+          },
+        })
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error?.message || 'Gemini API error');
+    }
+
+    const data = await response.json();
+    const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text ||
+                       "I'm here to help! Could you tell me more about what you'd like to know?";
+
+    return aiResponse.trim();
+
+  } catch (error) {
+    console.error('Error calling Gemini API:', error);
     throw error;
   }
 }

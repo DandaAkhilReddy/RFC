@@ -35,22 +35,22 @@ export default function UserFeedbackForm({ onComplete }: UserFeedbackFormProps) 
   const features = [
     {
       id: 'reddy-ai',
-      name: 'Agent Reddy',
+      name: 'AI Agent Reddy',
       description: 'Personal AI fitness coach with chat & voice help',
       icon: Bot,
       gradient: 'from-orange-500 to-red-500'
     },
     {
       id: 'fitbuddy-ai',
-      name: 'Agent FitBuddy',
-      description: 'Image analysis & body fat calculator - Once/week, 10min processing',
+      name: 'AI Agent FitBuddy',
+      description: 'AI-powered body fat analysis - Trained by 10M+ humans',
       icon: Camera,
       gradient: 'from-green-500 to-emerald-500'
     },
     {
       id: 'cupid-ai',
-      name: 'Agent Cupid',
-      description: 'Smart fitness partner matching',
+      name: 'AI Agent Cupid',
+      description: 'Smart partner matching with AI - Weekly assignments',
       icon: Heart,
       gradient: 'from-pink-500 to-purple-500'
     },

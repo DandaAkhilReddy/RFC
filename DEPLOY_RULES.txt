@@ -1,0 +1,9 @@
+Run this in your Windows terminal:
+
+cd C:\Users\akhil\ReddyfitWebsiteready
+firebase login
+
+Then after login, run:
+firebase deploy --only firestore:rules,storage:rules
+
+This will deploy the rules!

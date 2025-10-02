@@ -1,0 +1,11 @@
+{
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "storage": [
+    {
+      "bucket": "reddyfit-dcf41.firebasestorage.app",
+      "rules": "storage.rules"
+    }
+  ]
+}

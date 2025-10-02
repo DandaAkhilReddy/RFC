@@ -5,13 +5,13 @@ import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDqAfuTm_-sdbxzfhGAcJv_MNlIIoyl7PY",
-  authDomain: "reddyfit-website.firebaseapp.com",
-  projectId: "reddyfit-website",
-  storageBucket: "reddyfit-website.firebasestorage.app",
-  messagingSenderId: "384999892537",
-  appId: "1:384999892537:web:9b0e95fd677b7e36aa8fe8",
-  measurementId: "G-BV755BPQW7"
+  apiKey: "AIzaSyBFhGoxAAR4vLYLXNn8nDlKabiqhCPnWJk",
+  authDomain: "reddyfit-dcf41.firebaseapp.com",
+  projectId: "reddyfit-dcf41",
+  storageBucket: "reddyfit-dcf41.firebasestorage.app",
+  messagingSenderId: "123730832729",
+  appId: "1:123730832729:web:16ce63a0f2d5401f60b048",
+  measurementId: "G-ECC4W6B3JN"
 };
 
 const app = initializeApp(firebaseConfig);
