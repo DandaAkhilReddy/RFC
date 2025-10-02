@@ -218,6 +218,7 @@ export default function CleanDashboard() {
               <div>
                 <h2 className="text-2xl font-bold text-gray-900">Welcome, {user?.displayName?.split(' ')[0] || 'User'}! 👋</h2>
                 <p className="text-sm text-gray-600">Let's crush your fitness goals today</p>
+                <p className="text-xs text-gray-400">v2.0 Clean</p>
               </div>
             </div>
 
