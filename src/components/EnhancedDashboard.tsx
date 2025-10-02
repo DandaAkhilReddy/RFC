@@ -92,6 +92,25 @@ export default function EnhancedDashboard() {
   const [currentWorkouts, setCurrentWorkouts] = useState(0);
   const [showOnboarding, setShowOnboarding] = useState(false);
 
+  // Discipline tracking state
+  const [disciplineData, setDisciplineData] = useState({
+    currentStreak: 0,
+    bestStreak: 0,
+    totalDays: 0,
+    workoutStreak: 0,
+    calorieStreak: 0,
+    weightStreak: 0,
+    aiChatStreak: 0,
+    lastWorkoutDate: '',
+    lastCalorieLog: '',
+    lastWeightLog: '',
+    lastAIChatDate: '',
+    workoutHistory: [] as boolean[],
+    calorieHistory: [] as boolean[],
+    weightHistory: [] as boolean[],
+    aiChatHistory: [] as boolean[]
+  });
+
   // Mock data
   const [todaysMatches] = useState<Match[]>([
     { id: '1', name: 'Sarah Johnson', age: 28, photo: '👩', compatibility: 92, fitnessGoal: 'Weight Loss', distance: '2.3 km' },
@@ -126,6 +145,48 @@ export default function EnhancedDashboard() {
     return isComplete;
   };
 
+  // Initialize new user with fresh data
+  const initializeNewUser = async (userId: string) => {
+    try {
+      const initialData = {
+        calorieGoal: 2000,
+        weeklyWorkoutGoal: 5,
+        weight: 0,
+        height: 0,
+        targetWeight: 0,
+        startWeight: 0,
+        currentCalories: 0,
+        currentWorkouts: 0,
+        lastCalorieEdit: '',
+        lastWorkoutEdit: '',
+        createdAt: new Date().toISOString(),
+        // Discipline tracking
+        currentStreak: 0,
+        bestStreak: 0,
+        totalDays: 0,
+        workoutStreak: 0,
+        calorieStreak: 0,
+        weightStreak: 0,
+        aiChatStreak: 0,
+        lastWorkoutDate: '',
+        lastCalorieLog: '',
+        lastWeightLog: '',
+        lastAIChatDate: '',
+        workoutHistory: [],
+        calorieHistory: [],
+        weightHistory: [],
+        aiChatHistory: []
+      };
+
+      await setDoc(doc(db, Collections.USERS, userId), initialData);
+      console.log('✅ New user initialized with clean data');
+      return initialData;
+    } catch (error) {
+      console.error('Error initializing new user:', error);
+      return null;
+    }
+  };
+
   // Fetch user settings and check if complete
   useEffect(() => {
     if (user) {
@@ -133,39 +194,61 @@ export default function EnhancedDashboard() {
         try {
           const docRef = doc(db, Collections.USERS, user.uid);
           const docSnap = await getDoc(docRef);
+
+          let data;
           if (docSnap.exists()) {
-            const data = docSnap.data();
-
-            // Check if settings are complete
-            const isComplete = checkSettingsComplete(data);
-            setSettingsComplete(isComplete);
-
-            setUserSettings({
-              calorieGoal: data.calorieGoal || 2000,
-              weeklyWorkoutGoal: data.weeklyWorkoutGoal || 5,
-              weight: data.weight,
-              height: data.height,
-              bmi: data.bmi,
-              bmr: data.bmr,
-              targetWeight: data.targetWeight,
-              startWeight: data.startWeight
-            });
-            setTempCalorieGoal((data.calorieGoal || 2000).toString());
-            setTempWorkoutGoal((data.weeklyWorkoutGoal || 5).toString());
-            setLastCalorieEdit(data.lastCalorieEdit || '');
-            setLastWorkoutEdit(data.lastWorkoutEdit || '');
-            setCurrentCalories(data.currentCalories || 0);
-            setCurrentWorkouts(data.currentWorkouts || 0);
+            data = docSnap.data();
           } else {
-            // No settings found, use defaults
-            setUserSettings({
-              calorieGoal: 2000,
-              weeklyWorkoutGoal: 5,
-              weight: 75,
-              targetWeight: 70,
-              startWeight: 80
-            });
+            // New user - initialize with clean data
+            console.log('🆕 New user detected, initializing...');
+            data = await initializeNewUser(user.uid);
+            if (!data) {
+              throw new Error('Failed to initialize user');
+            }
           }
+
+          // Check if settings are complete
+          const isComplete = checkSettingsComplete(data);
+          setSettingsComplete(isComplete);
+
+          // Load user settings
+          setUserSettings({
+            calorieGoal: data.calorieGoal || 2000,
+            weeklyWorkoutGoal: data.weeklyWorkoutGoal || 5,
+            weight: data.weight,
+            height: data.height,
+            bmi: data.bmi,
+            bmr: data.bmr,
+            targetWeight: data.targetWeight,
+            startWeight: data.startWeight
+          });
+
+          setTempCalorieGoal((data.calorieGoal || 2000).toString());
+          setTempWorkoutGoal((data.weeklyWorkoutGoal || 5).toString());
+          setLastCalorieEdit(data.lastCalorieEdit || '');
+          setLastWorkoutEdit(data.lastWorkoutEdit || '');
+          setCurrentCalories(data.currentCalories || 0);
+          setCurrentWorkouts(data.currentWorkouts || 0);
+
+          // Load discipline data
+          setDisciplineData({
+            currentStreak: data.currentStreak || 0,
+            bestStreak: data.bestStreak || 0,
+            totalDays: data.totalDays || 0,
+            workoutStreak: data.workoutStreak || 0,
+            calorieStreak: data.calorieStreak || 0,
+            weightStreak: data.weightStreak || 0,
+            aiChatStreak: data.aiChatStreak || 0,
+            lastWorkoutDate: data.lastWorkoutDate || '',
+            lastCalorieLog: data.lastCalorieLog || '',
+            lastWeightLog: data.lastWeightLog || '',
+            lastAIChatDate: data.lastAIChatDate || '',
+            workoutHistory: data.workoutHistory || Array(7).fill(false),
+            calorieHistory: data.calorieHistory || Array(7).fill(false),
+            weightHistory: data.weightHistory || Array(7).fill(false),
+            aiChatHistory: data.aiChatHistory || Array(7).fill(false)
+          });
+
         } catch (error) {
           console.error('Error fetching user settings:', error);
           // Use defaults on error
@@ -643,13 +726,17 @@ export default function EnhancedDashboard() {
                   </div>
                   <div>
                     <div className="flex items-baseline gap-2 mb-2">
-                      <div className="text-3xl font-bold">7</div>
+                      <div className="text-3xl font-bold">{disciplineData.currentStreak}</div>
                       <div className="text-lg text-white/80">day streak</div>
                     </div>
                     <div className="bg-white/20 rounded-full h-2 overflow-hidden mb-2">
                       <div
                         className="bg-white h-full rounded-full transition-all duration-500"
-                        style={{ width: '70%' }}
+                        style={{
+                          width: `${disciplineData.totalDays > 0
+                            ? (disciplineData.currentStreak / disciplineData.totalDays) * 100
+                            : 0}%`
+                        }}
                       />
                     </div>
                     <div className="flex items-center justify-between text-xs text-white/80">
@@ -1288,9 +1375,13 @@ export default function EnhancedDashboard() {
               <div className="bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl p-8 shadow-xl text-white mb-8">
                 <div className="text-center">
                   <h3 className="text-xl font-bold mb-4">🔥 Current Streak</h3>
-                  <div className="text-7xl font-black mb-2">7</div>
+                  <div className="text-7xl font-black mb-2">{disciplineData.currentStreak}</div>
                   <p className="text-2xl text-white/90">Days</p>
-                  <p className="text-sm text-white/70 mt-4">Keep going! You're building momentum</p>
+                  <p className="text-sm text-white/70 mt-4">
+                    {disciplineData.currentStreak > 0
+                      ? "Keep going! You're building momentum"
+                      : "Start your journey today!"}
+                  </p>
                 </div>
               </div>
 
@@ -1302,16 +1393,16 @@ export default function EnhancedDashboard() {
                     Daily Workout
                   </h4>
                   <div className="flex gap-2 mb-4">
-                    {[1, 2, 3, 4, 5, 6, 7].map((day) => (
+                    {disciplineData.workoutHistory.slice(-7).map((completed, index) => (
                       <div
-                        key={day}
-                        className="w-10 h-10 rounded-lg bg-orange-500 flex items-center justify-center text-white font-bold"
+                        key={index}
+                        className={`w-10 h-10 rounded-lg ${completed ? 'bg-orange-500' : 'bg-gray-200'} flex items-center justify-center text-white font-bold`}
                       >
-                        ✓
+                        {completed ? '✓' : ''}
                       </div>
                     ))}
                   </div>
-                  <p className="text-sm text-gray-600">7-day streak</p>
+                  <p className="text-sm text-gray-600">{disciplineData.workoutStreak}-day streak</p>
                 </div>
 
                 <div className="bg-white rounded-xl p-6 shadow-lg">
@@ -1320,16 +1411,16 @@ export default function EnhancedDashboard() {
                     Calorie Tracking
                   </h4>
                   <div className="flex gap-2 mb-4">
-                    {[1, 2, 3, 4, 5, 6, 7].map((day) => (
+                    {disciplineData.calorieHistory.slice(-7).map((completed, index) => (
                       <div
-                        key={day}
-                        className={`w-10 h-10 rounded-lg ${day <= 6 ? 'bg-red-500' : 'bg-gray-200'} flex items-center justify-center text-white font-bold`}
+                        key={index}
+                        className={`w-10 h-10 rounded-lg ${completed ? 'bg-red-500' : 'bg-gray-200'} flex items-center justify-center text-white font-bold`}
                       >
-                        {day <= 6 ? '✓' : ''}
+                        {completed ? '✓' : ''}
                       </div>
                     ))}
                   </div>
-                  <p className="text-sm text-gray-600">6-day streak</p>
+                  <p className="text-sm text-gray-600">{disciplineData.calorieStreak}-day streak</p>
                 </div>
 
                 <div className="bg-white rounded-xl p-6 shadow-lg">
@@ -1338,16 +1429,16 @@ export default function EnhancedDashboard() {
                     Weight Logging
                   </h4>
                   <div className="flex gap-2 mb-4">
-                    {[1, 2, 3, 4, 5, 6, 7].map((day) => (
+                    {disciplineData.weightHistory.slice(-7).map((completed, index) => (
                       <div
-                        key={day}
-                        className={`w-10 h-10 rounded-lg ${day <= 5 ? 'bg-green-500' : 'bg-gray-200'} flex items-center justify-center text-white font-bold`}
+                        key={index}
+                        className={`w-10 h-10 rounded-lg ${completed ? 'bg-green-500' : 'bg-gray-200'} flex items-center justify-center text-white font-bold`}
                       >
-                        {day <= 5 ? '✓' : ''}
+                        {completed ? '✓' : ''}
                       </div>
                     ))}
                   </div>
-                  <p className="text-sm text-gray-600">5-day streak</p>
+                  <p className="text-sm text-gray-600">{disciplineData.weightStreak}-day streak</p>
                 </div>
 
                 <div className="bg-white rounded-xl p-6 shadow-lg">
@@ -1356,35 +1447,46 @@ export default function EnhancedDashboard() {
                     AI Chatbot Usage
                   </h4>
                   <div className="flex gap-2 mb-4">
-                    {[1, 2, 3, 4, 5, 6, 7].map((day) => (
+                    {disciplineData.aiChatHistory.slice(-7).map((completed, index) => (
                       <div
-                        key={day}
-                        className={`w-10 h-10 rounded-lg ${day <= 4 ? 'bg-purple-500' : 'bg-gray-200'} flex items-center justify-center text-white font-bold`}
+                        key={index}
+                        className={`w-10 h-10 rounded-lg ${completed ? 'bg-purple-500' : 'bg-gray-200'} flex items-center justify-center text-white font-bold`}
                       >
-                        {day <= 4 ? '✓' : ''}
+                        {completed ? '✓' : ''}
                       </div>
                     ))}
                   </div>
-                  <p className="text-sm text-gray-600">4-day streak</p>
+                  <p className="text-sm text-gray-600">{disciplineData.aiChatStreak}-day streak</p>
                 </div>
               </div>
 
               {/* Stats Overview */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="bg-gradient-to-br from-orange-100 to-red-100 rounded-xl p-4 text-center">
-                  <div className="text-3xl font-bold text-orange-600">21</div>
+                  <div className="text-3xl font-bold text-orange-600">{disciplineData.totalDays}</div>
                   <div className="text-sm text-gray-700">Total Days</div>
                 </div>
                 <div className="bg-gradient-to-br from-blue-100 to-cyan-100 rounded-xl p-4 text-center">
-                  <div className="text-3xl font-bold text-blue-600">85%</div>
+                  <div className="text-3xl font-bold text-blue-600">
+                    {disciplineData.totalDays > 0
+                      ? Math.round((disciplineData.currentStreak / disciplineData.totalDays) * 100)
+                      : 0}%
+                  </div>
                   <div className="text-sm text-gray-700">Consistency</div>
                 </div>
                 <div className="bg-gradient-to-br from-green-100 to-emerald-100 rounded-xl p-4 text-center">
-                  <div className="text-3xl font-bold text-green-600">7</div>
+                  <div className="text-3xl font-bold text-green-600">{disciplineData.bestStreak}</div>
                   <div className="text-sm text-gray-700">Best Streak</div>
                 </div>
                 <div className="bg-gradient-to-br from-purple-100 to-pink-100 rounded-xl p-4 text-center">
-                  <div className="text-3xl font-bold text-purple-600">4</div>
+                  <div className="text-3xl font-bold text-purple-600">
+                    {[
+                      disciplineData.workoutStreak > 0 ? 1 : 0,
+                      disciplineData.calorieStreak > 0 ? 1 : 0,
+                      disciplineData.weightStreak > 0 ? 1 : 0,
+                      disciplineData.aiChatStreak > 0 ? 1 : 0
+                    ].reduce((a, b) => a + b, 0)}
+                  </div>
                   <div className="text-sm text-gray-700">Active Habits</div>
                 </div>
               </div>
