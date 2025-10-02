@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { transition } from '@ssgoi/react';
+import { fly } from '@ssgoi/react/transitions';
 import {
   Bot,
   Utensils,
@@ -132,7 +134,8 @@ export default function MainDashboard() {
       description: 'AI-powered body fat analysis - Trained by 10M+ humans, once per week',
       icon: Camera,
       color: 'from-green-500 to-emerald-500',
-      available: true
+      available: true,
+      comingSoon: true
     },
     {
       id: 'cupid',
@@ -140,7 +143,8 @@ export default function MainDashboard() {
       description: 'Smart partner matching - Get your perfect fitness accountability buddy weekly',
       icon: Heart,
       color: 'from-pink-500 to-purple-500',
-      available: true
+      available: true,
+      comingSoon: true
     }
   ];
 
@@ -253,7 +257,12 @@ export default function MainDashboard() {
         {/* Quick Stats Banner */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           {/* Calorie Goal - Editable */}
-          <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+          <div
+            ref={transition({
+              key: 'calorie-goal-card',
+              ...fly({ x: -100, y: 0, opacity: true })
+            })}
+            className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
@@ -303,7 +312,12 @@ export default function MainDashboard() {
           </div>
 
           {/* Workout Goal - Editable */}
-          <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+          <div
+            ref={transition({
+              key: 'workout-goal-card',
+              ...fly({ x: 0, y: -80, opacity: true })
+            })}
+            className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
@@ -355,6 +369,10 @@ export default function MainDashboard() {
 
           {/* Health Stats - From Settings */}
           <div
+            ref={transition({
+              key: 'health-stats-card',
+              ...fly({ x: 100, y: 0, opacity: true })
+            })}
             className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
             onClick={() => setCurrentPage('settings')}
           >
@@ -383,9 +401,17 @@ export default function MainDashboard() {
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Main Features</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {mainFeatures.map((feature) => (
+            {mainFeatures.map((feature, index) => (
               <div
                 key={feature.id}
+                ref={transition({
+                  key: `feature-${feature.id}`,
+                  ...fly({
+                    x: index === 0 ? -150 : index === 1 ? 0 : 150,
+                    y: -100,
+                    opacity: true
+                  })
+                })}
                 className="relative group"
               >
                 <button
@@ -399,7 +425,14 @@ export default function MainDashboard() {
                     <feature.icon className="w-8 h-8 text-white" />
                   </div>
                   <h3 className="text-xl font-bold text-gray-900 mb-2 flex items-center justify-between">
-                    {feature.name}
+                    <span className="flex items-center gap-2">
+                      {feature.name}
+                      {feature.comingSoon && (
+                        <span className="px-2 py-0.5 bg-yellow-100 text-yellow-700 text-xs font-semibold rounded-full">
+                          Coming Soon
+                        </span>
+                      )}
+                    </span>
                     {feature.available && (
                       <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-orange-600 group-hover:translate-x-1 transition-all" />
                     )}

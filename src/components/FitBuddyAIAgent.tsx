@@ -1,4 +1,6 @@
 import React from 'react';
+import { transition } from '@ssgoi/react';
+import { rotate } from '@ssgoi/react/transitions';
 import { Camera, ArrowLeft, Sparkles, Clock, Bell, TrendingUp, AlertCircle, Shield, Zap, Users, Brain } from 'lucide-react';
 
 interface FitBuddyAIAgentProps {

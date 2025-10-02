@@ -30,6 +30,11 @@ export const Collections = {
   WEIGHT_LOGS: 'weight_logs',
   WORKOUTS: 'workouts',
   MATCHES: 'matches',
+  CUPID_MATCHES: 'cupid_matches',
+  WORKOUT_BUDDIES: 'workout_buddies',
   SWIPES: 'swipes',
-  CHAT_MESSAGES: 'chat_messages'
+  CHAT_MESSAGES: 'chat_messages',
+  VIDEOS: 'videos',
+  DAILY_STREAKS: 'daily_streaks',
+  COMMUNITY_POSTS: 'community_posts'
 };

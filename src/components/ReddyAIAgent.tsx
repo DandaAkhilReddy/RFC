@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { transition } from '@ssgoi/react';
+import { fly } from '@ssgoi/react/transitions';
 import {
   ArrowLeft,
   Send,
@@ -66,7 +68,7 @@ export default function ReddyAIAgent({ onBack }: ReddyAIAgentProps) {
   }, [inputMessage]);
 
   useEffect(() => {
-    // Load user context from Firestore and check if settings are complete
+    // Load user context from Firestore - NO automated messages
     const loadUserContext = async () => {
       if (!user?.email) {
         setIsCheckingSettings(false);
@@ -99,69 +101,11 @@ export default function ReddyAIAgent({ onBack }: ReddyAIAgentProps) {
               dailyProtein: 150,
             });
             setHasCompletedSettings(true);
-
-            // Welcome message after settings loaded
-            setMessages([{
-              id: '1',
-              role: 'assistant',
-              content: `Welcome back, ${user.displayName || 'Champion'}! 💪
-
-I'm Reddy, your AI fitness coach. I've loaded your profile and I'm ready to help you achieve your goals!
-
-WHAT CAN I HELP YOU WITH TODAY?
-• Create a workout plan
-• Get nutrition advice
-• Analyze meal photos
-• Track your progress
-• Answer fitness questions
-• Provide motivation
-
-What would you like to focus on?`,
-              timestamp: new Date()
-            }]);
           } else {
             setHasCompletedSettings(false);
-            setMessages([{
-              id: '1',
-              role: 'assistant',
-              content: `Hey there! 👋 Welcome to Reddy AI!
-
-I'd love to help you with your fitness journey, but I need some information first.
-
-Please go to SETTINGS and fill in:
-• Your current weight
-• Your target weight
-• Your fitness goal
-• Your fitness level
-• Your daily calorie goal
-
-Once you complete your settings, come back and I'll create a personalized fitness plan for you! 🎯
-
-Tap the back button to go to Settings.`,
-              timestamp: new Date()
-            }]);
           }
         } else {
           setHasCompletedSettings(false);
-          setMessages([{
-            id: '1',
-            role: 'assistant',
-            content: `Hey there! 👋 Welcome to Reddy AI!
-
-I'd love to help you with your fitness journey, but I need some information first.
-
-Please go to SETTINGS and fill in:
-• Your current weight
-• Your target weight
-• Your fitness goal
-• Your fitness level
-• Your daily calorie goal
-
-Once you complete your settings, come back and I'll create a personalized fitness plan for you! 🎯
-
-Tap the back button to go to Settings.`,
-            timestamp: new Date()
-          }]);
         }
 
         setIsCheckingSettings(false);
@@ -207,28 +151,7 @@ Tap the back button to go to Settings.`,
   const handleSendMessage = async () => {
     if (!inputMessage.trim() && !selectedImage) return;
     if (!user?.email) return;
-
-    // Check if settings are completed
-    if (!hasCompletedSettings) {
-      const reminderMessage: Message = {
-        id: Date.now().toString(),
-        role: 'assistant',
-        content: `Please complete your settings first! 🎯
-
-Go to Settings and fill in:
-• Your current weight
-• Your target weight
-• Your fitness goal
-• Your fitness level
-• Your daily calorie goal
-
-Then come back and I'll be ready to help you!`,
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, reminderMessage]);
-      setInputMessage('');
-      return;
-    }
+    if (!hasCompletedSettings) return; // Silently don't send if settings not complete
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -514,161 +437,139 @@ What would you like to focus on today?`;
   };
 
   return (
-    <div className="h-screen bg-gradient-to-br from-gray-50 via-white to-orange-50 flex flex-col">
-      {/* Header - Enhanced Modern Style */}
-      <div className="bg-white/80 backdrop-blur-md border-b border-gray-200/50 shadow-sm sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-3 sm:px-4 py-3 sm:py-4">
+    <div className="h-screen bg-gradient-to-br from-orange-50 via-white to-red-50 flex flex-col">
+      {/* Modern Gradient Header */}
+      <div className="bg-gradient-to-r from-orange-600 via-red-600 to-pink-600 shadow-lg">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-3 sm:gap-4">
               <button
                 onClick={onBack}
-                className="p-2 hover:bg-gray-100 rounded-xl transition-all duration-200 hover:scale-105 active:scale-95"
+                className="p-2 hover:bg-white/10 rounded-xl transition-all hover:scale-105 backdrop-blur-sm"
               >
-                <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6 text-gray-700" />
+                <ArrowLeft className="w-5 h-5 text-white" />
               </button>
-              <div className="flex items-center gap-2 sm:gap-3">
-                <div className="relative">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-orange-500 via-red-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg shadow-orange-500/30 animate-pulse">
-                    <Bot className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-                  </div>
-                  <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center shadow-lg">
+                  <Bot className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-base sm:text-lg font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent flex items-center gap-2">
-                    Reddy AI
-                    <Sparkles className="w-4 h-4 text-orange-500 animate-pulse" />
-                  </h1>
-                  <p className="text-xs text-green-600 font-medium flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-                    Active now
-                  </p>
+                  <h1 className="text-lg sm:text-xl font-bold text-white">Reddy AI</h1>
+                  <p className="text-xs text-white/80 hidden sm:block">Your Personal Fitness Coach</p>
                 </div>
               </div>
             </div>
-            <button
-              onClick={isSpeaking ? stopSpeaking : undefined}
-              className={`p-2.5 rounded-xl transition-all duration-200 ${
-                isSpeaking
-                  ? 'bg-gradient-to-br from-orange-100 to-red-100 text-orange-600 shadow-md'
-                  : 'text-gray-400 hover:bg-gray-100'
-              }`}
-            >
-              {isSpeaking ? <Volume2 className="w-5 h-5 animate-pulse" /> : <VolumeX className="w-5 h-5" />}
-            </button>
+            {isSpeaking && (
+              <button
+                onClick={stopSpeaking}
+                className="p-2 bg-white/20 hover:bg-white/30 rounded-xl transition-all backdrop-blur-sm"
+              >
+                <VolumeX className="w-5 h-5 text-white" />
+              </button>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Chat Messages - Enhanced Style */}
+      {/* Chat Messages - Modern Card Style */}
       <div className="flex-1 overflow-y-auto">
-        <div className="max-w-3xl mx-auto">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6">
+          {messages.length === 0 && !hasCompletedSettings && (
+            <div className="flex items-center justify-center h-full px-4">
+              <div className="text-center max-w-md bg-white rounded-2xl p-8 shadow-xl border border-orange-100">
+                <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                  <Bot className="w-8 h-8 text-white" />
+                </div>
+                <h2 className="text-xl font-bold text-gray-900 mb-2">Complete Your Profile</h2>
+                <p className="text-sm text-gray-600 mb-6">
+                  Please fill in your fitness profile in Settings to start chatting with Reddy AI.
+                </p>
+                <button
+                  onClick={onBack}
+                  className="px-6 py-3 bg-gradient-to-r from-orange-600 to-red-600 text-white font-semibold rounded-xl hover:shadow-lg transition-all hover:scale-105"
+                >
+                  Go to Settings →
+                </button>
+              </div>
+            </div>
+          )}
+
           {messages.map((message, index) => (
             <div
               key={message.id}
-              className={`${
-                message.role === 'assistant'
-                  ? 'bg-gradient-to-br from-gray-50 to-orange-50/30'
-                  : 'bg-white'
-              } border-b border-gray-100/50 transition-all duration-300 hover:shadow-sm`}
+              ref={transition({
+                key: `message-${message.id}`,
+                ...fly({
+                  x: message.role === 'user' ? 100 : -100,
+                  y: 0,
+                  opacity: true
+                })
+              })}
+              className="mb-4"
             >
-              <div className="px-3 sm:px-6 py-4 sm:py-6">
-                <div className="flex gap-3 sm:gap-4">
-                  {/* Avatar */}
+              <div className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                {/* AI Avatar (left side) */}
+                {message.role === 'assistant' && (
                   <div className="flex-shrink-0">
-                    <div
-                      className={`w-7 h-7 sm:w-9 sm:h-9 rounded-2xl flex items-center justify-center shadow-lg transition-transform duration-200 hover:scale-110 ${
-                        message.role === 'user'
-                          ? 'bg-gradient-to-br from-orange-500 to-orange-600 shadow-orange-500/30'
-                          : 'bg-gradient-to-br from-orange-500 via-red-500 to-pink-500 shadow-orange-500/40'
-                      }`}
-                    >
-                      {message.role === 'user' ? (
-                        <UserIcon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-                      ) : (
-                        <Bot className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-                      )}
+                    <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center shadow-lg">
+                      <Bot className="w-6 h-6 text-white" />
+                    </div>
+                  </div>
+                )}
+
+                {/* Message Bubble */}
+                <div className={`max-w-[75%] ${message.role === 'user' ? 'order-1' : 'order-2'}`}>
+                  {message.image && (
+                    <div className="mb-2">
+                      <img
+                        src={message.image}
+                        alt="Uploaded"
+                        className="max-w-sm rounded-2xl shadow-lg border-2 border-white"
+                      />
+                    </div>
+                  )}
+
+                  <div className={`rounded-2xl px-4 py-3 shadow-md ${
+                    message.role === 'user'
+                      ? 'bg-gradient-to-br from-orange-500 to-red-500 text-white'
+                      : 'bg-white text-gray-900 border border-gray-100'
+                  }`}>
+                    <div className="text-[15px] leading-relaxed whitespace-pre-wrap">
+                      {message.content}
                     </div>
                   </div>
 
-                  {/* Message Content */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <span className="text-xs sm:text-sm font-bold text-gray-900">
-                        {message.role === 'user' ? 'You' : 'Reddy AI'}
-                      </span>
-                      <span className="text-xs text-gray-400">
-                        {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </span>
-                    </div>
-
-                    {message.image && (
-                      <div className="mb-3 group">
-                        <img
-                          src={message.image}
-                          alt="Uploaded"
-                          className="max-w-xs sm:max-w-sm rounded-2xl shadow-lg group-hover:shadow-xl transition-all duration-300 border-2 border-gray-100"
-                        />
-                      </div>
-                    )}
-
-                    <div className="prose prose-sm sm:prose max-w-none">
-                      <div className={`text-sm sm:text-base whitespace-pre-wrap leading-relaxed ${
-                        message.role === 'user' ? 'text-gray-800' : 'text-gray-900'
-                      }`}>
-                        {message.content.split('\n').map((line, idx) => {
-                          // Format bold text (**text** becomes bold)
-                          if (line.includes('**')) {
-                            const parts = line.split('**');
-                            return (
-                              <p key={idx} className="mb-2">
-                                {parts.map((part, i) =>
-                                  i % 2 === 1 ? <strong key={i} className="font-bold text-gray-900">{part}</strong> : part
-                                )}
-                              </p>
-                            );
-                          }
-                          // Regular line
-                          return line ? <p key={idx} className="mb-2">{line}</p> : <br key={idx} />;
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Voice button for AI messages */}
-                    {message.role === 'assistant' && index === messages.length - 1 && !isLoading && (
-                      <button
-                        onClick={() => speakText(message.content)}
-                        className="mt-3 px-3 py-1.5 text-xs bg-gradient-to-r from-orange-100 to-red-100 hover:from-orange-200 hover:to-red-200 text-orange-700 rounded-full transition-all duration-200 flex items-center gap-1.5 shadow-sm hover:shadow-md font-medium"
-                      >
-                        <Volume2 className="w-3.5 h-3.5" />
-                        Read aloud
-                      </button>
-                    )}
+                  <div className={`text-xs text-gray-500 mt-1 px-2 ${message.role === 'user' ? 'text-right' : 'text-left'}`}>
+                    {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </div>
                 </div>
+
+                {/* User Avatar (right side) */}
+                {message.role === 'user' && (
+                  <div className="flex-shrink-0 order-2">
+                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center shadow-lg">
+                      <UserIcon className="w-6 h-6 text-white" />
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           ))}
 
-          {/* Loading Indicator - Enhanced */}
+          {/* Loading Indicator - Modern Style */}
           {isLoading && (
-            <div className="bg-gradient-to-br from-gray-50 to-orange-50/30 border-b border-gray-100/50">
-              <div className="px-3 sm:px-6 py-4 sm:py-6">
-                <div className="flex gap-3 sm:gap-4">
-                  <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-2xl bg-gradient-to-br from-orange-500 via-red-500 to-pink-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-orange-500/40 animate-pulse">
-                    <Bot className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+            <div className="mb-4">
+              <div className="flex gap-3 justify-start">
+                <div className="flex-shrink-0">
+                  <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center shadow-lg animate-pulse">
+                    <Bot className="w-6 h-6 text-white" />
                   </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <Loader2 className="w-4 h-4 text-orange-600 animate-spin" />
-                      <span className="text-sm font-medium bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
-                        Reddy is thinking...
-                      </span>
-                    </div>
-                    <div className="flex gap-1 mt-2">
-                      <div className="w-2 h-2 bg-orange-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                      <div className="w-2 h-2 bg-red-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                      <div className="w-2 h-2 bg-pink-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                    </div>
+                </div>
+                <div className="bg-white rounded-2xl px-4 py-3 shadow-md border border-gray-100">
+                  <div className="flex gap-1.5">
+                    <div className="w-2.5 h-2.5 bg-orange-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <div className="w-2.5 h-2.5 bg-orange-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <div className="w-2.5 h-2.5 bg-orange-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                   </div>
                 </div>
               </div>
@@ -705,67 +606,71 @@ What would you like to focus on today?`;
         </div>
       )}
 
-      {/* Input Area - Premium Style */}
-      <div className="bg-white/90 backdrop-blur-md border-t border-gray-200/50 shadow-2xl">
-        <div className="max-w-3xl mx-auto px-3 sm:px-6 py-3 sm:py-4">
-          <div className="bg-gradient-to-br from-gray-50 to-orange-50/50 rounded-2xl sm:rounded-3xl p-2 sm:p-3 shadow-inner border border-gray-200/50">
-            <div className="flex items-end gap-2">
+      {/* Input Area - Modern Glassmorphism Style */}
+      <div className="border-t border-white/20 bg-gradient-to-r from-orange-50 to-red-50 backdrop-blur-xl">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4">
+          <div className="relative bg-white rounded-2xl shadow-xl border border-orange-100">
+            <textarea
+              ref={textareaRef}
+              value={inputMessage}
+              onChange={(e) => setInputMessage(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Type your message..."
+              rows={1}
+              disabled={!hasCompletedSettings}
+              className="w-full px-5 py-4 pr-28 rounded-2xl focus:outline-none resize-none text-[15px] text-gray-900 placeholder-gray-400 disabled:bg-gray-50 disabled:cursor-not-allowed"
+              style={{ maxHeight: '200px' }}
+            />
+
+            <div className="absolute right-2 bottom-2 flex items-center gap-2">
               {/* Image Upload */}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleImageSelect}
-              />
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="p-2.5 text-gray-600 hover:bg-white rounded-xl transition-all duration-200 flex-shrink-0 hover:shadow-md hover:scale-105 active:scale-95"
+                disabled={!hasCompletedSettings}
+                className="p-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Upload image"
               >
                 <ImageIcon className="w-5 h-5" />
               </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageSelect}
+                className="hidden"
+              />
 
               {/* Voice Input */}
               <button
+                ref={transition({
+                  key: 'mic-button',
+                  ...fly({ x: -50, y: 50, opacity: true })
+                })}
                 onClick={isRecording ? stopRecording : startRecording}
-                className={`p-2.5 rounded-xl transition-all duration-200 flex-shrink-0 hover:scale-105 active:scale-95 ${
+                disabled={!hasCompletedSettings}
+                className={`p-2.5 rounded-xl transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed ${
                   isRecording
-                    ? 'bg-gradient-to-br from-red-500 to-pink-600 text-white shadow-lg shadow-red-500/50'
-                    : 'text-gray-600 hover:bg-white hover:shadow-md'
+                    ? 'bg-red-500 text-white hover:bg-red-600 animate-pulse'
+                    : 'bg-purple-100 text-purple-600 hover:bg-purple-200'
                 }`}
-                title={isRecording ? 'Stop recording' : 'Start voice input'}
+                title={isRecording ? 'Stop recording' : 'Voice input'}
               >
                 {isRecording ? (
-                  <MicOff className="w-5 h-5 animate-pulse" />
+                  <MicOff className="w-5 h-5" />
                 ) : (
                   <Mic className="w-5 h-5" />
                 )}
               </button>
 
-              {/* Text Input */}
-              <div className="flex-1 bg-white rounded-xl px-1">
-                <textarea
-                  ref={textareaRef}
-                  value={inputMessage}
-                  onChange={(e) => setInputMessage(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  placeholder="Message Reddy..."
-                  rows={1}
-                  className="w-full px-3 py-2.5 bg-transparent border-none focus:outline-none resize-none text-sm sm:text-base text-gray-800 placeholder-gray-400"
-                  style={{ maxHeight: '120px' }}
-                />
-              </div>
-
               {/* Send Button */}
               <button
+                ref={transition({
+                  key: 'send-button',
+                  ...fly({ x: 50, y: 50, opacity: true })
+                })}
                 onClick={handleSendMessage}
-                disabled={(!inputMessage.trim() && !selectedImage) || isLoading}
-                className={`p-2.5 rounded-xl transition-all duration-200 flex-shrink-0 hover:scale-105 active:scale-95 ${
-                  inputMessage.trim() || selectedImage
-                    ? 'bg-gradient-to-br from-orange-500 to-red-600 text-white shadow-lg shadow-orange-500/50 hover:shadow-xl'
-                    : 'text-gray-400 cursor-not-allowed bg-gray-200'
-                }`}
+                disabled={(!inputMessage.trim() && !selectedImage) || isLoading || !hasCompletedSettings}
+                className="p-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-red-500 text-white hover:from-orange-600 hover:to-red-600 transition-all hover:scale-105 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
               >
                 <Send className="w-5 h-5" />
               </button>
@@ -773,23 +678,28 @@ What would you like to focus on today?`;
           </div>
 
           {/* Quick Actions */}
-          <div className="flex gap-2 mt-3 overflow-x-auto pb-1 scrollbar-hide">
-            {[
-              { icon: '💪', text: 'Workout plan' },
-              { icon: '🍽️', text: 'Meal ideas' },
-              { icon: '📸', text: 'Analyze photo' },
-              { icon: '🔥', text: 'Motivate me' }
-            ].map((action) => (
+          {messages.length === 0 && hasCompletedSettings && (
+            <div className="flex gap-2 mt-3 flex-wrap justify-center">
               <button
-                key={action.text}
-                onClick={() => setInputMessage(action.text)}
-                className="px-3 py-1.5 text-xs sm:text-sm bg-white hover:bg-gradient-to-r hover:from-orange-50 hover:to-red-50 border border-gray-200 text-gray-700 rounded-full transition-all duration-200 whitespace-nowrap shadow-sm hover:shadow-md font-medium hover:scale-105 active:scale-95"
+                onClick={() => setInputMessage("What's my current progress?")}
+                className="px-4 py-2 bg-white/80 backdrop-blur-sm hover:bg-white text-sm text-gray-700 rounded-xl border border-orange-100 hover:border-orange-300 transition-all hover:shadow-md"
               >
-                <span className="mr-1.5">{action.icon}</span>
-                {action.text}
+                📊 My Progress
               </button>
-            ))}
-          </div>
+              <button
+                onClick={() => setInputMessage("Give me a workout plan")}
+                className="px-4 py-2 bg-white/80 backdrop-blur-sm hover:bg-white text-sm text-gray-700 rounded-xl border border-orange-100 hover:border-orange-300 transition-all hover:shadow-md"
+              >
+                💪 Workout Plan
+              </button>
+              <button
+                onClick={() => setInputMessage("Suggest a healthy meal")}
+                className="px-4 py-2 bg-white/80 backdrop-blur-sm hover:bg-white text-sm text-gray-700 rounded-xl border border-orange-100 hover:border-orange-300 transition-all hover:shadow-md"
+              >
+                🥗 Meal Ideas
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

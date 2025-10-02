@@ -1,9 +1,15 @@
 import { useAuth } from './components/AuthProvider';
 import LandingPage from './App';
 import MainDashboard from './components/MainDashboard';
+import NewDashboard from './components/NewDashboard';
+import EnhancedDashboard from './components/EnhancedDashboard';
 
 export default function AppRouter() {
   const { user, loading } = useAuth();
+
+  // Check if we're on the test dashboard routes
+  const isTestDashboard = window.location.pathname === '/test-dashboard';
+  const isEnhancedDashboard = window.location.pathname === '/enhanced-dashboard';
 
   console.log('[AppRouter] user:', user?.email, 'loading:', loading);
 
@@ -25,7 +31,9 @@ export default function AppRouter() {
     return <LandingPage />;
   }
 
-  // Logged in - show dashboard directly
+  // Logged in - show dashboard (or test dashboards if on test routes)
   console.log('[AppRouter] User logged in - showing dashboard');
+  if (isEnhancedDashboard) return <EnhancedDashboard />;
+  if (isTestDashboard) return <NewDashboard />;
   return <MainDashboard />;
 }

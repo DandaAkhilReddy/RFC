@@ -1,4 +1,6 @@
 import React from 'react';
+import { transition } from '@ssgoi/react';
+import { rotate } from '@ssgoi/react/transitions';
 import { Heart, ArrowLeft, Sparkles, Users, Target, MessageCircle, Shield, Brain, Zap, Clock, AlertCircle, TrendingUp, Award } from 'lucide-react';
 
 interface CupidAIAgentProps {

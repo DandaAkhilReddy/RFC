@@ -1,36 +1,201 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /users/{email} {
-      allow read, write: if request.auth != null && request.auth.token.email == email;
+
+    // ============ HELPER FUNCTIONS ============
+    function isSignedIn() {
+      return request.auth != null;
     }
-    
-    match /user_settings/{email} {
-      allow read, write: if request.auth != null && request.auth.token.email == email;
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
     }
-    
-    match /user_feedback/{email} {
-      allow read, write: if request.auth != null && request.auth.token.email == email;
+
+    function isValidEmail(email) {
+      return email.matches('^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$');
     }
-    
+
+    function isValidString(str, minLen, maxLen) {
+      return str is string && str.size() >= minLen && str.size() <= maxLen;
+    }
+
+    function isValidNumber(num, min, max) {
+      return num is number && num >= min && num <= max;
+    }
+
+    // ============ USERS COLLECTION ============
+    match /users/{userId} {
+      allow read: if isSignedIn();
+
+      allow create: if isOwner(userId)
+        && request.resource.data.keys().hasAll(['email', 'fullName'])
+        && isValidEmail(request.resource.data.email)
+        && isValidString(request.resource.data.fullName, 2, 50);
+
+      allow update: if isOwner(userId)
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['userId', 'createdAt']));
+
+      allow delete: if false; // No deletions allowed
+    }
+
+    // ============ MEALS COLLECTION ============
     match /meals/{mealId} {
-      allow read, write: if request.auth != null;
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+
+      allow create: if isSignedIn()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.keys().hasAll(['mealType', 'calories', 'date'])
+        && isValidNumber(request.resource.data.calories, 0, 10000)
+        && request.resource.data.mealType in ['Breakfast', 'Lunch', 'Dinner', 'Snack'];
+
+      allow update: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
-    
+
+    // ============ WORKOUTS COLLECTION ============
     match /workouts/{workoutId} {
-      allow read, write: if request.auth != null;
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+
+      allow create: if isSignedIn()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.keys().hasAll(['workoutType', 'duration', 'date'])
+        && isValidNumber(request.resource.data.duration, 1, 600);
+
+      allow update: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
-    
-    match /progress_photos/{docId} {
-      allow read, write: if request.auth != null;
+
+    // ============ WEIGHT LOGS COLLECTION ============
+    match /weight_logs/{logId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+
+      allow create: if isSignedIn()
+        && request.resource.data.userId == request.auth.uid
+        && isValidNumber(request.resource.data.weight, 20, 300);
+
+      allow update: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
-    
+
+    // ============ WORKOUT BUDDIES COLLECTION ============
+    match /workout_buddies/{connectionId} {
+      allow read: if isSignedIn() && (
+        resource.data.userId1 == request.auth.uid
+        || resource.data.userId2 == request.auth.uid
+      );
+
+      allow create: if isSignedIn()
+        && (request.resource.data.userId1 == request.auth.uid
+            || request.resource.data.userId2 == request.auth.uid)
+        && request.resource.data.status in ['pending', 'connected', 'rejected'];
+
+      allow update: if isSignedIn() && (
+        resource.data.userId1 == request.auth.uid
+        || resource.data.userId2 == request.auth.uid
+      );
+
+      allow delete: if isSignedIn() && (
+        resource.data.userId1 == request.auth.uid
+        || resource.data.userId2 == request.auth.uid
+      );
+    }
+
+    // ============ CUPID MATCHES COLLECTION ============
+    match /cupid_matches/{matchId} {
+      allow read: if isSignedIn() && (
+        resource.data.userId1 == request.auth.uid
+        || resource.data.userId2 == request.auth.uid
+      );
+
+      allow create: if false; // Only system can create matches
+
+      allow update: if isSignedIn()
+        && (resource.data.userId1 == request.auth.uid
+            || resource.data.userId2 == request.auth.uid)
+        && request.resource.data.status in ['accepted', 'rejected', 'expired'];
+
+      allow delete: if false;
+    }
+
+    // ============ CHAT MESSAGES COLLECTION ============
+    match /chat_messages/{messageId} {
+      allow read: if isSignedIn() && (
+        resource.data.senderId == request.auth.uid
+        || resource.data.receiverId == request.auth.uid
+      );
+
+      allow create: if isSignedIn()
+        && request.resource.data.senderId == request.auth.uid
+        && isValidString(request.resource.data.content, 1, 1000);
+
+      allow update: if isSignedIn()
+        && resource.data.receiverId == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read', 'readAt']);
+
+      allow delete: if isSignedIn() && resource.data.senderId == request.auth.uid;
+    }
+
+    // ============ VIDEOS COLLECTION ============
+    match /videos/{videoId} {
+      allow read: if isSignedIn();
+
+      allow create: if isSignedIn()
+        && request.resource.data.userId == request.auth.uid
+        && isValidString(request.resource.data.title, 3, 100)
+        && request.resource.data.category in ['Cooking', 'Workout', 'Transformation', 'Tips'];
+
+      allow update: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    // ============ DAILY STREAKS COLLECTION ============
+    match /daily_streaks/{streakId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create, update: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow delete: if false;
+    }
+
+    // ============ COMMUNITY POSTS COLLECTION ============
+    match /community_posts/{postId} {
+      allow read: if isSignedIn();
+
+      allow create: if isSignedIn()
+        && request.resource.data.userId == request.auth.uid
+        && isValidString(request.resource.data.content, 1, 2000);
+
+      allow update: if isSignedIn() && (
+        resource.data.userId == request.auth.uid
+        || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes', 'likedBy'])
+      );
+
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    // ============ USER FEEDBACK COLLECTION ============
+    match /user_feedback/{feedbackId} {
+      allow read: if isSignedIn();
+
+      allow create: if isSignedIn()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.type in ['like', 'comment', 'share'];
+
+      allow update: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    // ============ LEGACY COLLECTIONS (BACKWARDS COMPATIBILITY) ============
     match /matches/{matchId} {
-      allow read, write: if request.auth != null;
+      allow read, write: if isSignedIn();
     }
-    
-    match /chat_messages/{chatId}/{document=**} {
-      allow read, write: if request.auth != null;
+
+    match /progress_photos/{docId} {
+      allow read, write: if isSignedIn();
+    }
+
+    // ============ DENY ALL OTHER COLLECTIONS ============
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

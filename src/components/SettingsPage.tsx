@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { transition } from '@ssgoi/react';
+import { rotate } from '@ssgoi/react/transitions';
 import {
   User,
   Camera,
