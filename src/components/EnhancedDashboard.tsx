@@ -139,14 +139,6 @@ export default function EnhancedDashboard() {
           const isComplete = checkSettingsComplete(data);
           setSettingsComplete(isComplete);
 
-          // Show alert and redirect if settings incomplete
-          if (!isComplete) {
-            setShowSettingsAlert(true);
-            setTimeout(() => {
-              setCurrentPage('settings');
-            }, 3000);
-          }
-
           setUserSettings({
             calorieGoal: data.calorieGoal || 2000,
             weeklyWorkoutGoal: data.weeklyWorkoutGoal || 5,
@@ -198,22 +190,25 @@ export default function EnhancedDashboard() {
 
     // Check if already edited today
     if (!canEditToday(lastCalorieEdit)) {
-      alert('⚠️ You can only edit your calorie goal once per day. Try again tomorrow!');
       setEditingCalories(false);
       return;
     }
 
     const newGoal = parseInt(tempCalorieGoal);
     if (!isNaN(newGoal) && newGoal > 0) {
-      const today = new Date().toISOString();
-      await setDoc(doc(db, Collections.USERS, user.uid), {
-        calorieGoal: newGoal,
-        lastCalorieEdit: today
-      }, { merge: true });
-      setUserSettings({ ...userSettings, calorieGoal: newGoal });
-      setLastCalorieEdit(today);
-      setEditingCalories(false);
-      alert('✅ Calorie goal updated successfully!');
+      try {
+        const today = new Date().toISOString();
+        await setDoc(doc(db, Collections.USERS, user.uid), {
+          calorieGoal: newGoal,
+          lastCalorieEdit: today
+        }, { merge: true });
+        setUserSettings({ ...userSettings, calorieGoal: newGoal });
+        setLastCalorieEdit(today);
+        setEditingCalories(false);
+      } catch (error) {
+        console.error('Error saving calorie goal:', error);
+        setEditingCalories(false);
+      }
     }
   };
 
@@ -222,22 +217,25 @@ export default function EnhancedDashboard() {
 
     // Check if already edited today
     if (!canEditToday(lastWorkoutEdit)) {
-      alert('⚠️ You can only edit your workout goal once per day. Try again tomorrow!');
       setEditingWorkouts(false);
       return;
     }
 
     const newGoal = parseInt(tempWorkoutGoal);
     if (!isNaN(newGoal) && newGoal > 0) {
-      const today = new Date().toISOString();
-      await setDoc(doc(db, Collections.USERS, user.uid), {
-        weeklyWorkoutGoal: newGoal,
-        lastWorkoutEdit: today
-      }, { merge: true });
-      setUserSettings({ ...userSettings, weeklyWorkoutGoal: newGoal });
-      setLastWorkoutEdit(today);
-      setEditingWorkouts(false);
-      alert('✅ Workout goal updated successfully!');
+      try {
+        const today = new Date().toISOString();
+        await setDoc(doc(db, Collections.USERS, user.uid), {
+          weeklyWorkoutGoal: newGoal,
+          lastWorkoutEdit: today
+        }, { merge: true });
+        setUserSettings({ ...userSettings, weeklyWorkoutGoal: newGoal });
+        setLastWorkoutEdit(today);
+        setEditingWorkouts(false);
+      } catch (error) {
+        console.error('Error saving workout goal:', error);
+        setEditingWorkouts(false);
+      }
     }
   };
 
@@ -616,10 +614,11 @@ export default function EnhancedDashboard() {
                   )}
                 </div>
 
-                {/* Workout Goal - Compact Card */}
+                {/* Discipline & Consistency - Compact Card */}
                 <div
-                  ref={transition({ key: 'workout-card', ...fly({ y: 20, opacity: true, delay: 100 }) })}
-                  className="bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl p-4 shadow-lg text-white relative overflow-hidden group hover:shadow-2xl transition-shadow"
+                  ref={transition({ key: 'discipline-card', ...fly({ y: 20, opacity: true, delay: 100 }) })}
+                  className="bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl p-4 shadow-lg text-white relative overflow-hidden group hover:shadow-2xl transition-shadow cursor-pointer"
+                  onClick={() => setCurrentPage('discipline')}
                 >
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
@@ -627,63 +626,27 @@ export default function EnhancedDashboard() {
                         <Dumbbell className="w-5 h-5 text-white" />
                       </div>
                       <div>
-                        <h3 className="text-sm font-bold">Weekly Workouts</h3>
-                        <p className="text-xs text-white/70">
-                          {canEditToday(lastWorkoutEdit) ? 'Editable' : 'Locked today'}
-                        </p>
+                        <h3 className="text-sm font-bold">Discipline</h3>
+                        <p className="text-xs text-white/70">Track Consistency</p>
                       </div>
                     </div>
-                    {!editingWorkouts && canEditToday(lastWorkoutEdit) && (
-                      <button
-                        onClick={() => setEditingWorkouts(true)}
-                        className="p-2 hover:bg-white/20 rounded-lg transition-colors"
-                      >
-                        <Edit2 className="w-5 h-5 text-white" />
-                      </button>
-                    )}
                   </div>
-
-                  {editingWorkouts ? (
-                    <div className="flex gap-2">
-                      <input
-                        type="number"
-                        value={tempWorkoutGoal}
-                        onChange={(e) => setTempWorkoutGoal(e.target.value)}
-                        className="flex-1 px-3 py-2 border-2 border-white/30 bg-white/10 backdrop-blur-sm rounded-lg text-xl font-bold text-white placeholder-white/50"
-                        placeholder="Goal"
+                  <div>
+                    <div className="flex items-baseline gap-2 mb-2">
+                      <div className="text-3xl font-bold">7</div>
+                      <div className="text-lg text-white/80">day streak</div>
+                    </div>
+                    <div className="bg-white/20 rounded-full h-2 overflow-hidden mb-2">
+                      <div
+                        className="bg-white h-full rounded-full transition-all duration-500"
+                        style={{ width: '70%' }}
                       />
-                      <button
-                        onClick={saveWorkoutGoal}
-                        className="px-3 py-2 bg-white text-blue-600 rounded-lg font-bold hover:scale-105 transition-transform text-sm"
-                      >
-                        ✓
-                      </button>
-                      <button
-                        onClick={() => setEditingWorkouts(false)}
-                        className="px-3 py-2 bg-white/20 text-white rounded-lg font-bold hover:scale-105 transition-transform text-sm"
-                      >
-                        ✗
-                      </button>
                     </div>
-                  ) : (
-                    <div>
-                      <div className="flex items-baseline gap-2 mb-2">
-                        <div className="text-3xl font-bold">{currentWorkouts}</div>
-                        <div className="text-lg text-white/80">/ {userSettings.weeklyWorkoutGoal}</div>
-                        <div className="text-xs text-white/60 ml-auto">workouts</div>
-                      </div>
-                      <div className="bg-white/20 rounded-full h-2 overflow-hidden mb-2">
-                        <div
-                          className="bg-white h-full rounded-full transition-all duration-500"
-                          style={{ width: `${Math.min((currentWorkouts / (userSettings.weeklyWorkoutGoal || 5)) * 100, 100)}%` }}
-                        />
-                      </div>
-                      <div className="flex items-center justify-between text-xs text-white/80">
-                        <span>{Math.round((currentWorkouts / (userSettings.weeklyWorkoutGoal || 5)) * 100)}%</span>
-                        <span>{(userSettings.weeklyWorkoutGoal || 5) - currentWorkouts} left</span>
-                      </div>
+                    <div className="flex items-center justify-between text-xs text-white/80">
+                      <span>Click to view details</span>
+                      <span>→</span>
                     </div>
-                  )}
+                  </div>
                 </div>
 
                 {/* Weight Progress - Compact Card */}
@@ -1299,6 +1262,125 @@ export default function EnhancedDashboard() {
           )}
 
           {/* Community Page */}
+          {/* Discipline & Consistency Page */}
+          {currentPage === 'discipline' && (
+            <div
+              ref={transition({ key: 'discipline-content', ...fly({ x: 100, y: 0, opacity: true }) })}
+            >
+              <div className="mb-10">
+                <h2 className="text-4xl font-bold bg-gradient-to-r from-blue-500 to-cyan-500 bg-clip-text text-transparent mb-3">
+                  💪 Discipline & Consistency Tracker
+                </h2>
+                <p className="text-lg text-gray-600">Build unstoppable habits and track your fitness journey</p>
+              </div>
+
+              {/* Current Streak */}
+              <div className="bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl p-8 shadow-xl text-white mb-8">
+                <div className="text-center">
+                  <h3 className="text-xl font-bold mb-4">🔥 Current Streak</h3>
+                  <div className="text-7xl font-black mb-2">7</div>
+                  <p className="text-2xl text-white/90">Days</p>
+                  <p className="text-sm text-white/70 mt-4">Keep going! You're building momentum</p>
+                </div>
+              </div>
+
+              {/* Habits Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div className="bg-white rounded-xl p-6 shadow-lg">
+                  <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <Dumbbell className="w-5 h-5 text-orange-600" />
+                    Daily Workout
+                  </h4>
+                  <div className="flex gap-2 mb-4">
+                    {[1, 2, 3, 4, 5, 6, 7].map((day) => (
+                      <div
+                        key={day}
+                        className="w-10 h-10 rounded-lg bg-orange-500 flex items-center justify-center text-white font-bold"
+                      >
+                        ✓
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-sm text-gray-600">7-day streak</p>
+                </div>
+
+                <div className="bg-white rounded-xl p-6 shadow-lg">
+                  <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <Flame className="w-5 h-5 text-red-600" />
+                    Calorie Tracking
+                  </h4>
+                  <div className="flex gap-2 mb-4">
+                    {[1, 2, 3, 4, 5, 6, 7].map((day) => (
+                      <div
+                        key={day}
+                        className={`w-10 h-10 rounded-lg ${day <= 6 ? 'bg-red-500' : 'bg-gray-200'} flex items-center justify-center text-white font-bold`}
+                      >
+                        {day <= 6 ? '✓' : ''}
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-sm text-gray-600">6-day streak</p>
+                </div>
+
+                <div className="bg-white rounded-xl p-6 shadow-lg">
+                  <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <Activity className="w-5 h-5 text-green-600" />
+                    Weight Logging
+                  </h4>
+                  <div className="flex gap-2 mb-4">
+                    {[1, 2, 3, 4, 5, 6, 7].map((day) => (
+                      <div
+                        key={day}
+                        className={`w-10 h-10 rounded-lg ${day <= 5 ? 'bg-green-500' : 'bg-gray-200'} flex items-center justify-center text-white font-bold`}
+                      >
+                        {day <= 5 ? '✓' : ''}
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-sm text-gray-600">5-day streak</p>
+                </div>
+
+                <div className="bg-white rounded-xl p-6 shadow-lg">
+                  <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <Bot className="w-5 h-5 text-purple-600" />
+                    AI Chatbot Usage
+                  </h4>
+                  <div className="flex gap-2 mb-4">
+                    {[1, 2, 3, 4, 5, 6, 7].map((day) => (
+                      <div
+                        key={day}
+                        className={`w-10 h-10 rounded-lg ${day <= 4 ? 'bg-purple-500' : 'bg-gray-200'} flex items-center justify-center text-white font-bold`}
+                      >
+                        {day <= 4 ? '✓' : ''}
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-sm text-gray-600">4-day streak</p>
+                </div>
+              </div>
+
+              {/* Stats Overview */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="bg-gradient-to-br from-orange-100 to-red-100 rounded-xl p-4 text-center">
+                  <div className="text-3xl font-bold text-orange-600">21</div>
+                  <div className="text-sm text-gray-700">Total Days</div>
+                </div>
+                <div className="bg-gradient-to-br from-blue-100 to-cyan-100 rounded-xl p-4 text-center">
+                  <div className="text-3xl font-bold text-blue-600">85%</div>
+                  <div className="text-sm text-gray-700">Consistency</div>
+                </div>
+                <div className="bg-gradient-to-br from-green-100 to-emerald-100 rounded-xl p-4 text-center">
+                  <div className="text-3xl font-bold text-green-600">7</div>
+                  <div className="text-sm text-gray-700">Best Streak</div>
+                </div>
+                <div className="bg-gradient-to-br from-purple-100 to-pink-100 rounded-xl p-4 text-center">
+                  <div className="text-3xl font-bold text-purple-600">4</div>
+                  <div className="text-sm text-gray-700">Active Habits</div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {currentPage === 'community' && (
             <div
               ref={transition({ key: 'community-content', ...fly({ x: 100, y: 0, opacity: true }) })}
