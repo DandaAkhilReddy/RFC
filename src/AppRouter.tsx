@@ -1,6 +1,5 @@
 import { useAuth } from './components/AuthProvider';
 import LandingPage from './App';
-import MainDashboard from './components/MainDashboard';
 import NewDashboard from './components/NewDashboard';
 import EnhancedDashboard from './components/EnhancedDashboard';
 
