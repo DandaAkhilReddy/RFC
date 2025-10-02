@@ -38,16 +38,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         console.log('Auth state changed:', firebaseUser?.email || 'no user');
 
-        if (firebaseUser && firebaseUser.email) {
+        if (firebaseUser && firebaseUser.uid) {
           try {
-            // Check if user exists in Firestore
-            const userDocRef = doc(db, Collections.USERS, firebaseUser.email);
+            // Check if user exists in Firestore (using UID as document ID)
+            const userDocRef = doc(db, Collections.USERS, firebaseUser.uid);
             const userDoc = await getDoc(userDocRef);
 
             // Create or update user document
             if (!userDoc.exists()) {
-              console.log('Creating new user in Firestore...');
+              console.log('✅ Creating new user in Firestore with UID:', firebaseUser.uid);
               await setDoc(userDocRef, {
+                uid: firebaseUser.uid,
                 email: firebaseUser.email,
                 displayName: firebaseUser.displayName || '',
                 photoURL: firebaseUser.photoURL || '',
@@ -55,9 +56,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 onboardingCompleted: false,
                 feedbackCompleted: false
               });
-              console.log('User created successfully');
+              console.log('✅ User created successfully at users/' + firebaseUser.uid);
             } else {
-              console.log('User already exists:', userDoc.data());
+              console.log('ℹ️ User already exists at users/' + firebaseUser.uid);
               // Update display name and photo if changed
               const userData = userDoc.data();
               if (userData.displayName !== firebaseUser.displayName ||
@@ -70,7 +71,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               }
             }
           } catch (error) {
-            console.error('Error managing user profile:', error);
+            console.error('❌ Error managing user profile:', error);
           }
         }
 
