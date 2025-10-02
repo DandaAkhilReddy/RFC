@@ -170,6 +170,7 @@ export default function EnhancedDashboard() {
     if (user) {
       const fetchSettings = async () => {
         try {
+          console.log('📥 Loading user data for UID:', user.uid);
           const docRef = doc(db, Collections.USERS, user.uid);
           const docSnap = await getDoc(docRef);
 
@@ -177,6 +178,7 @@ export default function EnhancedDashboard() {
           let isNewUser = false;
 
           if (docSnap.exists()) {
+            console.log('✅ User data loaded from Firestore');
             data = docSnap.data();
             // Check if this is their first login (createdAt within last 5 minutes)
             const createdAt = data.createdAt ? new Date(data.createdAt) : null;
@@ -286,6 +288,7 @@ export default function EnhancedDashboard() {
           calorieGoal: newGoal,
           lastCalorieEdit: today
         }, { merge: true });
+        console.log('✅ Calorie goal saved:', newGoal);
         setUserSettings({ ...userSettings, calorieGoal: newGoal });
         setLastCalorieEdit(today);
         setEditingCalories(false);
@@ -313,6 +316,7 @@ export default function EnhancedDashboard() {
           weeklyWorkoutGoal: newGoal,
           lastWorkoutEdit: today
         }, { merge: true });
+        console.log('✅ Workout goal saved:', newGoal);
         setUserSettings({ ...userSettings, weeklyWorkoutGoal: newGoal });
         setLastWorkoutEdit(today);
         setEditingWorkouts(false);
