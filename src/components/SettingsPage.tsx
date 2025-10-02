@@ -130,18 +130,22 @@ export default function SettingsPage({ onBack }: SettingsPageProps) {
   }, [settings.weight, settings.height, settings.age, settings.gender]);
 
   const loadSettings = async () => {
-    if (!user?.email) return;
+    if (!user?.uid) return;
 
     setLoading(true);
     try {
-      const docRef = doc(db, Collections.USER_SETTINGS, user.email);
+      const docRef = doc(db, Collections.USERS, user.uid);
       const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
-        setSettings({ ...settings, ...docSnap.data() });
+        const data = docSnap.data();
+        console.log('✅ Settings loaded from users/' + user.uid);
+        setSettings(prev => ({ ...prev, ...data }));
+      } else {
+        console.log('ℹ️ No settings found, using defaults');
       }
     } catch (error) {
-      console.error('Error loading settings:', error);
+      console.error('❌ Error loading settings:', error);
     } finally {
       setLoading(false);
     }
@@ -240,20 +244,21 @@ export default function SettingsPage({ onBack }: SettingsPageProps) {
   };
 
   const saveSettings = async () => {
-    if (!user?.email) return;
+    if (!user?.uid) return;
 
     setSaving(true);
     try {
-      const docRef = doc(db, Collections.USER_SETTINGS, user.email);
+      const docRef = doc(db, Collections.USERS, user.uid);
       await setDoc(docRef, {
         ...settings,
         updatedAt: new Date().toISOString()
       }, { merge: true });
 
-      alert('Settings saved successfully!');
+      console.log('✅ Settings saved successfully to users/' + user.uid);
+      alert('✅ Settings saved successfully!');
     } catch (error) {
-      console.error('Error saving settings:', error);
-      alert('Failed to save settings');
+      console.error('❌ Error saving settings:', error);
+      alert('❌ Failed to save settings. Please try again.');
     } finally {
       setSaving(false);
     }
