@@ -1,7 +1,6 @@
 import { useAuth } from './components/AuthProvider';
 import LandingPage from './App';
-import NewDashboard from './components/NewDashboard';
-import EnhancedDashboard from './components/EnhancedDashboard';
+import CleanDashboard from './components/CleanDashboard';
 
 export default function AppRouter() {
   const { user, loading } = useAuth();
@@ -30,10 +29,7 @@ export default function AppRouter() {
     return <LandingPage />;
   }
 
-  // Logged in - show dashboard (or test dashboards if on test routes)
+  // Logged in - show clean dashboard
   console.log('[AppRouter] User logged in - showing dashboard');
-  if (isTestDashboard) return <NewDashboard />;
-
-  // DEFAULT: Always show EnhancedDashboard (with onboarding)
-  return <EnhancedDashboard />;
+  return <CleanDashboard />;
 }

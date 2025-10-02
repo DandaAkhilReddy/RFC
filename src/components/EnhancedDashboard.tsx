@@ -111,32 +111,10 @@ export default function EnhancedDashboard() {
     aiChatHistory: [] as boolean[]
   });
 
-  // Mock data
-  const [todaysMatches] = useState<Match[]>([
-    { id: '1', name: 'Sarah Johnson', age: 28, photo: '👩', compatibility: 92, fitnessGoal: 'Weight Loss', distance: '2.3 km' },
-    { id: '2', name: 'Mike Chen', age: 31, photo: '👨', compatibility: 88, fitnessGoal: 'Muscle Gain', distance: '3.5 km' },
-    { id: '3', name: 'Emma Davis', age: 26, photo: '👱‍♀️', compatibility: 85, fitnessGoal: 'Cardio', distance: '1.8 km' }
-  ]);
-
-  const [workoutBuddies] = useState<WorkoutBuddy[]>([
-    { id: '1', name: 'Alex Rodriguez', photo: '🧑', lastActive: '2 hours ago', distance: '1.5 km', commonWorkouts: ['💪 Strength', '🏃 Cardio'] },
-    { id: '2', name: 'Jessica Lee', photo: '👩', lastActive: '5 hours ago', distance: '2.8 km', commonWorkouts: ['🧘 Yoga', '💪 Strength'] },
-    { id: '3', name: 'David Kim', photo: '👨', lastActive: '1 day ago', distance: '3.2 km', commonWorkouts: ['🏃 Running', '🚴 Cycling'] }
-  ]);
-
-  const [healthInsights] = useState<HealthInsight[]>([
-    { id: '1', title: 'Sleep Quality', description: 'You averaged 7.5 hours this week. Try to maintain this!', icon: Activity, color: 'from-blue-500 to-cyan-500' },
-    { id: '2', title: 'Nutrition Score', description: 'Great protein intake! Consider more vegetables.', icon: Utensils, color: 'from-green-500 to-emerald-500' },
-    { id: '3', title: 'Hydration', description: 'You drank 2.1L today. Goal: 2.5L', icon: Trophy, color: 'from-purple-500 to-pink-500' }
-  ]);
-
-  const [communityPosts] = useState<CommunityPost[]>([
-    { id: '1', author: 'John Smith', authorPhoto: '🧑', content: 'Just completed my 100th workout! Feeling amazing! 💪', likes: 42, comments: 8, timestamp: '2 hours ago' },
-    { id: '2', author: 'Lisa Wang', authorPhoto: '👩', content: 'Found an amazing workout buddy through ReddyFit! Best decision ever! 🎉', likes: 38, comments: 12, timestamp: '5 hours ago' }
-  ]);
+  // No mock data - all real data from database
+  const [isFirstTimeUser, setIsFirstTimeUser] = useState(false);
 
   const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  const activityDots = [true, true, false, true, true, true, false];
 
   // Check if settings are complete
   const checkSettingsComplete = (data: any) => {
@@ -196,8 +174,15 @@ export default function EnhancedDashboard() {
           const docSnap = await getDoc(docRef);
 
           let data;
+          let isNewUser = false;
+
           if (docSnap.exists()) {
             data = docSnap.data();
+            // Check if this is their first login (createdAt within last 5 minutes)
+            const createdAt = data.createdAt ? new Date(data.createdAt) : null;
+            const now = new Date();
+            const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000);
+            isNewUser = createdAt && createdAt > fiveMinutesAgo;
           } else {
             // New user - initialize with clean data
             console.log('🆕 New user detected, initializing...');
@@ -205,7 +190,11 @@ export default function EnhancedDashboard() {
             if (!data) {
               throw new Error('Failed to initialize user');
             }
+            isNewUser = true;
           }
+
+          // Set first-time user flag
+          setIsFirstTimeUser(isNewUser);
 
           // Check if settings are complete
           const isComplete = checkSettingsComplete(data);
