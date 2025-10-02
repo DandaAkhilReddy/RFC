@@ -48,31 +48,31 @@ export default function OnboardingWelcome({ onComplete }: OnboardingWelcomeProps
 
   const features = [
     {
-      icon: Heart,
-      title: 'Cupid AI',
-      description: 'AI-powered fitness match finding. Meet your perfect workout partner or soulmate based on compatibility.',
-      gradient: 'from-pink-500 to-red-500',
+      icon: Bot,
+      title: 'AI Chatbot Coach',
+      description: '24/7 AI fitness coach for personalized guidance, workout tips, and instant answers to your fitness questions.',
+      gradient: 'from-orange-500 to-red-500',
       delay: 0.2
     },
     {
-      icon: Bot,
-      title: 'FitBot Assistant',
-      description: 'Voice-activated workout helper. Get real-time form corrections and personalized coaching.',
-      gradient: 'from-purple-500 to-pink-500',
+      icon: Heart,
+      title: 'AI Health Monitoring',
+      description: 'Real-time health metrics tracking with AI-powered insights, recovery analysis, and health risk predictions.',
+      gradient: 'from-teal-500 to-cyan-500',
       delay: 0.4
     },
     {
       icon: TrendingUp,
-      title: 'Smart Analytics',
-      description: 'AI progress tracking and insights. Visualize your journey with predictive analytics.',
-      gradient: 'from-blue-500 to-cyan-500',
+      title: 'AI Nutrition Analyzer',
+      description: 'Advanced meal scanning with instant macro tracking, nutritional insights, and deficit alerts.',
+      gradient: 'from-amber-500 to-yellow-500',
       delay: 0.6
     },
     {
       icon: Users,
-      title: 'Dating Events',
-      description: 'AI-curated fitness meetups. Connect at exclusive events designed for meaningful connections.',
-      gradient: 'from-orange-500 to-red-500',
+      title: 'AI Form Checker',
+      description: 'Video analysis for real-time exercise form correction, joint tracking, and injury prevention.',
+      gradient: 'from-violet-500 to-purple-500',
       delay: 0.8
     }
   ];

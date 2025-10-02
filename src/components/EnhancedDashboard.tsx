@@ -801,11 +801,14 @@ export default function EnhancedDashboard() {
                 </div>
 
                 {/* AI Photo Analysis */}
-                <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all relative overflow-hidden group">
+                <div
+                  onClick={() => alert('📸 AI Photo Analysis\n\n✨ Upload a photo to get:\n• Body fat percentage estimate\n• Muscle mass analysis\n• Posture correction tips\n\nThis feature is coming soon!')}
+                  className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all relative overflow-hidden group cursor-pointer hover:scale-105"
+                >
                   <div className="absolute top-4 right-4 px-3 py-1 bg-purple-100 text-purple-800 text-xs font-bold rounded-full">
                     COMING SOON
                   </div>
-                  <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mb-6 opacity-50">
+                  <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mb-6 opacity-50 group-hover:opacity-100 transition-opacity">
                     <Camera className="w-10 h-10 text-white" />
                   </div>
                   <h3 className="text-2xl font-bold text-gray-900 mb-2">AI Photo Analysis</h3>
@@ -827,11 +830,14 @@ export default function EnhancedDashboard() {
                 </div>
 
                 {/* AI Body Fat Calculator */}
-                <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all relative overflow-hidden group">
+                <div
+                  onClick={() => alert('📊 AI Body Fat Calculator\n\n✨ Calculate your:\n• Multi-point body measurements\n• BMI & BMR values\n• Personalized health recommendations\n\nThis feature is coming soon!')}
+                  className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all relative overflow-hidden group cursor-pointer hover:scale-105"
+                >
                   <div className="absolute top-4 right-4 px-3 py-1 bg-blue-100 text-blue-800 text-xs font-bold rounded-full">
                     COMING SOON
                   </div>
-                  <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center mb-6 opacity-50">
+                  <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center mb-6 opacity-50 group-hover:opacity-100 transition-opacity">
                     <Activity className="w-10 h-10 text-white" />
                   </div>
                   <h3 className="text-2xl font-bold text-gray-900 mb-2">AI Body Fat Calculator</h3>
@@ -853,11 +859,14 @@ export default function EnhancedDashboard() {
                 </div>
 
                 {/* AI Progress Tracking */}
-                <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all relative overflow-hidden group">
+                <div
+                  onClick={() => alert('📈 AI Progress Tracking\n\n✨ Track your progress with:\n• Weight & measurement trends\n• Goal achievement predictions\n• Smart AI recommendations\n\nThis feature is coming soon!')}
+                  className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all relative overflow-hidden group cursor-pointer hover:scale-105"
+                >
                   <div className="absolute top-4 right-4 px-3 py-1 bg-green-100 text-green-800 text-xs font-bold rounded-full">
                     COMING SOON
                   </div>
-                  <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center mb-6 opacity-50">
+                  <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center mb-6 opacity-50 group-hover:opacity-100 transition-opacity">
                     <TrendingUp className="w-10 h-10 text-white" />
                   </div>
                   <h3 className="text-2xl font-bold text-gray-900 mb-2">AI Progress Tracking</h3>
@@ -879,11 +888,14 @@ export default function EnhancedDashboard() {
                 </div>
 
                 {/* AI Meal Planner */}
-                <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all relative overflow-hidden group">
+                <div
+                  onClick={() => alert('🍽️ AI Meal Planner\n\n✨ Get personalized:\n• Custom macro calculations\n• Recipe suggestions\n• Grocery list generator\n\nThis feature is coming soon!')}
+                  className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all relative overflow-hidden group cursor-pointer hover:scale-105"
+                >
                   <div className="absolute top-4 right-4 px-3 py-1 bg-orange-100 text-orange-800 text-xs font-bold rounded-full">
                     COMING SOON
                   </div>
-                  <div className="w-20 h-20 bg-gradient-to-br from-orange-500 to-amber-500 rounded-2xl flex items-center justify-center mb-6 opacity-50">
+                  <div className="w-20 h-20 bg-gradient-to-br from-orange-500 to-amber-500 rounded-2xl flex items-center justify-center mb-6 opacity-50 group-hover:opacity-100 transition-opacity">
                     <Utensils className="w-10 h-10 text-white" />
                   </div>
                   <h3 className="text-2xl font-bold text-gray-900 mb-2">AI Meal Planner</h3>
@@ -905,11 +917,14 @@ export default function EnhancedDashboard() {
                 </div>
 
                 {/* AI Workout Generator */}
-                <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all relative overflow-hidden group">
+                <div
+                  onClick={() => alert('💪 AI Workout Generator\n\n✨ Get dynamic workouts:\n• Personalized routines\n• Exercise form videos\n• Progressive overload tracking\n\nThis feature is coming soon!')}
+                  className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all relative overflow-hidden group cursor-pointer hover:scale-105"
+                >
                   <div className="absolute top-4 right-4 px-3 py-1 bg-red-100 text-red-800 text-xs font-bold rounded-full">
                     COMING SOON
                   </div>
-                  <div className="w-20 h-20 bg-gradient-to-br from-red-500 to-pink-500 rounded-2xl flex items-center justify-center mb-6 opacity-50">
+                  <div className="w-20 h-20 bg-gradient-to-br from-red-500 to-pink-500 rounded-2xl flex items-center justify-center mb-6 opacity-50 group-hover:opacity-100 transition-opacity">
                     <Dumbbell className="w-10 h-10 text-white" />
                   </div>
                   <h3 className="text-2xl font-bold text-gray-900 mb-2">AI Workout Generator</h3>
@@ -931,11 +946,14 @@ export default function EnhancedDashboard() {
                 </div>
 
                 {/* AI Voice Coach */}
-                <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all relative overflow-hidden group">
+                <div
+                  onClick={() => alert('🎤 AI Voice Coach\n\n✨ Voice-activated coaching:\n• Hands-free workout tracking\n• Real-time form corrections\n• Motivational coaching\n\nThis feature is coming soon!')}
+                  className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all relative overflow-hidden group cursor-pointer hover:scale-105"
+                >
                   <div className="absolute top-4 right-4 px-3 py-1 bg-indigo-100 text-indigo-800 text-xs font-bold rounded-full">
                     COMING SOON
                   </div>
-                  <div className="w-20 h-20 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-2xl flex items-center justify-center mb-6 opacity-50">
+                  <div className="w-20 h-20 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-2xl flex items-center justify-center mb-6 opacity-50 group-hover:opacity-100 transition-opacity">
                     <Mic className="w-10 h-10 text-white" />
                   </div>
                   <h3 className="text-2xl font-bold text-gray-900 mb-2">AI Voice Coach</h3>
@@ -956,38 +974,44 @@ export default function EnhancedDashboard() {
                   </div>
                 </div>
 
-                {/* AI Injury Prevention */}
-                <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all relative overflow-hidden group">
-                  <div className="absolute top-4 right-4 px-3 py-1 bg-yellow-100 text-yellow-800 text-xs font-bold rounded-full">
+                {/* AI Health Monitoring */}
+                <div
+                  onClick={() => alert('❤️ AI Health Monitoring\n\n✨ Monitor your health:\n• Heart rate & sleep tracking\n• Recovery score analysis\n• Health risk predictions\n\nThis feature is coming soon!')}
+                  className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all relative overflow-hidden group cursor-pointer hover:scale-105"
+                >
+                  <div className="absolute top-4 right-4 px-3 py-1 bg-teal-100 text-teal-800 text-xs font-bold rounded-full">
                     COMING SOON
                   </div>
-                  <div className="w-20 h-20 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-2xl flex items-center justify-center mb-6 opacity-50">
-                    <Target className="w-10 h-10 text-white" />
+                  <div className="w-20 h-20 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-2xl flex items-center justify-center mb-6 opacity-50 group-hover:opacity-100 transition-opacity">
+                    <Activity className="w-10 h-10 text-white" />
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">AI Injury Prevention</h3>
-                  <p className="text-gray-600 mb-4 text-sm">Predictive analysis to prevent overtraining and reduce injury risk</p>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-2">AI Health Monitoring</h3>
+                  <p className="text-gray-600 mb-4 text-sm">Real-time health metrics tracking with AI-powered insights and alerts</p>
                   <div className="space-y-2 text-sm text-gray-500">
                     <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-yellow-500"></div>
-                      Recovery time optimization
+                      <div className="w-1.5 h-1.5 rounded-full bg-teal-500"></div>
+                      Heart rate & sleep tracking
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-yellow-500"></div>
-                      Muscle imbalance detection
+                      <div className="w-1.5 h-1.5 rounded-full bg-teal-500"></div>
+                      Recovery score analysis
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-yellow-500"></div>
-                      Rest day recommendations
+                      <div className="w-1.5 h-1.5 rounded-full bg-teal-500"></div>
+                      Health risk predictions
                     </div>
                   </div>
                 </div>
 
                 {/* Social AI - Cupid */}
-                <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all relative overflow-hidden group">
+                <div
+                  onClick={() => alert('💘 Cupid AI Dating\n\n✨ Find your fitness match:\n• Fitness compatibility scores\n• Activity-based matching\n• Workout date suggestions\n\nThis feature is coming soon!')}
+                  className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all relative overflow-hidden group cursor-pointer hover:scale-105"
+                >
                   <div className="absolute top-4 right-4 px-3 py-1 bg-pink-100 text-pink-800 text-xs font-bold rounded-full">
                     COMING SOON
                   </div>
-                  <div className="w-20 h-20 bg-gradient-to-br from-pink-500 to-red-500 rounded-2xl flex items-center justify-center mb-6 opacity-50">
+                  <div className="w-20 h-20 bg-gradient-to-br from-pink-500 to-red-500 rounded-2xl flex items-center justify-center mb-6 opacity-50 group-hover:opacity-100 transition-opacity">
                     <Heart className="w-10 h-10 text-white" />
                   </div>
                   <h3 className="text-2xl font-bold text-gray-900 mb-2">Cupid AI Dating</h3>
@@ -1004,6 +1028,93 @@ export default function EnhancedDashboard() {
                     <div className="flex items-center gap-2">
                       <div className="w-1.5 h-1.5 rounded-full bg-pink-500"></div>
                       Workout date suggestions
+                    </div>
+                  </div>
+                </div>
+
+                {/* AI Nutrition Analyzer */}
+                <div
+                  onClick={() => alert('🥗 AI Nutrition Analyzer\n\n✨ Advanced nutrition tracking:\n• Photo-based meal scanning\n• Real-time macro breakdown\n• Nutritional deficit alerts\n\nThis feature is coming soon!')}
+                  className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all relative overflow-hidden group cursor-pointer hover:scale-105"
+                >
+                  <div className="absolute top-4 right-4 px-3 py-1 bg-amber-100 text-amber-800 text-xs font-bold rounded-full">
+                    COMING SOON
+                  </div>
+                  <div className="w-20 h-20 bg-gradient-to-br from-amber-500 to-yellow-500 rounded-2xl flex items-center justify-center mb-6 opacity-50 group-hover:opacity-100 transition-opacity">
+                    <Utensils className="w-10 h-10 text-white" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-2">AI Nutrition Analyzer</h3>
+                  <p className="text-gray-600 mb-4 text-sm">Advanced meal scanning with instant macro tracking and nutrition insights</p>
+                  <div className="space-y-2 text-sm text-gray-500">
+                    <div className="flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-amber-500"></div>
+                      Photo-based meal scanning
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-amber-500"></div>
+                      Real-time macro breakdown
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-amber-500"></div>
+                      Nutritional deficit alerts
+                    </div>
+                  </div>
+                </div>
+
+                {/* AI Form Checker */}
+                <div
+                  onClick={() => alert('📹 AI Form Checker\n\n✨ Perfect your form:\n• Live video form analysis\n• Joint angle tracking\n• Instant correction feedback\n\nThis feature is coming soon!')}
+                  className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all relative overflow-hidden group cursor-pointer hover:scale-105"
+                >
+                  <div className="absolute top-4 right-4 px-3 py-1 bg-violet-100 text-violet-800 text-xs font-bold rounded-full">
+                    COMING SOON
+                  </div>
+                  <div className="w-20 h-20 bg-gradient-to-br from-violet-500 to-purple-500 rounded-2xl flex items-center justify-center mb-6 opacity-50 group-hover:opacity-100 transition-opacity">
+                    <Camera className="w-10 h-10 text-white" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-2">AI Form Checker</h3>
+                  <p className="text-gray-600 mb-4 text-sm">Video analysis for real-time exercise form correction and injury prevention</p>
+                  <div className="space-y-2 text-sm text-gray-500">
+                    <div className="flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-violet-500"></div>
+                      Live video form analysis
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-violet-500"></div>
+                      Joint angle tracking
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-violet-500"></div>
+                      Instant correction feedback
+                    </div>
+                  </div>
+                </div>
+
+                {/* AI Recovery Optimizer */}
+                <div
+                  onClick={() => alert('😴 AI Recovery Optimizer\n\n✨ Optimize your recovery:\n• Sleep quality analysis\n• Stress level monitoring\n• Recovery protocol builder\n\nThis feature is coming soon!')}
+                  className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all relative overflow-hidden group cursor-pointer hover:scale-105"
+                >
+                  <div className="absolute top-4 right-4 px-3 py-1 bg-sky-100 text-sky-800 text-xs font-bold rounded-full">
+                    COMING SOON
+                  </div>
+                  <div className="w-20 h-20 bg-gradient-to-br from-sky-500 to-blue-500 rounded-2xl flex items-center justify-center mb-6 opacity-50 group-hover:opacity-100 transition-opacity">
+                    <Activity className="w-10 h-10 text-white" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-2">AI Recovery Optimizer</h3>
+                  <p className="text-gray-600 mb-4 text-sm">Smart recovery protocols with sleep quality and stress management insights</p>
+                  <div className="space-y-2 text-sm text-gray-500">
+                    <div className="flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-sky-500"></div>
+                      Sleep quality analysis
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-sky-500"></div>
+                      Stress level monitoring
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-sky-500"></div>
+                      Recovery protocol builder
                     </div>
                   </div>
                 </div>
