@@ -33,7 +33,8 @@ export default function AppRouter() {
 
   // Logged in - show dashboard (or test dashboards if on test routes)
   console.log('[AppRouter] User logged in - showing dashboard');
-  if (isEnhancedDashboard) return <EnhancedDashboard />;
   if (isTestDashboard) return <NewDashboard />;
-  return <MainDashboard />;
+
+  // DEFAULT: Always show EnhancedDashboard (with onboarding)
+  return <EnhancedDashboard />;
 }

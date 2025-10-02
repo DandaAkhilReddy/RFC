@@ -13,6 +13,7 @@ import ReddyAIAgent from './ReddyAIAgent';
 import FitBuddyAIAgent from './FitBuddyAIAgent';
 import CupidAIAgent from './CupidAIAgent';
 import SettingsPage from './SettingsPage';
+import OnboardingWelcome, { hasSeenOnboarding } from './OnboardingWelcome';
 import { db, Collections } from '../lib/firebase';
 import { doc, getDoc, setDoc, collection, addDoc, updateDoc, arrayUnion, increment } from 'firebase/firestore';
 
@@ -89,6 +90,7 @@ export default function EnhancedDashboard() {
   const [lastWorkoutEdit, setLastWorkoutEdit] = useState<string>('');
   const [currentCalories, setCurrentCalories] = useState(0);
   const [currentWorkouts, setCurrentWorkouts] = useState(0);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   // Mock data
   const [todaysMatches] = useState<Match[]>([
@@ -170,6 +172,13 @@ export default function EnhancedDashboard() {
         }
       };
       fetchSettings();
+    }
+  }, [user]);
+
+  // Check if user needs to see onboarding
+  useEffect(() => {
+    if (user && !hasSeenOnboarding()) {
+      setShowOnboarding(true);
     }
   }, [user]);
 
@@ -330,6 +339,11 @@ export default function EnhancedDashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-red-50">
+      {/* Onboarding Welcome Modal */}
+      {showOnboarding && (
+        <OnboardingWelcome onComplete={() => setShowOnboarding(false)} />
+      )}
+
       {/* Settings Alert Banner */}
       {showSettingsAlert && !settingsComplete && (
         <div className="fixed top-0 left-0 right-0 bg-gradient-to-r from-orange-500 to-red-500 text-white px-6 py-4 z-50 shadow-lg">
