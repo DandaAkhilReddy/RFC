@@ -164,11 +164,14 @@ export default function EnhancedDashboard() {
           setCurrentCalories(data.currentCalories || 0);
           setCurrentWorkouts(data.currentWorkouts || 0);
         } else {
-          // No settings found, redirect to settings
-          setShowSettingsAlert(true);
-          setTimeout(() => {
-            setCurrentPage('settings');
-          }, 3000);
+          // No settings found, use defaults
+          setUserSettings({
+            calorieGoal: 2000,
+            weeklyWorkoutGoal: 5,
+            weight: 75,
+            targetWeight: 70,
+            startWeight: 80
+          });
         }
       };
       fetchSettings();
@@ -541,19 +544,22 @@ export default function EnhancedDashboard() {
                 </div>
               </div>
 
-              {/* Quick Stats Grid - Visual Progress Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                {/* Calorie Goal - Visual Progress Card */}
-                <div className="bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl p-6 shadow-xl text-white">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
-                        <Flame className="w-7 h-7 text-white" />
+              {/* Quick Stats Grid - Compact Progress Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                {/* Calorie Goal - Compact Card */}
+                <div
+                  ref={transition({ key: 'calorie-card', ...fly({ y: 20, opacity: true }) })}
+                  className="bg-gradient-to-br from-orange-500 to-red-500 rounded-xl p-4 shadow-lg text-white relative overflow-hidden group hover:shadow-2xl transition-shadow"
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
+                        <Flame className="w-5 h-5 text-white" />
                       </div>
                       <div>
-                        <h3 className="text-xl font-bold">Daily Calorie Goal</h3>
-                        <p className="text-xs text-white/80">
-                          {canEditToday(lastCalorieEdit) ? 'Click to edit' : 'Already edited today'}
+                        <h3 className="text-sm font-bold">Daily Calories</h3>
+                        <p className="text-xs text-white/70">
+                          {canEditToday(lastCalorieEdit) ? 'Editable' : 'Locked today'}
                         </p>
                       </div>
                     </div>
@@ -568,61 +574,62 @@ export default function EnhancedDashboard() {
                   </div>
 
                   {editingCalories ? (
-                    <div className="space-y-3">
-                      <div className="flex gap-2">
-                        <input
-                          type="number"
-                          value={tempCalorieGoal}
-                          onChange={(e) => setTempCalorieGoal(e.target.value)}
-                          className="flex-1 px-4 py-3 border-2 border-white/30 bg-white/10 backdrop-blur-sm rounded-xl text-3xl font-bold text-white placeholder-white/50"
-                          placeholder="Goal"
-                        />
-                        <button
-                          onClick={saveCalorieGoal}
-                          className="px-6 py-3 bg-white text-orange-600 rounded-xl font-bold hover:scale-105 transition-transform"
-                        >
-                          ✓
-                        </button>
-                        <button
-                          onClick={() => setEditingCalories(false)}
-                          className="px-6 py-3 bg-white/20 text-white rounded-xl font-bold hover:scale-105 transition-transform"
-                        >
-                          ✗
-                        </button>
-                      </div>
+                    <div className="flex gap-2">
+                      <input
+                        type="number"
+                        value={tempCalorieGoal}
+                        onChange={(e) => setTempCalorieGoal(e.target.value)}
+                        className="flex-1 px-3 py-2 border-2 border-white/30 bg-white/10 backdrop-blur-sm rounded-lg text-xl font-bold text-white placeholder-white/50"
+                        placeholder="Goal"
+                      />
+                      <button
+                        onClick={saveCalorieGoal}
+                        className="px-3 py-2 bg-white text-orange-600 rounded-lg font-bold hover:scale-105 transition-transform text-sm"
+                      >
+                        ✓
+                      </button>
+                      <button
+                        onClick={() => setEditingCalories(false)}
+                        className="px-3 py-2 bg-white/20 text-white rounded-lg font-bold hover:scale-105 transition-transform text-sm"
+                      >
+                        ✗
+                      </button>
                     </div>
                   ) : (
                     <div>
-                      <div className="flex items-baseline gap-2 mb-4">
-                        <div className="text-5xl font-bold">{currentCalories}</div>
-                        <div className="text-2xl text-white/80">/ {userSettings.calorieGoal}</div>
-                        <div className="text-sm text-white/60 ml-auto">kcal</div>
+                      <div className="flex items-baseline gap-2 mb-2">
+                        <div className="text-3xl font-bold">{currentCalories}</div>
+                        <div className="text-lg text-white/80">/ {userSettings.calorieGoal}</div>
+                        <div className="text-xs text-white/60 ml-auto">kcal</div>
                       </div>
-                      <div className="bg-white/20 rounded-full h-3 overflow-hidden mb-2">
+                      <div className="bg-white/20 rounded-full h-2 overflow-hidden mb-2">
                         <div
                           className="bg-white h-full rounded-full transition-all duration-500"
                           style={{ width: `${Math.min((currentCalories / (userSettings.calorieGoal || 2000)) * 100, 100)}%` }}
                         />
                       </div>
-                      <div className="flex items-center justify-between text-sm text-white/80">
-                        <span>{Math.round((currentCalories / (userSettings.calorieGoal || 2000)) * 100)}% consumed</span>
-                        <span>{(userSettings.calorieGoal || 2000) - currentCalories} kcal remaining</span>
+                      <div className="flex items-center justify-between text-xs text-white/80">
+                        <span>{Math.round((currentCalories / (userSettings.calorieGoal || 2000)) * 100)}%</span>
+                        <span>{(userSettings.calorieGoal || 2000) - currentCalories} left</span>
                       </div>
                     </div>
                   )}
                 </div>
 
-                {/* Workout Goal - Visual Progress Card */}
-                <div className="bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl p-6 shadow-xl text-white">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
-                        <Dumbbell className="w-7 h-7 text-white" />
+                {/* Workout Goal - Compact Card */}
+                <div
+                  ref={transition({ key: 'workout-card', ...fly({ y: 20, opacity: true, delay: 100 }) })}
+                  className="bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl p-4 shadow-lg text-white relative overflow-hidden group hover:shadow-2xl transition-shadow"
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
+                        <Dumbbell className="w-5 h-5 text-white" />
                       </div>
                       <div>
-                        <h3 className="text-xl font-bold">Weekly Workouts</h3>
-                        <p className="text-xs text-white/80">
-                          {canEditToday(lastWorkoutEdit) ? 'Click to edit' : 'Already edited today'}
+                        <h3 className="text-sm font-bold">Weekly Workouts</h3>
+                        <p className="text-xs text-white/70">
+                          {canEditToday(lastWorkoutEdit) ? 'Editable' : 'Locked today'}
                         </p>
                       </div>
                     </div>
@@ -637,62 +644,82 @@ export default function EnhancedDashboard() {
                   </div>
 
                   {editingWorkouts ? (
-                    <div className="space-y-3">
-                      <div className="flex gap-2">
-                        <input
-                          type="number"
-                          value={tempWorkoutGoal}
-                          onChange={(e) => setTempWorkoutGoal(e.target.value)}
-                          className="flex-1 px-4 py-3 border-2 border-white/30 bg-white/10 backdrop-blur-sm rounded-xl text-3xl font-bold text-white placeholder-white/50"
-                          placeholder="Goal"
-                        />
-                        <button
-                          onClick={saveWorkoutGoal}
-                          className="px-6 py-3 bg-white text-blue-600 rounded-xl font-bold hover:scale-105 transition-transform"
-                        >
-                          ✓
-                        </button>
-                        <button
-                          onClick={() => setEditingWorkouts(false)}
-                          className="px-6 py-3 bg-white/20 text-white rounded-xl font-bold hover:scale-105 transition-transform"
-                        >
-                          ✗
-                        </button>
-                      </div>
+                    <div className="flex gap-2">
+                      <input
+                        type="number"
+                        value={tempWorkoutGoal}
+                        onChange={(e) => setTempWorkoutGoal(e.target.value)}
+                        className="flex-1 px-3 py-2 border-2 border-white/30 bg-white/10 backdrop-blur-sm rounded-lg text-xl font-bold text-white placeholder-white/50"
+                        placeholder="Goal"
+                      />
+                      <button
+                        onClick={saveWorkoutGoal}
+                        className="px-3 py-2 bg-white text-blue-600 rounded-lg font-bold hover:scale-105 transition-transform text-sm"
+                      >
+                        ✓
+                      </button>
+                      <button
+                        onClick={() => setEditingWorkouts(false)}
+                        className="px-3 py-2 bg-white/20 text-white rounded-lg font-bold hover:scale-105 transition-transform text-sm"
+                      >
+                        ✗
+                      </button>
                     </div>
                   ) : (
                     <div>
-                      <div className="flex items-baseline gap-2 mb-4">
-                        <div className="text-5xl font-bold">{currentWorkouts}</div>
-                        <div className="text-2xl text-white/80">/ {userSettings.weeklyWorkoutGoal}</div>
-                        <div className="text-sm text-white/60 ml-auto">workouts</div>
+                      <div className="flex items-baseline gap-2 mb-2">
+                        <div className="text-3xl font-bold">{currentWorkouts}</div>
+                        <div className="text-lg text-white/80">/ {userSettings.weeklyWorkoutGoal}</div>
+                        <div className="text-xs text-white/60 ml-auto">workouts</div>
                       </div>
-                      <div className="bg-white/20 rounded-full h-3 overflow-hidden mb-2">
+                      <div className="bg-white/20 rounded-full h-2 overflow-hidden mb-2">
                         <div
                           className="bg-white h-full rounded-full transition-all duration-500"
                           style={{ width: `${Math.min((currentWorkouts / (userSettings.weeklyWorkoutGoal || 5)) * 100, 100)}%` }}
                         />
                       </div>
-                      <div className="flex items-center justify-between text-sm text-white/80">
-                        <span>{Math.round((currentWorkouts / (userSettings.weeklyWorkoutGoal || 5)) * 100)}% complete</span>
-                        <span>{(userSettings.weeklyWorkoutGoal || 5) - currentWorkouts} workouts left</span>
+                      <div className="flex items-center justify-between text-xs text-white/80">
+                        <span>{Math.round((currentWorkouts / (userSettings.weeklyWorkoutGoal || 5)) * 100)}%</span>
+                        <span>{(userSettings.weeklyWorkoutGoal || 5) - currentWorkouts} left</span>
                       </div>
                     </div>
                   )}
                 </div>
 
-                {/* Health Stats */}
-                <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                      <Activity className="w-6 h-6 text-green-600" />
+                {/* Weight Progress - Compact Card */}
+                <div
+                  ref={transition({ key: 'weight-card', ...fly({ y: 20, opacity: true, delay: 200 }) })}
+                  className="bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl p-4 shadow-lg text-white relative overflow-hidden group hover:shadow-2xl transition-shadow"
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
+                        <Activity className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-bold">Weight Goal</h3>
+                        <p className="text-xs text-white/70">Current Progress</p>
+                      </div>
                     </div>
                   </div>
-                  <h3 className="text-gray-500 text-sm font-medium mb-2">Health Stats</h3>
-                  <div className="space-y-2">
-                    {userSettings.weight && <div className="text-sm"><span className="text-gray-500">Weight:</span> <span className="font-bold">{userSettings.weight}kg</span></div>}
-                    {userSettings.bmi && <div className="text-sm"><span className="text-gray-500">BMI:</span> <span className="font-bold">{userSettings.bmi.toFixed(1)}</span></div>}
-                    {userSettings.bmr && <div className="text-sm"><span className="text-gray-500">BMR:</span> <span className="font-bold">{Math.round(userSettings.bmr)} kcal</span></div>}
+                  <div>
+                    <div className="flex items-baseline gap-2 mb-2">
+                      <div className="text-3xl font-bold">{userSettings.weight || 75}</div>
+                      <div className="text-lg text-white/80">/ {userSettings.targetWeight || 70}</div>
+                      <div className="text-xs text-white/60 ml-auto">kg</div>
+                    </div>
+                    <div className="bg-white/20 rounded-full h-2 overflow-hidden mb-2">
+                      <div
+                        className="bg-white h-full rounded-full transition-all duration-500"
+                        style={{
+                          width: `${Math.min(((userSettings.startWeight || 80) - (userSettings.weight || 75)) / ((userSettings.startWeight || 80) - (userSettings.targetWeight || 70)) * 100, 100)}%`
+                        }}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-white/80">
+                      <span>{Math.round(((userSettings.startWeight || 80) - (userSettings.weight || 75)) / ((userSettings.startWeight || 80) - (userSettings.targetWeight || 70)) * 100)}%</span>
+                      <span>{(userSettings.weight || 75) - (userSettings.targetWeight || 70)} kg to go</span>
+                    </div>
                   </div>
                 </div>
               </div>
