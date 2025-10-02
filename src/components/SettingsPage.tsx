@@ -244,21 +244,31 @@ export default function SettingsPage({ onBack }: SettingsPageProps) {
   };
 
   const saveSettings = async () => {
-    if (!user?.uid) return;
+    if (!user?.uid) {
+      console.error('❌ No user UID found');
+      return;
+    }
 
     setSaving(true);
     try {
+      console.log('📝 Saving settings for user:', user.uid);
+      console.log('📝 Settings data:', settings);
+
       const docRef = doc(db, Collections.USERS, user.uid);
-      await setDoc(docRef, {
+      const dataToSave = {
         ...settings,
         updatedAt: new Date().toISOString()
-      }, { merge: true });
+      };
+
+      console.log('📝 Data to save:', dataToSave);
+
+      await setDoc(docRef, dataToSave, { merge: true });
 
       console.log('✅ Settings saved successfully to users/' + user.uid);
-      alert('✅ Settings saved successfully!');
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Error saving settings:', error);
-      alert('❌ Failed to save settings. Please try again.');
+      console.error('❌ Error code:', error.code);
+      console.error('❌ Error message:', error.message);
     } finally {
       setSaving(false);
     }
