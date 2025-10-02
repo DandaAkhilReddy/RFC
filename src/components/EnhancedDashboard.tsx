@@ -130,33 +130,45 @@ export default function EnhancedDashboard() {
   useEffect(() => {
     if (user) {
       const fetchSettings = async () => {
-        const docRef = doc(db, Collections.USERS, user.uid);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          const data = docSnap.data();
+        try {
+          const docRef = doc(db, Collections.USERS, user.uid);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            const data = docSnap.data();
 
-          // Check if settings are complete
-          const isComplete = checkSettingsComplete(data);
-          setSettingsComplete(isComplete);
+            // Check if settings are complete
+            const isComplete = checkSettingsComplete(data);
+            setSettingsComplete(isComplete);
 
-          setUserSettings({
-            calorieGoal: data.calorieGoal || 2000,
-            weeklyWorkoutGoal: data.weeklyWorkoutGoal || 5,
-            weight: data.weight,
-            height: data.height,
-            bmi: data.bmi,
-            bmr: data.bmr,
-            targetWeight: data.targetWeight,
-            startWeight: data.startWeight
-          });
-          setTempCalorieGoal((data.calorieGoal || 2000).toString());
-          setTempWorkoutGoal((data.weeklyWorkoutGoal || 5).toString());
-          setLastCalorieEdit(data.lastCalorieEdit || '');
-          setLastWorkoutEdit(data.lastWorkoutEdit || '');
-          setCurrentCalories(data.currentCalories || 0);
-          setCurrentWorkouts(data.currentWorkouts || 0);
-        } else {
-          // No settings found, use defaults
+            setUserSettings({
+              calorieGoal: data.calorieGoal || 2000,
+              weeklyWorkoutGoal: data.weeklyWorkoutGoal || 5,
+              weight: data.weight,
+              height: data.height,
+              bmi: data.bmi,
+              bmr: data.bmr,
+              targetWeight: data.targetWeight,
+              startWeight: data.startWeight
+            });
+            setTempCalorieGoal((data.calorieGoal || 2000).toString());
+            setTempWorkoutGoal((data.weeklyWorkoutGoal || 5).toString());
+            setLastCalorieEdit(data.lastCalorieEdit || '');
+            setLastWorkoutEdit(data.lastWorkoutEdit || '');
+            setCurrentCalories(data.currentCalories || 0);
+            setCurrentWorkouts(data.currentWorkouts || 0);
+          } else {
+            // No settings found, use defaults
+            setUserSettings({
+              calorieGoal: 2000,
+              weeklyWorkoutGoal: 5,
+              weight: 75,
+              targetWeight: 70,
+              startWeight: 80
+            });
+          }
+        } catch (error) {
+          console.error('Error fetching user settings:', error);
+          // Use defaults on error
           setUserSettings({
             calorieGoal: 2000,
             weeklyWorkoutGoal: 5,
@@ -254,10 +266,9 @@ export default function EnhancedDashboard() {
         status: 'pending',
         createdAt: new Date().toISOString()
       });
-      alert('Connection request sent! 🎉');
+      console.log('Connection request sent successfully');
     } catch (error) {
       console.error('Error connecting:', error);
-      alert('Failed to send connection request. Please try again.');
     }
   };
 
@@ -271,10 +282,9 @@ export default function EnhancedDashboard() {
         status: 'interested',
         createdAt: new Date().toISOString()
       });
-      alert('Match request sent! 💕');
+      console.log('Match request sent successfully');
     } catch (error) {
       console.error('Error matching:', error);
-      alert('Failed to send match request. Please try again.');
     }
   };
 
