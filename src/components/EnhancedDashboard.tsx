@@ -776,12 +776,20 @@ export default function EnhancedDashboard() {
               ref={transition({ key: 'ai-agents-content', ...fly({ x: 100, y: 0, opacity: true }) })}
             >
               {/* Header */}
-              <div className="mb-8">
-                <h2 className="text-3xl font-bold text-gray-900 mb-2">🤖 AI-Powered Features</h2>
-                <p className="text-gray-600">Experience the future of fitness with our advanced AI tools</p>
+              <div className="mb-10">
+                <h2 className="text-4xl font-bold bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent mb-3">
+                  🤖 AI-Powered Fitness Suite
+                </h2>
+                <p className="text-lg text-gray-600">12 intelligent agents transforming your fitness journey</p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Active Features Section */}
+              <div className="mb-12">
+                <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                  <Zap className="w-6 h-6 text-orange-500" />
+                  Active Features
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {/* Reddy AI Chatbot - ACTIVE */}
                 <div
                   onClick={() => setCurrentPage('reddy')}
@@ -799,6 +807,16 @@ export default function EnhancedDashboard() {
                     Start Chat <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-2 transition-transform" />
                   </div>
                 </div>
+                </div>
+              </div>
+
+              {/* Health & Analytics Section */}
+              <div className="mb-12">
+                <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                  <Activity className="w-6 h-6 text-teal-500" />
+                  Health & Analytics
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
 
                 {/* AI Photo Analysis */}
                 <div
@@ -886,6 +904,16 @@ export default function EnhancedDashboard() {
                     </div>
                   </div>
                 </div>
+                </div>
+              </div>
+
+              {/* Nutrition & Training Section */}
+              <div className="mb-12">
+                <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                  <Utensils className="w-6 h-6 text-orange-500" />
+                  Nutrition & Training
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
 
                 {/* AI Meal Planner */}
                 <div
@@ -973,6 +1001,16 @@ export default function EnhancedDashboard() {
                     </div>
                   </div>
                 </div>
+                </div>
+              </div>
+
+              {/* Advanced AI Tools Section */}
+              <div className="mb-12">
+                <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                  <Crown className="w-6 h-6 text-purple-500" />
+                  Advanced AI Tools
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
 
                 {/* AI Health Monitoring */}
                 <div
@@ -1117,6 +1155,7 @@ export default function EnhancedDashboard() {
                       Recovery protocol builder
                     </div>
                   </div>
+                </div>
                 </div>
               </div>
             </div>
