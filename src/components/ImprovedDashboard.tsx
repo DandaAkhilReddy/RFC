@@ -10,6 +10,8 @@ import {
   TrendingDown, Award, ChevronRight, AlertCircle, Shield, CheckCircle2,
   ArrowLeft, Mic, Brain
 } from 'lucide-react';
+import { doc, getDoc, setDoc, collection, query, where, getDocs, updateDoc } from 'firebase/firestore';
+import { db, Collections } from '../lib/firebase';
 import { useAuth } from './AuthProvider';
 import ToastNotification from './ToastNotification';
 import Logo from './Logo';
@@ -116,6 +118,71 @@ export default function ImprovedDashboard() {
     sleep: '',
     weight: ''
   });
+
+  // Load user data from Firestore
+  useEffect(() => {
+    const loadUserData = async () => {
+      if (!user?.uid) return;
+
+      try {
+        // Load user goals
+        const userDoc = await getDoc(doc(db, Collections.USERS, user.uid));
+        if (userDoc.exists() && userDoc.data().goals) {
+          setUserGoals(userDoc.data().goals);
+        }
+
+        // Load daily data for current date
+        const dailyDataDoc = await getDoc(doc(db, Collections.USERS, user.uid, 'daily_activities', currentDate));
+        if (dailyDataDoc.exists()) {
+          setDailyData(dailyDataDoc.data() as DailyActivity);
+        }
+      } catch (error) {
+        console.error('Error loading user data:', error);
+        setToast({ message: '⚠️ Failed to load data from database', type: 'error' });
+      }
+    };
+
+    loadUserData();
+  }, [user, currentDate]);
+
+  // Save daily data to Firestore whenever it changes
+  useEffect(() => {
+    const saveDailyData = async () => {
+      if (!user?.uid || dailyData.foods.length === 0 && dailyData.workouts.length === 0) return;
+
+      try {
+        await setDoc(doc(db, Collections.USERS, user.uid, 'daily_activities', currentDate), dailyData);
+        console.log('✅ Daily data saved to Firestore');
+      } catch (error) {
+        console.error('Error saving daily data:', error);
+      }
+    };
+
+    // Debounce saves
+    const timer = setTimeout(saveDailyData, 1000);
+    return () => clearTimeout(timer);
+  }, [dailyData, user, currentDate]);
+
+  // Save user goals to Firestore whenever they change
+  useEffect(() => {
+    const saveUserGoals = async () => {
+      if (!user?.uid) return;
+
+      try {
+        await updateDoc(doc(db, Collections.USERS, user.uid), {
+          goals: userGoals,
+          updatedAt: new Date().toISOString()
+        });
+        console.log('✅ User goals saved to Firestore');
+      } catch (error) {
+        console.error('Error saving user goals:', error);
+      }
+    };
+
+    // Debounce saves
+    const timer = setTimeout(saveUserGoals, 1000);
+    return () => clearTimeout(timer);
+  }, [userGoals, user]);
 
   // Calculate totals
   const totalCalories = dailyData.foods.reduce((sum, food) => sum + food.calories, 0);
