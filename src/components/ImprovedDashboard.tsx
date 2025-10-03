@@ -633,9 +633,9 @@ export default function ImprovedDashboard() {
                         <div className="text-sm opacity-75 mt-1">calories</div>
                       </div>
 
-                      <div className={`p-6 rounded-2xl ${totalCalories > 0 ? 'bg-white/20 backdrop-blur-sm' : 'bg-white/10 backdrop-blur-sm border-2 border-white/30 border-dashed'}`}>
+                      <div className={`p-6 rounded-2xl transition-all duration-500 ${totalCalories > 0 ? 'bg-white/20 backdrop-blur-sm scale-105' : 'bg-white/10 backdrop-blur-sm border-2 border-white/30 border-dashed'}`}>
                         <div className="text-sm opacity-90 mb-2">Consumed</div>
-                        <div className="text-4xl font-bold">{totalCalories || '0'}</div>
+                        <div className="text-4xl font-bold animate-pulse">{totalCalories || '0'}</div>
                         <div className="text-sm opacity-75 mt-1">calories</div>
                       </div>
 
