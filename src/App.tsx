@@ -213,6 +213,225 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* AI AGENTS WORKFLOW SECTION */}
+      <section className="py-20 bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 text-white">
+        <div className="container mx-auto px-6">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold mb-4">
+              🤖 Meet Your AI Agents
+            </h2>
+            <p className="text-xl text-purple-200 max-w-3xl mx-auto">
+              Three intelligent agents working together to transform your fitness journey
+            </p>
+          </div>
+
+          {/* 3-Step Process Flow */}
+          <div className="max-w-6xl mx-auto mb-16">
+            <div className="grid md:grid-cols-3 gap-8">
+              {/* Step 1: Rapid AI */}
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border-2 border-purple-400/50 hover:border-purple-300 transition-all hover:scale-105">
+                <div className="bg-gradient-to-r from-purple-500 to-blue-500 w-16 h-16 rounded-full flex items-center justify-center mb-6 mx-auto">
+                  <Bot className="w-8 h-8 text-white" />
+                </div>
+                <div className="text-center mb-4">
+                  <div className="text-3xl font-bold mb-2">Step 1</div>
+                  <h3 className="text-2xl font-bold mb-4">Rapid AI</h3>
+                </div>
+                <ul className="space-y-3 text-purple-100">
+                  <li className="flex items-start">
+                    <Mic className="w-5 h-5 text-purple-300 mr-2 mt-1 flex-shrink-0" />
+                    <span><strong>One Voice Note</strong> - Just speak or type your fitness goals</span>
+                  </li>
+                  <li className="flex items-start">
+                    <Sparkles className="w-5 h-5 text-purple-300 mr-2 mt-1 flex-shrink-0" />
+                    <span><strong>Instant Plans</strong> - Complete workout & meal plans in seconds</span>
+                  </li>
+                  <li className="flex items-start">
+                    <Zap className="w-5 h-5 text-purple-300 mr-2 mt-1 flex-shrink-0" />
+                    <span><strong>Powered by LLama 3.3 70B</strong> - 70 billion parameters for deep understanding</span>
+                  </li>
+                </ul>
+                <div className="mt-6 pt-6 border-t border-purple-400/30">
+                  <div className="text-sm text-purple-200">
+                    <strong>Unlock:</strong> Using Rapid AI makes you eligible for Cupid AI
+                  </div>
+                </div>
+              </div>
+
+              {/* Step 2: Cupid AI */}
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border-2 border-pink-400/50 hover:border-pink-300 transition-all hover:scale-105">
+                <div className="bg-gradient-to-r from-pink-500 to-red-500 w-16 h-16 rounded-full flex items-center justify-center mb-6 mx-auto">
+                  <Heart className="w-8 h-8 text-white" />
+                </div>
+                <div className="text-center mb-4">
+                  <div className="text-3xl font-bold mb-2">Step 2</div>
+                  <h3 className="text-2xl font-bold mb-4">Cupid AI</h3>
+                  <div className="inline-block px-3 py-1 bg-pink-500/30 rounded-full text-xs font-semibold mb-4">
+                    Unlocked with Rapid ✓
+                  </div>
+                </div>
+                <ul className="space-y-3 text-pink-100">
+                  <li className="flex items-start">
+                    <Heart className="w-5 h-5 text-pink-300 mr-2 mt-1 flex-shrink-0" />
+                    <span><strong>Dating Coach</strong> - AI-powered dating advice and profile tips</span>
+                  </li>
+                  <li className="flex items-start">
+                    <Users className="w-5 h-5 text-pink-300 mr-2 mt-1 flex-shrink-0" />
+                    <span><strong>Fitness Buddy Matching</strong> - Find your perfect workout accountability partner</span>
+                  </li>
+                  <li className="flex items-start">
+                    <Target className="w-5 h-5 text-pink-300 mr-2 mt-1 flex-shrink-0" />
+                    <span><strong>Compatibility Analysis</strong> - Match based on goals, level, schedule & values</span>
+                  </li>
+                </ul>
+                <div className="mt-6 pt-6 border-t border-pink-400/30">
+                  <div className="text-sm text-pink-200">
+                    <strong>Unlock:</strong> Cupid AI activates the Matching Algorithm
+                  </div>
+                </div>
+              </div>
+
+              {/* Step 3: ML Matching */}
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border-2 border-green-400/50 hover:border-green-300 transition-all hover:scale-105">
+                <div className="bg-gradient-to-r from-green-500 to-emerald-500 w-16 h-16 rounded-full flex items-center justify-center mb-6 mx-auto">
+                  <Sparkles className="w-8 h-8 text-white" />
+                </div>
+                <div className="text-center mb-4">
+                  <div className="text-3xl font-bold mb-2">Step 3</div>
+                  <h3 className="text-2xl font-bold mb-4">ML Matching</h3>
+                  <div className="inline-block px-3 py-1 bg-green-500/30 rounded-full text-xs font-semibold mb-4">
+                    Auto-activated ✓
+                  </div>
+                </div>
+                <ul className="space-y-3 text-green-100">
+                  <li className="flex items-start">
+                    <Activity className="w-5 h-5 text-green-300 mr-2 mt-1 flex-shrink-0" />
+                    <span><strong>Multi-Scenario Analysis</strong> - Analyzes 50+ compatibility factors</span>
+                  </li>
+                  <li className="flex items-start">
+                    <TrendingUp className="w-5 h-5 text-green-300 mr-2 mt-1 flex-shrink-0" />
+                    <span><strong>Self-Learning AI</strong> - Gets smarter with every interaction</span>
+                  </li>
+                  <li className="flex items-start">
+                    <Star className="w-5 h-5 text-green-300 mr-2 mt-1 flex-shrink-0" />
+                    <span><strong>Perfect Matches</strong> - One quality match per day, carefully curated</span>
+                  </li>
+                </ul>
+                <div className="mt-6 pt-6 border-t border-green-400/30">
+                  <div className="text-sm text-green-200">
+                    <strong>Result:</strong> Find your ideal fitness accountability partner
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Technology Behind It */}
+          <div className="max-w-5xl mx-auto">
+            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border-2 border-blue-400/50">
+              <h3 className="text-3xl font-bold mb-8 text-center">🧠 Advanced ML Technology</h3>
+
+              <div className="grid md:grid-cols-2 gap-8 mb-8">
+                {/* Tinker API */}
+                <div className="bg-white/5 p-6 rounded-xl">
+                  <div className="flex items-center mb-4">
+                    <Zap className="w-8 h-8 text-yellow-400 mr-3" />
+                    <h4 className="text-xl font-bold">Tinker API by Thinking Labs</h4>
+                  </div>
+                  <p className="text-purple-200 mb-4">
+                    Enterprise-grade AI infrastructure providing lightning-fast inference with 99.9% uptime guarantee.
+                  </p>
+                  <ul className="space-y-2 text-sm text-purple-100">
+                    <li className="flex items-start">
+                      <CheckCircle2 className="w-4 h-4 text-green-400 mr-2 mt-0.5 flex-shrink-0" />
+                      <span>Sub-second response times</span>
+                    </li>
+                    <li className="flex items-start">
+                      <CheckCircle2 className="w-4 h-4 text-green-400 mr-2 mt-0.5 flex-shrink-0" />
+                      <span>Global CDN for low latency</span>
+                    </li>
+                    <li className="flex items-start">
+                      <CheckCircle2 className="w-4 h-4 text-green-400 mr-2 mt-0.5 flex-shrink-0" />
+                      <span>Auto-scaling infrastructure</span>
+                    </li>
+                  </ul>
+                </div>
+
+                {/* LLama 3.3 70B */}
+                <div className="bg-white/5 p-6 rounded-xl">
+                  <div className="flex items-center mb-4">
+                    <Bot className="w-8 h-8 text-blue-400 mr-3" />
+                    <h4 className="text-xl font-bold">Meta LLama 3.3 70B</h4>
+                  </div>
+                  <p className="text-purple-200 mb-4">
+                    Meta's latest open-source language model with 70 billion parameters, fine-tuned for fitness and health coaching.
+                  </p>
+                  <ul className="space-y-2 text-sm text-purple-100">
+                    <li className="flex items-start">
+                      <CheckCircle2 className="w-4 h-4 text-green-400 mr-2 mt-0.5 flex-shrink-0" />
+                      <span>70B parameters for deep context understanding</span>
+                    </li>
+                    <li className="flex items-start">
+                      <CheckCircle2 className="w-4 h-4 text-green-400 mr-2 mt-0.5 flex-shrink-0" />
+                      <span>Specialized fitness & nutrition training</span>
+                    </li>
+                    <li className="flex items-start">
+                      <CheckCircle2 className="w-4 h-4 text-green-400 mr-2 mt-0.5 flex-shrink-0" />
+                      <span>Personalized recommendations</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              {/* Matching Scenarios */}
+              <div className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 p-6 rounded-xl">
+                <h4 className="text-xl font-bold mb-4 flex items-center">
+                  <Crown className="w-6 h-6 text-yellow-400 mr-2" />
+                  Multi-Scenario Matching Algorithm
+                </h4>
+                <p className="text-purple-100 mb-4">
+                  Our ML algorithm analyzes 50+ compatibility factors across multiple scenarios:
+                </p>
+                <div className="grid md:grid-cols-3 gap-4 text-sm">
+                  <div className="bg-white/10 p-4 rounded-lg">
+                    <div className="font-bold mb-2">🎯 Fitness Alignment</div>
+                    <ul className="space-y-1 text-xs text-purple-100">
+                      <li>• Current fitness level</li>
+                      <li>• Workout preferences</li>
+                      <li>• Training frequency</li>
+                      <li>• Goal compatibility</li>
+                    </ul>
+                  </div>
+                  <div className="bg-white/10 p-4 rounded-lg">
+                    <div className="font-bold mb-2">📅 Lifestyle Sync</div>
+                    <ul className="space-y-1 text-xs text-purple-100">
+                      <li>• Schedule compatibility</li>
+                      <li>• Geographic proximity</li>
+                      <li>• Availability patterns</li>
+                      <li>• Time zone matching</li>
+                    </ul>
+                  </div>
+                  <div className="bg-white/10 p-4 rounded-lg">
+                    <div className="font-bold mb-2">💡 Values Match</div>
+                    <ul className="space-y-1 text-xs text-purple-100">
+                      <li>• Motivation style</li>
+                      <li>• Communication preferences</li>
+                      <li>• Accountability needs</li>
+                      <li>• Personality compatibility</li>
+                    </ul>
+                  </div>
+                </div>
+                <div className="mt-4 pt-4 border-t border-purple-400/30">
+                  <p className="text-sm text-purple-200 text-center">
+                    <strong>🚀 The more you use ReddyFit, the smarter the AI becomes!</strong> Our self-learning algorithms continuously improve match quality based on your interactions and feedback.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* PRIVACY & SECURITY SECTION */}
       <section className="py-20 bg-gradient-to-br from-gray-50 to-white">
         <div className="container mx-auto px-6">
