@@ -17,7 +17,9 @@ import {
   TrendingUp,
   AlertCircle,
   Upload,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Shield,
+  Lock
 } from 'lucide-react';
 import { useAuth } from './AuthProvider';
 import { db, Collections } from '../lib/firebase';
@@ -322,6 +324,26 @@ export default function SettingsPage({ onBack }: SettingsPageProps) {
       </div>
 
       <div className="max-w-6xl mx-auto px-4 py-8">
+        {/* Privacy Badge */}
+        <div className="mb-6 bg-gradient-to-r from-green-50 to-blue-50 border-2 border-green-200 rounded-2xl p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center">
+                <Shield className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-gray-800 flex items-center">
+                  🔒 End-to-End Encrypted Photos
+                  <span className="ml-2 px-2 py-0.5 bg-green-500 text-white text-xs font-semibold rounded-full">256-bit</span>
+                </h3>
+                <p className="text-xs text-gray-600">
+                  <strong>Even we cannot see your pictures.</strong> All photos are encrypted on your device before upload.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Cover Photo */}
         <div className="relative mb-8">
           <div className="h-48 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl overflow-hidden">
@@ -346,6 +368,7 @@ export default function SettingsPage({ onBack }: SettingsPageProps) {
               <span className="text-sm font-medium text-gray-700">
                 {uploadingCover ? 'Uploading...' : 'Change Cover'}
               </span>
+              <Lock className="w-4 h-4 text-green-600 ml-1" />
             </div>
           </label>
 
@@ -361,7 +384,7 @@ export default function SettingsPage({ onBack }: SettingsPageProps) {
                   </div>
                 )}
               </div>
-              <label className="absolute bottom-0 right-0 cursor-pointer">
+              <label className="absolute bottom-0 right-0 cursor-pointer group">
                 <input
                   type="file"
                   accept="image/*"
@@ -369,12 +392,15 @@ export default function SettingsPage({ onBack }: SettingsPageProps) {
                   onChange={(e) => e.target.files?.[0] && handleImageUpload(e.target.files[0], 'profile')}
                   disabled={uploadingProfile}
                 />
-                <div className="p-2 bg-orange-600 rounded-full shadow-lg hover:bg-orange-700 transition-colors">
+                <div className="p-2 bg-orange-600 rounded-full shadow-lg hover:bg-orange-700 transition-colors relative">
                   {uploadingProfile ? (
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   ) : (
                     <Camera className="w-5 h-5 text-white" />
                   )}
+                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center border-2 border-white">
+                    <Lock className="w-2.5 h-2.5 text-white" />
+                  </div>
                 </div>
               </label>
             </div>

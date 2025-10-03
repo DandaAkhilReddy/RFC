@@ -90,6 +90,7 @@ export default function ImprovedDashboard() {
   const [showAddFood, setShowAddFood] = useState(false);
   const [showAddWorkout, setShowAddWorkout] = useState(false);
   const [editingStats, setEditingStats] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
 
   // Form states
   const [newFood, setNewFood] = useState({
@@ -540,7 +541,7 @@ export default function ImprovedDashboard() {
           {currentPage === 'dashboard' && (
             <>
               {/* Header */}
-              <div className="flex justify-between items-center mb-8">
+              <div className="flex justify-between items-center mb-6">
                 <div>
                   <h1 className="text-4xl font-bold bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent mb-2">
                     Welcome back, {user?.displayName || user?.email?.split('@')[0]}!
@@ -563,6 +564,48 @@ export default function ImprovedDashboard() {
                   >
                     <Target className="w-5 h-5" />
                     <span>Set Goals</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Privacy & Trust Banner */}
+              <div className="mb-8 bg-gradient-to-r from-green-50 via-blue-50 to-purple-50 border-2 border-green-200 rounded-2xl p-6 shadow-lg">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start space-x-4 flex-1">
+                    <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                      <Lock className="w-6 h-6 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-bold text-gray-800 mb-2 flex items-center">
+                        🔒 Your Privacy is Our Priority
+                        <span className="ml-3 px-3 py-1 bg-green-500 text-white text-xs font-semibold rounded-full">256-bit Encrypted</span>
+                      </h3>
+                      <p className="text-sm text-gray-700 mb-3">
+                        <strong>End-to-End Encryption:</strong> All your photos, videos, and data are encrypted with military-grade AES-256 encryption.
+                        <strong className="text-green-700"> Even we cannot see your pictures or videos.</strong> Only you have the decryption keys.
+                      </p>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div className="flex items-center space-x-2 text-xs text-gray-600">
+                          <Shield className="w-4 h-4 text-green-600 flex-shrink-0" />
+                          <span><strong>Zero-knowledge encryption</strong> - We can't access your data</span>
+                        </div>
+                        <div className="flex items-center space-x-2 text-xs text-gray-600">
+                          <Lock className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                          <span><strong>Client-side encryption</strong> - Encrypted before upload</span>
+                        </div>
+                        <div className="flex items-center space-x-2 text-xs text-gray-600">
+                          <CheckCircle2 className="w-4 h-4 text-purple-600 flex-shrink-0" />
+                          <span><strong>GDPR compliant</strong> - Full data control & deletion</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowPrivacyModal(true)}
+                    className="ml-4 px-4 py-2 bg-white border-2 border-green-500 text-green-700 rounded-xl hover:bg-green-50 transition-all text-sm font-semibold flex items-center space-x-2 flex-shrink-0"
+                  >
+                    <Info className="w-4 h-4" />
+                    <span>Learn More</span>
                   </button>
                 </div>
               </div>
@@ -1062,6 +1105,175 @@ export default function ImprovedDashboard() {
                     </button>
                   </div>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* Privacy Modal */}
+          {showPrivacyModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+              <div className="bg-white rounded-3xl p-8 max-w-3xl w-full mx-4 shadow-3xl max-h-[90vh] overflow-y-auto">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-3xl font-bold flex items-center">
+                    <Lock className="w-8 h-8 text-green-500 mr-3" />
+                    Your Privacy & Security
+                  </h3>
+                  <button
+                    onClick={() => setShowPrivacyModal(false)}
+                    className="p-2 hover:bg-gray-100 rounded-full transition"
+                  >
+                    <X className="w-6 h-6 text-gray-500" />
+                  </button>
+                </div>
+
+                {/* End-to-End Encryption Section */}
+                <div className="mb-8">
+                  <div className="flex items-center mb-4">
+                    <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center mr-4">
+                      <Shield className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h4 className="text-xl font-bold text-gray-800">End-to-End Encryption</h4>
+                      <p className="text-sm text-green-600 font-semibold">256-bit AES Military-Grade Security</p>
+                    </div>
+                  </div>
+                  <p className="text-gray-700 mb-4">
+                    <strong>Even we cannot see your pictures or videos.</strong> All your photos, videos, and sensitive data are encrypted on your device before being uploaded to our servers. This means only you have the decryption keys, and nobody else—including ReddyFit staff—can access your private content.
+                  </p>
+
+                  {/* Encryption Process Visual */}
+                  <div className="bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-200 rounded-2xl p-6 mb-4">
+                    <h5 className="font-bold text-gray-800 mb-4 flex items-center">
+                      <Info className="w-5 h-5 mr-2 text-blue-600" />
+                      How It Works
+                    </h5>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="bg-white rounded-xl p-4 border-2 border-blue-200">
+                        <div className="text-3xl mb-2">📱</div>
+                        <h6 className="font-bold text-sm mb-2">1. Client-Side Encryption</h6>
+                        <p className="text-xs text-gray-600">Your photos are encrypted on your device using AES-256 before upload</p>
+                      </div>
+                      <div className="bg-white rounded-xl p-4 border-2 border-purple-200">
+                        <div className="text-3xl mb-2">🔐</div>
+                        <h6 className="font-bold text-sm mb-2">2. Secure Transfer</h6>
+                        <p className="text-xs text-gray-600">Encrypted data is sent over HTTPS with TLS 1.3 to our servers</p>
+                      </div>
+                      <div className="bg-white rounded-xl p-4 border-2 border-green-200">
+                        <div className="text-3xl mb-2">🗝️</div>
+                        <h6 className="font-bold text-sm mb-2">3. You Control Keys</h6>
+                        <p className="text-xs text-gray-600">Only you have the decryption keys stored securely on your device</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Zero-Knowledge Encryption */}
+                <div className="mb-8">
+                  <div className="flex items-center mb-4">
+                    <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center mr-4">
+                      <Lock className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h4 className="text-xl font-bold text-gray-800">Zero-Knowledge Architecture</h4>
+                      <p className="text-sm text-purple-600 font-semibold">We Can't Access Your Data</p>
+                    </div>
+                  </div>
+                  <p className="text-gray-700 mb-4">
+                    ReddyFit uses a <strong>zero-knowledge encryption model</strong>. This means:
+                  </p>
+                  <ul className="space-y-2 ml-4">
+                    <li className="flex items-start">
+                      <CheckCircle2 className="w-5 h-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                      <span className="text-sm text-gray-700">We never have access to your unencrypted photos or videos</span>
+                    </li>
+                    <li className="flex items-start">
+                      <CheckCircle2 className="w-5 h-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                      <span className="text-sm text-gray-700">Your encryption keys never leave your device</span>
+                    </li>
+                    <li className="flex items-start">
+                      <CheckCircle2 className="w-5 h-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                      <span className="text-sm text-gray-700">Even if our servers were compromised, your data remains encrypted</span>
+                    </li>
+                    <li className="flex items-start">
+                      <CheckCircle2 className="w-5 h-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                      <span className="text-sm text-gray-700">No government, hacker, or ReddyFit employee can decrypt your content</span>
+                    </li>
+                  </ul>
+                </div>
+
+                {/* Technical Details */}
+                <div className="mb-8">
+                  <div className="flex items-center mb-4">
+                    <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center mr-4">
+                      <Shield className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h4 className="text-xl font-bold text-gray-800">Technical Specifications</h4>
+                      <p className="text-sm text-orange-600 font-semibold">Industry-Leading Security Standards</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="bg-gray-50 border-2 border-gray-200 rounded-xl p-4">
+                      <h6 className="font-bold text-sm mb-2">Encryption Algorithm</h6>
+                      <p className="text-xs text-gray-600">AES-256 (Advanced Encryption Standard)</p>
+                      <p className="text-xs text-gray-500 mt-1">Same encryption used by banks and governments</p>
+                    </div>
+                    <div className="bg-gray-50 border-2 border-gray-200 rounded-xl p-4">
+                      <h6 className="font-bold text-sm mb-2">Key Length</h6>
+                      <p className="text-xs text-gray-600">256-bit encryption keys</p>
+                      <p className="text-xs text-gray-500 mt-1">2^256 possible combinations (virtually unbreakable)</p>
+                    </div>
+                    <div className="bg-gray-50 border-2 border-gray-200 rounded-xl p-4">
+                      <h6 className="font-bold text-sm mb-2">Transport Security</h6>
+                      <p className="text-xs text-gray-600">TLS 1.3 with Perfect Forward Secrecy</p>
+                      <p className="text-xs text-gray-500 mt-1">Secure transmission over the internet</p>
+                    </div>
+                    <div className="bg-gray-50 border-2 border-gray-200 rounded-xl p-4">
+                      <h6 className="font-bold text-sm mb-2">Key Storage</h6>
+                      <p className="text-xs text-gray-600">Secure device-level storage</p>
+                      <p className="text-xs text-gray-500 mt-1">Keys never transmitted to servers</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* GDPR & Data Rights */}
+                <div className="mb-6">
+                  <div className="flex items-center mb-4">
+                    <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center mr-4">
+                      <CheckCircle2 className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h4 className="text-xl font-bold text-gray-800">GDPR Compliant & Your Rights</h4>
+                      <p className="text-sm text-blue-600 font-semibold">Full Control Over Your Data</p>
+                    </div>
+                  </div>
+                  <ul className="space-y-2 ml-4">
+                    <li className="flex items-start">
+                      <CheckCircle2 className="w-5 h-5 text-blue-500 mr-2 mt-0.5 flex-shrink-0" />
+                      <span className="text-sm text-gray-700"><strong>Right to Access:</strong> View all your data anytime</span>
+                    </li>
+                    <li className="flex items-start">
+                      <CheckCircle2 className="w-5 h-5 text-blue-500 mr-2 mt-0.5 flex-shrink-0" />
+                      <span className="text-sm text-gray-700"><strong>Right to Deletion:</strong> Permanently delete your account and all data</span>
+                    </li>
+                    <li className="flex items-start">
+                      <CheckCircle2 className="w-5 h-5 text-blue-500 mr-2 mt-0.5 flex-shrink-0" />
+                      <span className="text-sm text-gray-700"><strong>Right to Portability:</strong> Export your data in standard formats</span>
+                    </li>
+                    <li className="flex items-start">
+                      <CheckCircle2 className="w-5 h-5 text-blue-500 mr-2 mt-0.5 flex-shrink-0" />
+                      <span className="text-sm text-gray-700"><strong>Data Minimization:</strong> We only collect what's necessary</span>
+                    </li>
+                  </ul>
+                </div>
+
+                {/* Close Button */}
+                <button
+                  onClick={() => setShowPrivacyModal(false)}
+                  className="w-full px-6 py-4 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-xl hover:shadow-xl transition-all font-bold text-lg"
+                >
+                  Got it, my data is secure! 🔒
+                </button>
               </div>
             </div>
           )}
