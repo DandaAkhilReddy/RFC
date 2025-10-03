@@ -7,7 +7,7 @@ import {
   Activity, Heart, Settings, LogOut, Menu, Bell, Home, User, ChevronDown,
   Save, Apple, Coffee, Drumstick, Cookie, Info, BarChart3, Sparkles, Zap,
   Users, Share2, Smartphone, Radio, Bot, Send, UserPlus, Trophy, Lock,
-  TrendingDown, Award, ChevronRight, AlertCircle
+  TrendingDown, Award, ChevronRight, AlertCircle, Shield, CheckCircle2
 } from 'lucide-react';
 import { useAuth } from './AuthProvider';
 import ToastNotification from './ToastNotification';
