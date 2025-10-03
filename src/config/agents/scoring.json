@@ -1,0 +1,51 @@
+{
+  "version": "1.0.0",
+  "daily_score": {
+    "weights": {
+      "workout_completion": 20,
+      "training_quality": 10,
+      "calorie_adherence": 20,
+      "protein": 10,
+      "steps": 10,
+      "sleep": 10,
+      "hydration": 5,
+      "recovery": 5,
+      "check_in": 10
+    },
+    "thresholds": {
+      "calorie_deviation_pct": {
+        "le_5": 20,
+        "gt_5_le_10": 15,
+        "gt_10_le_20": 8,
+        "gt_20": 0
+      },
+      "protein": {
+        "ge_target": 10,
+        "gt_90pct": 8,
+        "gt_75pct": 6,
+        "gt_50pct": 3,
+        "lt_50pct": 0
+      },
+      "steps": {
+        "ge_10000": 10,
+        "ge_8000": 7,
+        "ge_6000": 5,
+        "lt_6000": 0
+      },
+      "sleep_hours": {
+        "ge_7_le_9": 8,
+        "ge_6_lt_7": 5,
+        "lt_6": 0
+      }
+    },
+    "token_rules": {
+      "min_score_for_token": 70,
+      "daily_token_value": 1
+    },
+    "streak": {
+      "per_day_multiplier": 0.02,
+      "max_multiplier": 0.20,
+      "grace_passes_per_28_days": 2
+    }
+  }
+}
