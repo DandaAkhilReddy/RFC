@@ -7,13 +7,16 @@ import {
   Activity, Heart, Settings, LogOut, Menu, Bell, Home, User, ChevronDown,
   Save, Apple, Coffee, Drumstick, Cookie, Info, BarChart3, Sparkles, Zap,
   Users, Share2, Smartphone, Radio, Bot, Send, UserPlus, Trophy, Lock,
-  TrendingDown, Award, ChevronRight, AlertCircle, Shield, CheckCircle2
+  TrendingDown, Award, ChevronRight, AlertCircle, Shield, CheckCircle2,
+  ArrowLeft, Mic, Brain
 } from 'lucide-react';
 import { useAuth } from './AuthProvider';
 import ToastNotification from './ToastNotification';
 import Logo from './Logo';
+import RapidAIPage from './RapidAIPage';
+import CupidAIPage from './CupidAIPage';
 
-type PageType = 'dashboard' | 'diet' | 'workout' | 'ai-agents' | 'friends';
+type PageType = 'dashboard' | 'diet' | 'workout' | 'ai-agents' | 'friends' | 'rapid-ai' | 'cupid-ai';
 
 interface FoodEntry {
   id: string;
@@ -1338,14 +1341,138 @@ export default function ImprovedDashboard() {
             </div>
           )}
 
+          {/* AI Agents Hub */}
+          {currentPage === 'ai-agents' && (
+            <div>
+              <h2 className="text-3xl font-bold mb-6">🤖 AI Agents Hub</h2>
+              <p className="text-gray-600 mb-8 text-lg">
+                Choose your AI-powered fitness companion. Each agent is designed to help you achieve your goals in unique ways.
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Rapid AI Card */}
+                <div
+                  onClick={() => setCurrentPage('rapid-ai')}
+                  className="bg-gradient-to-br from-purple-500 to-blue-500 rounded-2xl p-8 text-white cursor-pointer hover:shadow-2xl transition-all transform hover:scale-105"
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                      <Zap className="w-8 h-8" />
+                    </div>
+                    <ChevronRight className="w-6 h-6" />
+                  </div>
+                  <h3 className="text-2xl font-bold mb-3">Rapid AI</h3>
+                  <p className="text-purple-100 mb-4">
+                    One voice note or click to get your complete fitness plan instantly. Powered by Tinker API & LLama 3.3 70B.
+                  </p>
+                  <div className="flex items-center space-x-4 text-sm">
+                    <div className="flex items-center space-x-1">
+                      <Mic className="w-4 h-4" />
+                      <span>Voice Input</span>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <Sparkles className="w-4 h-4" />
+                      <span>AI Plans</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Cupid AI Card */}
+                <div
+                  onClick={() => setCurrentPage('cupid-ai')}
+                  className="bg-gradient-to-br from-pink-500 to-red-500 rounded-2xl p-8 text-white cursor-pointer hover:shadow-2xl transition-all transform hover:scale-105 relative overflow-hidden"
+                >
+                  <div className="absolute top-2 right-2 px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-xs font-semibold">
+                    Unlocked with Rapid
+                  </div>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                      <Heart className="w-8 h-8" />
+                    </div>
+                    <ChevronRight className="w-6 h-6" />
+                  </div>
+                  <h3 className="text-2xl font-bold mb-3">Cupid AI</h3>
+                  <p className="text-pink-100 mb-4">
+                    Find your perfect fitness buddy or dating match. AI-powered matching & dating coach to help you connect.
+                  </p>
+                  <div className="flex items-center space-x-4 text-sm">
+                    <div className="flex items-center space-x-1">
+                      <Users className="w-4 h-4" />
+                      <span>Buddy Match</span>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <Heart className="w-4 h-4" />
+                      <span>Dating Coach</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Technology Section */}
+              <div className="mt-8 bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-200 rounded-2xl p-6">
+                <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                  <Brain className="w-6 h-6 text-blue-600 mr-2" />
+                  Powered by Advanced AI Technology
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="bg-white rounded-xl p-4 border border-blue-200">
+                    <h4 className="font-bold text-gray-800 mb-2">🚀 Tinker API</h4>
+                    <p className="text-sm text-gray-600">
+                      By Thinking Labs - Enterprise-grade AI infrastructure with 99.9% uptime
+                    </p>
+                  </div>
+                  <div className="bg-white rounded-xl p-4 border border-purple-200">
+                    <h4 className="font-bold text-gray-800 mb-2">🧠 LLama 3.3 70B</h4>
+                    <p className="text-sm text-gray-600">
+                      Meta's latest open-source model with 70 billion parameters for deep understanding
+                    </p>
+                  </div>
+                  <div className="bg-white rounded-xl p-4 border border-green-200">
+                    <h4 className="font-bold text-gray-800 mb-2">📈 Self-Learning</h4>
+                    <p className="text-sm text-gray-600">
+                      <strong>The more you use ReddyFit, the smarter it gets!</strong> Continuous training & improvement
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Rapid AI Page */}
+          {currentPage === 'rapid-ai' && (
+            <div>
+              <button
+                onClick={() => setCurrentPage('ai-agents')}
+                className="flex items-center text-gray-600 hover:text-purple-600 mb-6 transition group"
+              >
+                <ArrowLeft className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform" />
+                Back to AI Agents Hub
+              </button>
+              <RapidAIPage />
+            </div>
+          )}
+
+          {/* Cupid AI Page */}
+          {currentPage === 'cupid-ai' && (
+            <div>
+              <button
+                onClick={() => setCurrentPage('ai-agents')}
+                className="flex items-center text-gray-600 hover:text-pink-600 mb-6 transition group"
+              >
+                <ArrowLeft className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform" />
+                Back to AI Agents Hub
+              </button>
+              <CupidAIPage />
+            </div>
+          )}
+
           {/* Other Pages - Coming Soon */}
-          {currentPage !== 'dashboard' && (
+          {(currentPage === 'diet' || currentPage === 'workout' || currentPage === 'friends') && (
             <div className="flex items-center justify-center min-h-[60vh]">
               <div className="text-center">
                 <div className="w-24 h-24 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
                   {currentPage === 'diet' && <Utensils className="w-12 h-12 text-white" />}
                   {currentPage === 'workout' && <Dumbbell className="w-12 h-12 text-white" />}
-                  {currentPage === 'ai-agents' && <Bot className="w-12 h-12 text-white" />}
                   {currentPage === 'friends' && <Users className="w-12 h-12 text-white" />}
                 </div>
                 <h2 className="text-3xl font-bold mb-4 capitalize">{currentPage.replace('-', ' ')}</h2>
