@@ -729,7 +729,7 @@ export default function ImprovedDashboard() {
                         <div className="mt-4 text-center">
                           <div className="text-2xl font-bold text-blue-600">{userGoals.currentWeight} kg</div>
                           <div className="text-sm text-gray-600 mt-1">Starting Weight</div>
-                          <div className="text-xs text-gray-500">90 days ago</div>
+                          <div className="text-xs text-gray-500">{new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toLocaleDateString()}</div>
                         </div>
                       </div>
 
@@ -771,15 +771,19 @@ export default function ImprovedDashboard() {
                   {/* Stats Summary */}
                   <div className="mt-8 grid grid-cols-3 gap-4">
                     <div className="text-center p-4 bg-blue-50 rounded-xl">
-                      <div className="text-2xl font-bold text-blue-600">{weightDifference.toFixed(1)} kg</div>
+                      <div className="text-2xl font-bold text-blue-600">{Math.abs(weightDifference).toFixed(1)} kg</div>
                       <div className="text-sm text-gray-600">Total to Lose</div>
                     </div>
                     <div className="text-center p-4 bg-green-50 rounded-xl">
-                      <div className="text-2xl font-bold text-green-600">{weightProgress.toFixed(1)} kg</div>
+                      <div className="text-2xl font-bold text-green-600">
+                        {weightProgress > 0 ? `${weightProgress.toFixed(1)} kg` : 'Not started'}
+                      </div>
                       <div className="text-sm text-gray-600">Progress Made</div>
                     </div>
                     <div className="text-center p-4 bg-purple-50 rounded-xl">
-                      <div className="text-2xl font-bold text-purple-600">{(weightDifference - weightProgress).toFixed(1)} kg</div>
+                      <div className="text-2xl font-bold text-purple-600">
+                        {Math.abs(weightDifference - weightProgress).toFixed(1)} kg
+                      </div>
                       <div className="text-sm text-gray-600">Remaining</div>
                     </div>
                   </div>
@@ -813,7 +817,11 @@ export default function ImprovedDashboard() {
                         style={{ width: `${Math.min(100, (totalCalories / userGoals.dailyCalories) * 100)}%` }}
                       ></div>
                     </div>
-                    <div className="text-xs mt-2 opacity-75">{userGoals.dailyCalories - totalCalories} remaining</div>
+                    <div className="text-xs mt-2 opacity-75">
+                      {userGoals.dailyCalories - totalCalories > 0
+                        ? `${userGoals.dailyCalories - totalCalories} remaining`
+                        : `${Math.abs(userGoals.dailyCalories - totalCalories)} over limit`}
+                    </div>
                   </div>
 
                   {/* Protein Detail */}
