@@ -1,6 +1,6 @@
 import { useAuth } from './components/AuthProvider';
 import LandingPage from './App';
-import EnhancedDashboard from './components/EnhancedDashboard';
+import ImprovedDashboard from './components/ImprovedDashboard';
 
 export default function AppRouter() {
   const { user, loading } = useAuth();
@@ -29,7 +29,7 @@ export default function AppRouter() {
     return <LandingPage />;
   }
 
-  // Logged in - show enhanced dashboard
-  console.log('[AppRouter] User logged in - showing enhanced dashboard');
-  return <EnhancedDashboard />;
+  // Logged in - show improved dashboard
+  console.log('[AppRouter] User logged in - showing improved dashboard');
+  return <ImprovedDashboard />;
 }
