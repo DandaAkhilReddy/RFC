@@ -1,12 +1,15 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { User, signInWithPopup, signInWithRedirect, getRedirectResult, signOut as firebaseSignOut, onAuthStateChanged } from 'firebase/auth';
-import { auth, googleProvider, db, Collections } from '../lib/firebase';
+import { User, signInWithPopup, signInWithRedirect, getRedirectResult, signOut as firebaseSignOut, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { auth, googleProvider, githubProvider, db, Collections } from '../lib/firebase';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
+  signInWithGithub: () => Promise<void>;
+  signInWithEmail: (email: string, password: string) => Promise<void>;
+  signUpWithEmail: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -141,6 +144,52 @@ Please add this domain to Firebase:
     }
   };
 
+
+  const signInWithGithub = async () => {
+    try {
+      console.log('Starting GitHub sign-in...');
+      githubProvider.setCustomParameters({
+        prompt: 'select_account'
+      });
+
+      try {
+        const result = await signInWithPopup(auth, githubProvider);
+        console.log('GitHub sign-in successful:', result.user.email);
+      } catch (popupError: any) {
+        console.log('Popup failed, trying redirect method...', popupError.code);
+        if (popupError.code === 'auth/popup-blocked' ||
+            popupError.code === 'auth/popup-closed-by-user' ||
+            popupError.code === 'auth/cancelled-popup-request') {
+          await signInWithRedirect(auth, githubProvider);
+        } else {
+          throw popupError;
+        }
+      }
+    } catch (error: any) {
+      console.error('Error signing in with GitHub:', error);
+      alert(`GitHub sign-in failed: ${error.message}`);
+    }
+  };
+
+  const signInWithEmail = async (email: string, password: string) => {
+    try {
+      const result = await signInWithEmailAndPassword(auth, email, password);
+      console.log('Email sign-in successful:', result.user.email);
+    } catch (error: any) {
+      console.error('Error signing in with email:', error);
+      throw error;
+    }
+  };
+
+  const signUpWithEmail = async (email: string, password: string) => {
+    try {
+      const result = await createUserWithEmailAndPassword(auth, email, password);
+      console.log('Email sign-up successful:', result.user.email);
+    } catch (error: any) {
+      console.error('Error signing up with email:', error);
+      throw error;
+    }
+  };
   const signOut = async () => {
     try {
       await firebaseSignOut(auth);
@@ -150,7 +199,7 @@ Please add this domain to Firebase:
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signInWithGoogle, signOut }}>
+    <AuthContext.Provider value={{ user, loading, signInWithGoogle, signInWithGithub, signInWithEmail, signUpWithEmail, signOut }}>
       {children}
     </AuthContext.Provider>
   );

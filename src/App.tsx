@@ -10,12 +10,15 @@ import Logo from './components/Logo';
 import DOMPurify from 'isomorphic-dompurify';
 
 export default function LandingPage() {
-  const { signInWithGoogle, user } = useAuth();
+  const { signInWithGoogle, signInWithGithub, signInWithEmail, signUpWithEmail, user } = useAuth();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [gender, setGender] = useState<'male' | 'female'>('male');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState('');
+  const [loginEmail, setLoginEmail] = useState<string>("");
+  const [loginPassword, setLoginPassword] = useState<string>("");
+  const [showEmailLogin, setShowEmailLogin] = useState(false);
 
   console.log('LandingPage rendered - current user:', user?.email || 'none');
 
@@ -152,6 +155,76 @@ export default function LandingPage() {
             </button>
           </div>
 
+
+            {/* GitHub Login Button */}
+            <button
+              onClick={signInWithGithub}
+              className="group relative overflow-hidden bg-gray-800 text-white px-10 py-5 rounded-full font-bold text-xl hover:shadow-xl transition transform hover:scale-110 flex items-center space-x-3"
+            >
+              <svg className="w-6 h-6" viewBox="0 0 24 24" fill="white">
+                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+              </svg>
+              <span>Sign in with GitHub</span>
+            </button>
+
+            {/* Email/Password Toggle */}
+            <button
+              onClick={() => setShowEmailLogin(!showEmailLogin)}
+              className="group relative overflow-hidden bg-blue-600 text-white px-10 py-5 rounded-full font-bold text-xl hover:shadow-xl transition transform hover:scale-110 flex items-center space-x-3"
+            >
+              <span>{showEmailLogin ? 'Hide' : 'Sign in with Email'}</span>
+            </button>
+          </div>
+
+          {/* Email/Password Login Form */}
+          {showEmailLogin && (
+            <div className="mt-8 bg-white p-8 rounded-2xl shadow-xl max-w-md mx-auto">
+              <h3 className="text-2xl font-bold mb-6 text-center">Email Login</h3>
+              <form onSubmit={async (e) => {
+                e.preventDefault();
+                try {
+                  await signInWithEmail(loginEmail, loginPassword);
+                } catch (error: any) {
+                  if (error.code === 'auth/user-not-found') {
+                    // Auto sign-up if user doesn't exist
+                    try {
+                      await signUpWithEmail(loginEmail, loginPassword);
+                    } catch (signUpError: any) {
+                      alert('Error: ' + signUpError.message);
+                    }
+                  } else {
+                    alert('Error: ' + error.message);
+                  }
+                }
+              }} className="space-y-4">
+                <input
+                  type="email"
+                  placeholder="Email"
+                  value={loginEmail}
+                  onChange={(e) => setLoginEmail(e.target.value)}
+                  required
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-orange-500 focus:outline-none"
+                />
+                <input
+                  type="password"
+                  placeholder="Password"
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                  required
+                  minLength={6}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-orange-500 focus:outline-none"
+                />
+                <button
+                  type="submit"
+                  className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-3 rounded-lg font-bold hover:shadow-lg transition"
+                >
+                  Sign In / Sign Up
+                </button>
+              </form>
+            </div>
+          )}
+
+          <div className="mt-4">
           {/* Animated Stats */}
           <div
             ref={transition({
