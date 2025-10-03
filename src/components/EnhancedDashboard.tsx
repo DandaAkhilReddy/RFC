@@ -1,1565 +1,998 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { transition } from '@ssgoi/react';
 import { fly } from '@ssgoi/react/transitions';
 import {
-  Bot, Utensils, Dumbbell, Settings, LogOut, Menu, X, ChevronRight, Heart,
-  Activity, Camera, MessageCircle, TrendingUp, Users, Edit2, Calendar,
-  MapPin, Star, Trophy, Mic, BarChart3, Image as ImageIcon, Zap, Crown,
-  Clock, Target, Award, Flame, Home, Sparkles, UserCircle2, Bell, AlertCircle,
-  Upload, ThumbsUp, Share2
+  Camera, Plus, Edit2, Check, X, Trash2, Upload, Image as ImageIcon,
+  Utensils, Dumbbell, TrendingUp, Calendar, Clock, Target, Flame,
+  Activity, Heart, Settings, LogOut, Menu, Bell, Home, User, ChevronDown,
+  Save, Apple, Coffee, Drumstick, Cookie, Info, BarChart3, Sparkles, Zap,
+  Users, Share2, Smartphone, Radio, Bot, Send, UserPlus, Trophy, Lock
 } from 'lucide-react';
 import { useAuth } from './AuthProvider';
-import ReddyAIAgent from './ReddyAIAgent';
-import FitBuddyAIAgent from './FitBuddyAIAgent';
-import CupidAIAgent from './CupidAIAgent';
-import SettingsPage from './SettingsPage';
-import OnboardingWelcome, { hasSeenOnboarding } from './OnboardingWelcome';
-import { db, Collections } from '../lib/firebase';
-import { doc, getDoc, setDoc, collection, addDoc, updateDoc, arrayUnion, increment } from 'firebase/firestore';
+import ToastNotification from './ToastNotification';
+import Logo from './Logo';
 
-type DashboardPage = 'dashboard' | 'ai-agents' | 'workout-buddies' | 'dating-matches' | 'community' | 'diet-nutrition' | 'settings' | 'reddy' | 'fitbuddy' | 'cupid';
+type PageType = 'dashboard' | 'diet' | 'workout' | 'ai-agents' | 'friends';
 
-interface UserSettings {
-  calorieGoal?: number;
-  weeklyWorkoutGoal?: number;
-  weight?: number;
-  height?: number;
-  bmi?: number;
-  bmr?: number;
-  targetWeight?: number;
-  startWeight?: number;
-}
-
-interface Match {
+interface FoodEntry {
   id: string;
   name: string;
-  age: number;
-  photo: string;
-  compatibility: number;
-  fitnessGoal: string;
-  distance: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  time: string;
+  photo?: string;
 }
 
-interface WorkoutBuddy {
+interface WorkoutEntry {
   id: string;
   name: string;
-  photo: string;
-  lastActive: string;
-  distance: string;
-  commonWorkouts: string[];
+  duration: number;
+  caloriesBurned: number;
+  time: string;
+  photo?: string;
 }
 
-interface HealthInsight {
-  id: string;
-  title: string;
-  description: string;
-  icon: any;
-  color: string;
-}
-
-interface CommunityPost {
-  id: string;
-  author: string;
-  authorPhoto: string;
-  content: string;
-  likes: number;
-  comments: number;
-  timestamp: string;
+interface DailyActivity {
+  date: string;
+  steps: number;
+  water: number;
+  sleep: number;
+  weight: number;
+  photos: string[];
+  foods: FoodEntry[];
+  workouts: WorkoutEntry[];
+  notes: string;
 }
 
 export default function EnhancedDashboard() {
   const { user, signOut } = useAuth();
-  const [currentPage, setCurrentPage] = useState<DashboardPage>('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [settingsComplete, setSettingsComplete] = useState(false);
-  const [showSettingsAlert, setShowSettingsAlert] = useState(false);
-  const [userSettings, setUserSettings] = useState<UserSettings>({
-    calorieGoal: 2000,
-    weeklyWorkoutGoal: 5,
-    weight: 75,
-    targetWeight: 70,
-    startWeight: 80
-  });
-  const [editingCalories, setEditingCalories] = useState(false);
-  const [editingWorkouts, setEditingWorkouts] = useState(false);
-  const [tempCalorieGoal, setTempCalorieGoal] = useState('2000');
-  const [tempWorkoutGoal, setTempWorkoutGoal] = useState('5');
-  const [selectedDay, setSelectedDay] = useState(new Date().getDay());
-  const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
-  const [lastCalorieEdit, setLastCalorieEdit] = useState<string>('');
-  const [lastWorkoutEdit, setLastWorkoutEdit] = useState<string>('');
-  const [currentCalories, setCurrentCalories] = useState(0);
-  const [currentWorkouts, setCurrentWorkouts] = useState(0);
-  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [currentPage, setCurrentPage] = useState<PageType>('dashboard');
+  const [currentDate, setCurrentDate] = useState(new Date().toISOString().split('T')[0]);
+  const [toast, setToast] = useState<{message: string, type: 'success' | 'error' | 'info'} | null>(null);
+  const [showNFCShare, setShowNFCShare] = useState(false);
 
-  // Discipline tracking state
-  const [disciplineData, setDisciplineData] = useState({
-    currentStreak: 0,
-    bestStreak: 0,
-    totalDays: 0,
-    workoutStreak: 0,
-    calorieStreak: 0,
-    weightStreak: 0,
-    aiChatStreak: 0,
-    lastWorkoutDate: '',
-    lastCalorieLog: '',
-    lastWeightLog: '',
-    lastAIChatDate: '',
-    workoutHistory: [] as boolean[],
-    calorieHistory: [] as boolean[],
-    weightHistory: [] as boolean[],
-    aiChatHistory: [] as boolean[]
+  const [dailyData, setDailyData] = useState<DailyActivity>({
+    date: currentDate,
+    steps: 0,
+    water: 0,
+    sleep: 0,
+    weight: 0,
+    photos: [],
+    foods: [],
+    workouts: [],
+    notes: ''
   });
 
-  // No mock data - all real data from database
-  const healthInsights: HealthInsight[] = [
-    {
-      id: "1",
-      title: "Calorie Balance",
-      description: "You are on track with your daily calorie goals",
-      icon: Utensils,
-      color: "from-green-500 to-emerald-600"
-    },
-    {
-      id: "2",
-      title: "Workout Consistency",
-      description: "Great job maintaining your workout schedule",
-      icon: Dumbbell,
-      color: "from-blue-500 to-cyan-600"
-    },
-    {
-      id: "3",
-      title: "Progress Tracking",
-      description: "You are making steady progress toward your goals",
-      icon: TrendingUp,
-      color: "from-purple-500 to-pink-600"
-    }
-  ];
-  const activityDots = [true, true, false, true, false, false, false];
-  const workoutBuddies: WorkoutBuddy[] = [];
-  const todaysMatches: Match[] = [];
-  const communityPosts: CommunityPost[] = [];
+  const [showAddFood, setShowAddFood] = useState(false);
+  const [showAddWorkout, setShowAddWorkout] = useState(false);
+  const [editingStats, setEditingStats] = useState(false);
 
-  const [isFirstTimeUser, setIsFirstTimeUser] = useState(false);
+  // Form states
+  const [newFood, setNewFood] = useState({
+    name: '',
+    calories: '',
+    protein: '',
+    carbs: '',
+    fat: ''
+  });
 
-  const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const [newWorkout, setNewWorkout] = useState({
+    name: '',
+    duration: '',
+    caloriesBurned: ''
+  });
 
-  // Check if settings are complete
-  const checkSettingsComplete = (data: any) => {
-    const requiredFields = ['weight', 'height', 'fitnessGoal', 'currentFitnessLevel', 'targetWeight'];
-    const isComplete = requiredFields.every(field => data[field] && data[field] !== '');
-    return isComplete;
-  };
-
-  // Initialize new user with fresh data
-  const initializeNewUser = async (userId: string) => {
-    try {
-      const initialData = {
-        calorieGoal: 2000,
-        weeklyWorkoutGoal: 5,
-        weight: 0,
-        height: 0,
-        targetWeight: 0,
-        startWeight: 0,
-        currentCalories: 0,
-        currentWorkouts: 0,
-        lastCalorieEdit: '',
-        lastWorkoutEdit: '',
-        createdAt: new Date().toISOString(),
-        // Discipline tracking
-        currentStreak: 0,
-        bestStreak: 0,
-        totalDays: 0,
-        workoutStreak: 0,
-        calorieStreak: 0,
-        weightStreak: 0,
-        aiChatStreak: 0,
-        lastWorkoutDate: '',
-        lastCalorieLog: '',
-        lastWeightLog: '',
-        lastAIChatDate: '',
-        workoutHistory: [],
-        calorieHistory: [],
-        weightHistory: [],
-        aiChatHistory: []
-      };
-
-      await setDoc(doc(db, Collections.USERS, userId), initialData);
-      console.log('✅ New user initialized with clean data');
-      return initialData;
-    } catch (error) {
-      console.error('Error initializing new user:', error);
-      return null;
-    }
-  };
-
-  // Fetch user settings and check if complete
-  useEffect(() => {
-    if (user) {
-      const fetchSettings = async () => {
-        try {
-          console.log('📥 Loading user data for UID:', user.uid);
-          const docRef = doc(db, Collections.USERS, user.uid);
-          const docSnap = await getDoc(docRef);
-
-          let data;
-          let isNewUser = false;
-
-          if (docSnap.exists()) {
-            console.log('✅ User data loaded from Firestore');
-            data = docSnap.data();
-            // Check if this is their first login (createdAt within last 5 minutes)
-            const createdAt = data.createdAt ? new Date(data.createdAt) : null;
-            const now = new Date();
-            const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000);
-            isNewUser = createdAt && createdAt > fiveMinutesAgo;
-          } else {
-            // New user - initialize with clean data
-            console.log('🆕 New user detected, initializing...');
-            data = await initializeNewUser(user.uid);
-            if (!data) {
-              throw new Error('Failed to initialize user');
-            }
-            isNewUser = true;
-          }
-
-          // Set first-time user flag
-          setIsFirstTimeUser(isNewUser);
-
-          // Check if settings are complete
-          const isComplete = checkSettingsComplete(data);
-          setSettingsComplete(isComplete);
-
-          // Load user settings
-          setUserSettings({
-            calorieGoal: data.calorieGoal || 2000,
-            weeklyWorkoutGoal: data.weeklyWorkoutGoal || 5,
-            weight: data.weight,
-            height: data.height,
-            bmi: data.bmi,
-            bmr: data.bmr,
-            targetWeight: data.targetWeight,
-            startWeight: data.startWeight
-          });
-
-          setTempCalorieGoal((data.calorieGoal || 2000).toString());
-          setTempWorkoutGoal((data.weeklyWorkoutGoal || 5).toString());
-          setLastCalorieEdit(data.lastCalorieEdit || '');
-          setLastWorkoutEdit(data.lastWorkoutEdit || '');
-          setCurrentCalories(data.currentCalories || 0);
-          setCurrentWorkouts(data.currentWorkouts || 0);
-
-          // Load discipline data
-          setDisciplineData({
-            currentStreak: data.currentStreak || 0,
-            bestStreak: data.bestStreak || 0,
-            totalDays: data.totalDays || 0,
-            workoutStreak: data.workoutStreak || 0,
-            calorieStreak: data.calorieStreak || 0,
-            weightStreak: data.weightStreak || 0,
-            aiChatStreak: data.aiChatStreak || 0,
-            lastWorkoutDate: data.lastWorkoutDate || '',
-            lastCalorieLog: data.lastCalorieLog || '',
-            lastWeightLog: data.lastWeightLog || '',
-            lastAIChatDate: data.lastAIChatDate || '',
-            workoutHistory: data.workoutHistory || Array(7).fill(false),
-            calorieHistory: data.calorieHistory || Array(7).fill(false),
-            weightHistory: data.weightHistory || Array(7).fill(false),
-            aiChatHistory: data.aiChatHistory || Array(7).fill(false)
-          });
-
-        } catch (error) {
-          console.error('Error fetching user settings:', error);
-          // Use defaults on error
-          setUserSettings({
-            calorieGoal: 2000,
-            weeklyWorkoutGoal: 5,
-            weight: 75,
-            targetWeight: 70,
-            startWeight: 80
-          });
-        }
-      };
-      fetchSettings();
-    }
-  }, [user]);
-
-  // Check if user needs to see onboarding
-  useEffect(() => {
-    if (user && !hasSeenOnboarding()) {
-      setShowOnboarding(true);
-    }
-  }, [user]);
-
-  // Check if can edit today
-  const canEditToday = (lastEditDate: string) => {
-    if (!lastEditDate) return true;
-    const today = new Date().toDateString();
-    const lastEdit = new Date(lastEditDate).toDateString();
-    return today !== lastEdit;
-  };
-
-  const saveCalorieGoal = async () => {
-    if (!user) return;
-
-    // Check if already edited today
-    if (!canEditToday(lastCalorieEdit)) {
-      setEditingCalories(false);
+  const handleAddFood = () => {
+    if (!newFood.name || !newFood.calories) {
+      setToast({ message: 'Please enter food name and calories', type: 'error' });
       return;
     }
 
-    const newGoal = parseInt(tempCalorieGoal);
-    if (!isNaN(newGoal) && newGoal > 0) {
-      try {
-        const today = new Date().toISOString();
-        await setDoc(doc(db, Collections.USERS, user.uid), {
-          calorieGoal: newGoal,
-          lastCalorieEdit: today
-        }, { merge: true });
-        console.log('✅ Calorie goal saved:', newGoal);
-        setUserSettings({ ...userSettings, calorieGoal: newGoal });
-        setLastCalorieEdit(today);
-        setEditingCalories(false);
-      } catch (error) {
-        console.error('Error saving calorie goal:', error);
-        setEditingCalories(false);
-      }
-    }
+    const foodEntry: FoodEntry = {
+      id: Date.now().toString(),
+      name: newFood.name,
+      calories: parseInt(newFood.calories),
+      protein: parseInt(newFood.protein) || 0,
+      carbs: parseInt(newFood.carbs) || 0,
+      fat: parseInt(newFood.fat) || 0,
+      time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+    };
+
+    setDailyData(prev => ({
+      ...prev,
+      foods: [...prev.foods, foodEntry]
+    }));
+
+    setNewFood({ name: '', calories: '', protein: '', carbs: '', fat: '' });
+    setShowAddFood(false);
+    setToast({ message: 'Food added successfully!', type: 'success' });
   };
 
-  const saveWorkoutGoal = async () => {
-    if (!user) return;
-
-    // Check if already edited today
-    if (!canEditToday(lastWorkoutEdit)) {
-      setEditingWorkouts(false);
+  const handleAddWorkout = () => {
+    if (!newWorkout.name || !newWorkout.duration) {
+      setToast({ message: 'Please enter workout name and duration', type: 'error' });
       return;
     }
 
-    const newGoal = parseInt(tempWorkoutGoal);
-    if (!isNaN(newGoal) && newGoal > 0) {
-      try {
-        const today = new Date().toISOString();
-        await setDoc(doc(db, Collections.USERS, user.uid), {
-          weeklyWorkoutGoal: newGoal,
-          lastWorkoutEdit: today
-        }, { merge: true });
-        console.log('✅ Workout goal saved:', newGoal);
-        setUserSettings({ ...userSettings, weeklyWorkoutGoal: newGoal });
-        setLastWorkoutEdit(today);
-        setEditingWorkouts(false);
-      } catch (error) {
-        console.error('Error saving workout goal:', error);
-        setEditingWorkouts(false);
-      }
-    }
+    const workoutEntry: WorkoutEntry = {
+      id: Date.now().toString(),
+      name: newWorkout.name,
+      duration: parseInt(newWorkout.duration),
+      caloriesBurned: parseInt(newWorkout.caloriesBurned) || 0,
+      time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+    };
+
+    setDailyData(prev => ({
+      ...prev,
+      workouts: [...prev.workouts, workoutEntry]
+    }));
+
+    setNewWorkout({ name: '', duration: '', caloriesBurned: '' });
+    setShowAddWorkout(false);
+    setToast({ message: 'Workout added successfully!', type: 'success' });
   };
 
-  const weightProgress = userSettings.startWeight && userSettings.targetWeight && userSettings.weight
-    ? ((userSettings.startWeight - userSettings.weight) / (userSettings.startWeight - userSettings.targetWeight)) * 100
-    : 0;
+  const handleDeleteFood = (id: string) => {
+    setDailyData(prev => ({
+      ...prev,
+      foods: prev.foods.filter(food => food.id !== id)
+    }));
+    setToast({ message: 'Food deleted', type: 'info' });
+  };
 
-  // Button Handlers
-  const handleConnectBuddy = async (buddyId: string) => {
-    if (!user) return;
-    try {
-      const connectionRef = collection(db, Collections.USERS, user.uid, 'connections');
-      await addDoc(connectionRef, {
-        buddyId,
-        type: 'workout_buddy',
-        status: 'pending',
-        createdAt: new Date().toISOString()
+  const handleDeleteWorkout = (id: string) => {
+    setDailyData(prev => ({
+      ...prev,
+      workouts: prev.workouts.filter(workout => workout.id !== id)
+    }));
+    setToast({ message: 'Workout deleted', type: 'info' });
+  };
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files) {
+      Array.from(files).forEach(file => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setDailyData(prev => ({
+            ...prev,
+            photos: [...prev.photos, reader.result as string]
+          }));
+        };
+        reader.readAsDataURL(file);
       });
-      console.log('Connection request sent successfully');
-    } catch (error) {
-      console.error('Error connecting:', error);
+      setToast({ message: 'Photos uploaded!', type: 'success' });
     }
   };
 
-  const handleConnectMatch = async (matchId: string) => {
-    if (!user) return;
-    try {
-      const matchRef = collection(db, Collections.MATCHES);
-      await addDoc(matchRef, {
-        userId: user.uid,
-        matchId,
-        status: 'interested',
-        createdAt: new Date().toISOString()
-      });
-      console.log('Match request sent successfully');
-    } catch (error) {
-      console.error('Error matching:', error);
-    }
-  };
-
-  const handleLikePost = async (postId: string) => {
-    if (!user) return;
-    try {
-      if (likedPosts.has(postId)) {
-        // Unlike
-        setLikedPosts(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(postId);
-          return newSet;
-        });
-      } else {
-        // Like
-        setLikedPosts(prev => new Set(prev).add(postId));
-        const postRef = doc(db, Collections.USER_FEEDBACK, postId);
-        await setDoc(postRef, {
-          likes: increment(1),
-          likedBy: arrayUnion(user.uid)
-        }, { merge: true });
-      }
-    } catch (error) {
-      console.error('Error liking post:', error);
-    }
-  };
-
-  const handleUpgradePremium = () => {
-    alert('🔥 Premium upgrade coming soon! Get ready for advanced AI matchmaking.');
-  };
-
-  const handleUploadPhoto = () => {
-    alert('📸 Photo upload feature coming soon!');
-  };
-
-  const handleVoiceChat = () => {
-    alert('🎤 Voice chat feature coming soon!');
-  };
-
-  // Navigation items
-  const navItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: Home, color: 'orange' },
-    { id: 'ai-agents', label: 'AI Agents', icon: Bot, color: 'purple' },
-    { id: 'diet-nutrition', label: 'Diet & Nutrition', icon: Utensils, color: 'green' },
-    { id: 'workout-buddies', label: 'Workout Buddies', icon: Users, color: 'blue' },
-    { id: 'dating-matches', label: 'Dating & Matches', icon: Heart, color: 'pink' },
-    { id: 'community', label: 'Community', icon: MessageCircle, color: 'cyan' }
-  ];
-
-  // Handle AI agent navigation
-  if (currentPage === 'reddy') {
-    return <ReddyAIAgent onBack={() => setCurrentPage('ai-agents')} />;
-  }
-  if (currentPage === 'fitbuddy') {
-    return <FitBuddyAIAgent onBack={() => setCurrentPage('ai-agents')} />;
-  }
-  if (currentPage === 'cupid') {
-    return <CupidAIAgent onBack={() => setCurrentPage('ai-agents')} />;
-  }
-  if (currentPage === 'settings') {
-    return <SettingsPage onBack={() => setCurrentPage('dashboard')} />;
-  }
+  const totalCalories = dailyData.foods.reduce((sum, food) => sum + food.calories, 0);
+  const totalProtein = dailyData.foods.reduce((sum, food) => sum + food.protein, 0);
+  const totalCarbs = dailyData.foods.reduce((sum, food) => sum + food.carbs, 0);
+  const totalFat = dailyData.foods.reduce((sum, food) => sum + food.fat, 0);
+  const totalCaloriesBurned = dailyData.workouts.reduce((sum, workout) => sum + workout.caloriesBurned, 0);
+  const netCalories = totalCalories - totalCaloriesBurned;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-red-50">
-      {/* Onboarding Welcome Modal */}
-      {showOnboarding && (
-        <OnboardingWelcome onComplete={() => setShowOnboarding(false)} />
-      )}
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-red-50 relative overflow-hidden">
+      {toast && <ToastNotification message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
-      {/* Settings Alert Banner */}
-      {showSettingsAlert && !settingsComplete && (
-        <div className="fixed top-0 left-0 right-0 bg-gradient-to-r from-orange-500 to-red-500 text-white px-6 py-4 z-50 shadow-lg">
-          <div className="flex items-center justify-between max-w-7xl mx-auto">
-            <div className="flex items-center gap-3">
-              <AlertCircle className="w-6 h-6" />
-              <div>
-                <p className="font-bold">Complete Your Profile Settings</p>
-                <p className="text-sm text-white/90">Please fill in all required information to unlock all features. Redirecting to settings...</p>
-              </div>
+      {/* Animated Background Blobs */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 left-10 w-96 h-96 bg-orange-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-red-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-4000"></div>
+      </div>
+
+      {/* Sidebar */}
+      <div className={`fixed left-0 top-0 h-full bg-white/90 backdrop-blur-md shadow-2xl transition-all duration-300 z-40 ${sidebarOpen ? 'w-64' : 'w-20'} border-r border-gray-200`}>
+        <div className="p-6 border-b border-gray-200">
+          {sidebarOpen ? (
+            <div className="flex items-center justify-between">
+              <Logo size={40} showText={true} />
+              <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 hover:bg-orange-100 rounded-lg transition">
+                <Menu className="w-6 h-6 text-gray-600" />
+              </button>
             </div>
-            <button
-              onClick={() => setShowSettingsAlert(false)}
-              className="p-2 hover:bg-white/20 rounded-lg transition-colors"
-            >
-              <X className="w-5 h-5" />
+          ) : (
+            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 hover:bg-orange-100 rounded-lg transition w-full flex justify-center">
+              <Menu className="w-6 h-6 text-gray-600" />
+            </button>
+          )}
+        </div>
+
+        <nav className="mt-6 space-y-1">
+          <button
+            onClick={() => setCurrentPage('dashboard')}
+            className={`w-full flex items-center px-6 py-3 transition ${
+              currentPage === 'dashboard'
+                ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg'
+                : 'hover:bg-orange-50 text-gray-600 hover:text-orange-500'
+            }`}
+          >
+            <Home className="w-5 h-5" />
+            {sidebarOpen && <span className="ml-3 font-semibold">Dashboard</span>}
+          </button>
+
+          <button
+            onClick={() => setCurrentPage('diet')}
+            className={`w-full flex items-center px-6 py-3 transition ${
+              currentPage === 'diet'
+                ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg'
+                : 'hover:bg-orange-50 text-gray-600 hover:text-orange-500'
+            }`}
+          >
+            <Utensils className="w-5 h-5" />
+            {sidebarOpen && <span className="ml-3 font-semibold">Diet & Nutrition</span>}
+          </button>
+
+          <button
+            onClick={() => setCurrentPage('workout')}
+            className={`w-full flex items-center px-6 py-3 transition ${
+              currentPage === 'workout'
+                ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg'
+                : 'hover:bg-orange-50 text-gray-600 hover:text-orange-500'
+            }`}
+          >
+            <Dumbbell className="w-5 h-5" />
+            {sidebarOpen && <span className="ml-3 font-semibold">Workouts</span>}
+          </button>
+
+          <button
+            onClick={() => setCurrentPage('ai-agents')}
+            className={`w-full flex items-center px-6 py-3 transition ${
+              currentPage === 'ai-agents'
+                ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg'
+                : 'hover:bg-orange-50 text-gray-600 hover:text-orange-500'
+            }`}
+          >
+            <Bot className="w-5 h-5" />
+            {sidebarOpen && <span className="ml-3 font-semibold">AI Agents</span>}
+          </button>
+
+          <button
+            onClick={() => setCurrentPage('friends')}
+            className={`w-full flex items-center px-6 py-3 transition ${
+              currentPage === 'friends'
+                ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg'
+                : 'hover:bg-orange-50 text-gray-600 hover:text-orange-500'
+            }`}
+          >
+            <Users className="w-5 h-5" />
+            {sidebarOpen && <span className="ml-3 font-semibold">Friends</span>}
+          </button>
+
+          <div className="border-t border-gray-200 mt-4 pt-4">
+            <button onClick={signOut} className="w-full flex items-center px-6 py-3 hover:bg-orange-50 text-gray-600 transition group">
+              <LogOut className="w-5 h-5 group-hover:text-orange-500 transition" />
+              {sidebarOpen && <span className="ml-3 group-hover:text-orange-500 transition">Logout</span>}
             </button>
           </div>
-        </div>
-      )}
+        </nav>
+      </div>
 
-      {/* Modern Sidebar */}
-      <aside
-        className={`fixed top-0 left-0 h-full bg-white shadow-2xl transition-all duration-300 z-50 ${
-          sidebarOpen ? 'w-72' : 'w-20'
-        }`}
-      >
-        {/* Sidebar Header */}
-        <div className="p-6 border-b border-gray-100">
-          <div className="flex items-center justify-between">
-            {sidebarOpen && (
-              <div
-                ref={transition({ key: 'sidebar-logo', ...fly({ x: -50, y: 0, opacity: true }) })}
-                className="flex items-center gap-3"
-              >
-                <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center">
-                  <Flame className="w-6 h-6 text-white" />
+      {/* Main Content */}
+      <div className={`transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-20'} relative z-10`}>
+        <div className="p-8">
+          {/* Share Button - Floating */}
+          <button
+            onClick={() => setShowNFCShare(true)}
+            className="fixed bottom-8 right-8 z-50 p-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full shadow-2xl hover:shadow-3xl transition-all transform hover:scale-110 flex items-center space-x-2"
+          >
+            <Share2 className="w-6 h-6" />
+            <span className="font-semibold">Share</span>
+          </button>
+
+          {/* NFC Share Modal */}
+          {showNFCShare && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+              <div className="bg-white rounded-3xl p-8 max-w-md w-full mx-4 shadow-3xl">
+                <div className="text-center">
+                  <div className="w-20 h-20 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Smartphone className="w-10 h-10 text-white" />
+                  </div>
+                  <h3 className="text-2xl font-bold mb-2">Share with Friends</h3>
+                  <p className="text-gray-600 mb-6">Touch phones together or send a friend request</p>
+
+                  <div className="space-y-3">
+                    <button
+                      onClick={() => {
+                        setToast({ message: '📱 Hold phones together to connect!', type: 'info' });
+                        setShowNFCShare(false);
+                      }}
+                      className="w-full px-6 py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:shadow-lg transition-all transform hover:scale-105 flex items-center justify-center space-x-2 font-semibold"
+                    >
+                      <Radio className="w-5 h-5 animate-pulse" />
+                      <span>Touch to Share (NFC)</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(`https://reddyfit.app/add/${user?.uid}`);
+                        setToast({ message: '🔗 Friend link copied!', type: 'success' });
+                        setShowNFCShare(false);
+                      }}
+                      className="w-full px-6 py-4 bg-white border-2 border-purple-500 text-purple-600 rounded-xl hover:bg-purple-50 transition-all flex items-center justify-center space-x-2 font-semibold"
+                    >
+                      <UserPlus className="w-5 h-5" />
+                      <span>Copy Friend Link</span>
+                    </button>
+
+                    <button
+                      onClick={() => setShowNFCShare(false)}
+                      className="w-full px-6 py-3 text-gray-600 hover:text-gray-800 transition"
+                    >
+                      Cancel
+                    </button>
+                  </div>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* Dashboard Page */}
+          {currentPage === 'dashboard' && (
+            <>
+              {/* Header */}
+              <div
+                ref={transition({
+                  key: 'header',
+                  ...fly({ y: -50, opacity: true })
+                })}
+                className="flex justify-between items-center mb-8"
+              >
                 <div>
-                  <h2 className="text-xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
-                    ReddyFit
-                  </h2>
-                  <p className="text-xs text-gray-500">Your Fitness Hub</p>
+                  <h1 className="text-4xl font-bold bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent mb-2">
+                    Welcome back, {user?.displayName || user?.email?.split('@')[0]}!
+                  </h1>
+                  <p className="text-gray-600 flex items-center">
+                    <Sparkles className="w-5 h-5 mr-2 text-orange-500" />
+                    Track your daily fitness journey
+                  </p>
+                </div>
+                <div className="flex items-center space-x-4">
+                  <input
+                    type="date"
+                    value={currentDate}
+                    onChange={(e) => setCurrentDate(e.target.value)}
+                    className="px-4 py-2 border-2 border-gray-300 rounded-xl focus:border-orange-500 focus:outline-none bg-white/80 backdrop-blur-sm shadow-lg hover:shadow-xl transition"
+                  />
+                </div>
+              </div>
+
+          {/* Stats Overview */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div
+              ref={transition({
+                key: 'stat-1',
+                ...fly({ x: -100, opacity: true })
+              })}
+              className="bg-gradient-to-br from-orange-500 to-red-500 p-6 rounded-2xl shadow-2xl hover:shadow-3xl transition-all transform hover:scale-105 text-white relative overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-2">
+                  <Utensils className="w-8 h-8" />
+                  <span className="text-sm opacity-90">Calories</span>
+                </div>
+                <div className="text-4xl font-bold">{totalCalories}</div>
+                <div className="text-sm opacity-90 mt-1">Net: {netCalories}</div>
+              </div>
+            </div>
+
+            <div
+              ref={transition({
+                key: 'stat-2',
+                ...fly({ y: -100, opacity: true })
+              })}
+              className="bg-gradient-to-br from-blue-500 to-cyan-500 p-6 rounded-2xl shadow-2xl hover:shadow-3xl transition-all transform hover:scale-105 text-white relative overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-2">
+                  <Dumbbell className="w-8 h-8" />
+                  <span className="text-sm opacity-90">Workouts</span>
+                </div>
+                <div className="text-4xl font-bold">{dailyData.workouts.length}</div>
+                <div className="text-sm opacity-90 mt-1">{totalCaloriesBurned} cal burned</div>
+              </div>
+            </div>
+
+            <div
+              ref={transition({
+                key: 'stat-3',
+                ...fly({ y: -100, opacity: true })
+              })}
+              className="bg-gradient-to-br from-green-500 to-emerald-500 p-6 rounded-2xl shadow-2xl hover:shadow-3xl transition-all transform hover:scale-105 text-white relative overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-2">
+                  <Activity className="w-8 h-8" />
+                  <span className="text-sm opacity-90">Steps</span>
+                </div>
+                {editingStats ? (
+                  <input
+                    type="number"
+                    value={dailyData.steps}
+                    onChange={(e) => setDailyData(prev => ({ ...prev, steps: parseInt(e.target.value) || 0 }))}
+                    className="text-4xl font-bold w-full border-b-2 border-white focus:outline-none bg-transparent"
+                  />
+                ) : (
+                  <div className="text-4xl font-bold">{dailyData.steps}</div>
+                )}
+                <div className="text-sm opacity-90 mt-1">Daily goal: 10,000</div>
+              </div>
+            </div>
+
+            <div
+              ref={transition({
+                key: 'stat-4',
+                ...fly({ x: 100, opacity: true })
+              })}
+              className="bg-gradient-to-br from-purple-500 to-pink-500 p-6 rounded-2xl shadow-2xl hover:shadow-3xl transition-all transform hover:scale-105 text-white relative overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-2">
+                  <Heart className="w-8 h-8" />
+                  <span className="text-sm opacity-90">Weight</span>
+                </div>
+                {editingStats ? (
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={dailyData.weight}
+                    onChange={(e) => setDailyData(prev => ({ ...prev, weight: parseFloat(e.target.value) || 0 }))}
+                    className="text-4xl font-bold w-full border-b-2 border-white focus:outline-none bg-transparent"
+                  />
+                ) : (
+                  <div className="text-4xl font-bold">{dailyData.weight} kg</div>
+                )}
+                <button
+                  onClick={() => setEditingStats(!editingStats)}
+                  className="text-sm hover:underline mt-1 flex items-center opacity-90 hover:opacity-100 transition"
+                >
+                  {editingStats ? <><Check className="w-4 h-4 mr-1" /> Save</> : <><Edit2 className="w-4 h-4 mr-1" /> Edit</>}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Macros Breakdown */}
+          <div
+            ref={transition({
+              key: 'macros',
+              ...fly({ y: 100, opacity: true })
+            })}
+            className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-2xl p-8 mb-8 border border-gray-200 hover:shadow-3xl transition-all"
+          >
+            <h3 className="text-2xl font-bold mb-6 flex items-center bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">
+              <Target className="w-7 h-7 mr-2 text-orange-500" />
+              Today's Macros
+            </h3>
+            <div className="grid grid-cols-3 gap-6">
+              <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl border-2 border-blue-200 hover:border-blue-400 transition">
+                <div className="text-4xl font-bold bg-gradient-to-r from-blue-500 to-cyan-500 bg-clip-text text-transparent">{totalProtein}g</div>
+                <div className="text-sm text-gray-600 font-semibold mt-1">Protein</div>
+              </div>
+              <div className="text-center p-4 bg-gradient-to-br from-yellow-50 to-orange-50 rounded-xl border-2 border-yellow-200 hover:border-yellow-400 transition">
+                <div className="text-4xl font-bold bg-gradient-to-r from-yellow-500 to-orange-500 bg-clip-text text-transparent">{totalCarbs}g</div>
+                <div className="text-sm text-gray-600 font-semibold mt-1">Carbs</div>
+              </div>
+              <div className="text-center p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border-2 border-green-200 hover:border-green-400 transition">
+                <div className="text-4xl font-bold bg-gradient-to-r from-green-500 to-emerald-500 bg-clip-text text-transparent">{totalFat}g</div>
+                <div className="text-sm text-gray-600 font-semibold mt-1">Fat</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Food Tracking */}
+          <div
+            ref={transition({
+              key: 'food',
+              ...fly({ x: -100, opacity: true })
+            })}
+            className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-2xl p-8 mb-8 border border-gray-200 hover:shadow-3xl transition-all"
+          >
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-2xl font-bold flex items-center bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">
+                <Utensils className="w-7 h-7 mr-2 text-orange-500" />
+                Food Log
+              </h3>
+              <button
+                onClick={() => setShowAddFood(!showAddFood)}
+                className="px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl hover:shadow-lg transition-all transform hover:scale-105 flex items-center font-semibold"
+              >
+                <Plus className="w-5 h-5 mr-2" />
+                Add Food
+              </button>
+            </div>
+
+            {showAddFood && (
+              <div className="bg-orange-50 p-4 rounded-xl mb-4">
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <input
+                    type="text"
+                    placeholder="Food name"
+                    value={newFood.name}
+                    onChange={(e) => setNewFood({ ...newFood, name: e.target.value })}
+                    className="px-4 py-2 border-2 border-orange-300 rounded-lg focus:border-orange-500 focus:outline-none"
+                  />
+                  <input
+                    type="number"
+                    placeholder="Calories"
+                    value={newFood.calories}
+                    onChange={(e) => setNewFood({ ...newFood, calories: e.target.value })}
+                    className="px-4 py-2 border-2 border-orange-300 rounded-lg focus:border-orange-500 focus:outline-none"
+                  />
+                  <input
+                    type="number"
+                    placeholder="Protein (g)"
+                    value={newFood.protein}
+                    onChange={(e) => setNewFood({ ...newFood, protein: e.target.value })}
+                    className="px-4 py-2 border-2 border-orange-300 rounded-lg focus:border-orange-500 focus:outline-none"
+                  />
+                  <input
+                    type="number"
+                    placeholder="Carbs (g)"
+                    value={newFood.carbs}
+                    onChange={(e) => setNewFood({ ...newFood, carbs: e.target.value })}
+                    className="px-4 py-2 border-2 border-orange-300 rounded-lg focus:border-orange-500 focus:outline-none"
+                  />
+                  <input
+                    type="number"
+                    placeholder="Fat (g)"
+                    value={newFood.fat}
+                    onChange={(e) => setNewFood({ ...newFood, fat: e.target.value })}
+                    className="px-4 py-2 border-2 border-orange-300 rounded-lg focus:border-orange-500 focus:outline-none"
+                  />
+                </div>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={handleAddFood}
+                    className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition flex items-center"
+                  >
+                    <Check className="w-5 h-5 mr-2" />
+                    Add
+                  </button>
+                  <button
+                    onClick={() => setShowAddFood(false)}
+                    className="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition flex items-center"
+                  >
+                    <X className="w-5 h-5 mr-2" />
+                    Cancel
+                  </button>
                 </div>
               </div>
             )}
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              {sidebarOpen ? <X className="w-5 h-5 text-gray-600" /> : <Menu className="w-5 h-5 text-gray-600" />}
-            </button>
-          </div>
-        </div>
 
-        {/* User Profile Section */}
-        {sidebarOpen && (
-          <div
-            ref={transition({ key: 'sidebar-profile', ...fly({ x: -50, y: 0, opacity: true }) })}
-            className="p-4 mx-4 mt-4 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl text-white"
-          >
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
-                <UserCircle2 className="w-8 h-8 text-white" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="font-bold text-white truncate">{user?.displayName || 'Fitness Enthusiast'}</h3>
-                <p className="text-xs text-white/80 truncate">{user?.email}</p>
-              </div>
-            </div>
-            <div className="flex items-center justify-between text-sm">
-              <div className="text-center">
-                <div className="font-bold">150</div>
-                <div className="text-xs text-white/80">Day Streak</div>
-              </div>
-              <div className="w-px h-8 bg-white/20"></div>
-              <div className="text-center">
-                <div className="font-bold">245</div>
-                <div className="text-xs text-white/80">Workouts</div>
-              </div>
-              <div className="w-px h-8 bg-white/20"></div>
-              <div className="text-center">
-                <div className="font-bold">12</div>
-                <div className="text-xs text-white/80">Buddies</div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Navigation Items */}
-        <nav className="p-4 space-y-2">
-          {navItems.map((item, index) => {
-            const Icon = item.icon;
-            const isActive = currentPage === item.id;
-            return (
-              <button
-                key={item.id}
-                ref={transition({
-                  key: `nav-${item.id}`,
-                  ...fly({ x: -100, y: 0, opacity: true })
-                })}
-                onClick={() => setCurrentPage(item.id as DashboardPage)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-                  isActive
-                    ? `bg-gradient-to-r from-${item.color}-500 to-${item.color}-600 text-white shadow-lg`
-                    : 'hover:bg-gray-50 text-gray-700'
-                }`}
-              >
-                <Icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-gray-600'}`} />
-                {sidebarOpen && (
-                  <span className="font-semibold">{item.label}</span>
-                )}
-                {sidebarOpen && isActive && (
-                  <ChevronRight className="w-4 h-4 ml-auto" />
-                )}
-              </button>
-            );
-          })}
-        </nav>
-
-        {/* Bottom Actions */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-100 bg-white space-y-2">
-          <button
-            onClick={() => setCurrentPage('settings')}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-              currentPage === 'settings'
-                ? 'bg-gradient-to-r from-gray-500 to-gray-600 text-white'
-                : 'hover:bg-gray-50 text-gray-700'
-            }`}
-          >
-            <Settings className="w-5 h-5" />
-            {sidebarOpen && <span className="font-semibold">Settings</span>}
-          </button>
-          <button
-            onClick={signOut}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-50 text-red-600 transition-all"
-          >
-            <LogOut className="w-5 h-5" />
-            {sidebarOpen && <span className="font-semibold">Logout</span>}
-          </button>
-        </div>
-      </aside>
-
-      {/* Main Content Area */}
-      <main
-        className={`transition-all duration-300 ${sidebarOpen ? 'ml-72' : 'ml-20'}`}
-      >
-        {/* Top Bar */}
-        <header className="bg-white/80 backdrop-blur-xl border-b border-gray-100 sticky top-0 z-40">
-          <div className="px-8 py-4 flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                {navItems.find(item => item.id === currentPage)?.label || 'Dashboard'}
-              </h1>
-              <p className="text-sm text-gray-500">Welcome back, {user?.displayName?.split(' ')[0] || 'Champion'}! 👋</p>
-            </div>
-            <div className="flex items-center gap-4">
-              <button className="relative p-2 hover:bg-gray-100 rounded-xl transition-colors">
-                <Bell className="w-5 h-5 text-gray-600" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-              </button>
-            </div>
-          </div>
-        </header>
-
-        {/* Page Content */}
-        <div className="p-8">
-          {/* Dashboard Page */}
-          {currentPage === 'dashboard' && (
-            <div
-              ref={transition({ key: 'dashboard-content', ...fly({ x: 100, y: 0, opacity: true }) })}
-            >
-              {/* Weight Goal Progress */}
-              <div className="bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl p-8 shadow-xl mb-8 text-white">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h3 className="text-3xl font-bold">Weight Goal Progress</h3>
-                    <p className="text-white/80">Keep pushing towards your goal!</p>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-4xl font-bold">{Math.round(weightProgress)}%</div>
-                    <div className="text-sm text-white/80">Complete</div>
-                  </div>
+            <div className="space-y-3">
+              {dailyData.foods.length === 0 ? (
+                <div className="text-center py-8 text-gray-400">
+                  <Apple className="w-16 h-16 mx-auto mb-2 opacity-50" />
+                  <p>No food logged today. Start tracking your meals!</p>
                 </div>
-                <div className="bg-white/20 rounded-full h-4 mb-4 overflow-hidden">
-                  <div
-                    className="bg-white h-full rounded-full transition-all duration-500"
-                    style={{ width: `${Math.min(weightProgress, 100)}%` }}
-                  />
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <div>Start: {userSettings.startWeight}kg</div>
-                  <div>Current: {userSettings.weight}kg</div>
-                  <div>Goal: {userSettings.targetWeight}kg</div>
-                </div>
-              </div>
-
-              {/* Quick Stats Grid - Compact Progress Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                {/* Calorie Goal - Compact Card */}
-                <div
-                  ref={transition({ key: 'calorie-card', ...fly({ y: 20, opacity: true }) })}
-                  className="bg-gradient-to-br from-orange-500 to-red-500 rounded-xl p-4 shadow-lg text-white relative overflow-hidden group hover:shadow-2xl transition-shadow"
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
-                        <Flame className="w-5 h-5 text-white" />
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-bold">Daily Calories</h3>
-                        <p className="text-xs text-white/70">
-                          {canEditToday(lastCalorieEdit) ? 'Editable' : 'Locked today'}
-                        </p>
-                      </div>
-                    </div>
-                    {!editingCalories && canEditToday(lastCalorieEdit) && (
-                      <button
-                        onClick={() => setEditingCalories(true)}
-                        className="p-2 hover:bg-white/20 rounded-lg transition-colors"
-                      >
-                        <Edit2 className="w-5 h-5 text-white" />
-                      </button>
-                    )}
-                  </div>
-
-                  {editingCalories ? (
-                    <div className="flex gap-2">
-                      <input
-                        type="number"
-                        value={tempCalorieGoal}
-                        onChange={(e) => setTempCalorieGoal(e.target.value)}
-                        className="flex-1 px-3 py-2 border-2 border-white/30 bg-white/10 backdrop-blur-sm rounded-lg text-xl font-bold text-white placeholder-white/50"
-                        placeholder="Goal"
-                      />
-                      <button
-                        onClick={saveCalorieGoal}
-                        className="px-3 py-2 bg-white text-orange-600 rounded-lg font-bold hover:scale-105 transition-transform text-sm"
-                      >
-                        ✓
-                      </button>
-                      <button
-                        onClick={() => setEditingCalories(false)}
-                        className="px-3 py-2 bg-white/20 text-white rounded-lg font-bold hover:scale-105 transition-transform text-sm"
-                      >
-                        ✗
-                      </button>
-                    </div>
-                  ) : (
+              ) : (
+                dailyData.foods.map(food => (
+                  <div key={food.id} className="flex justify-between items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
                     <div>
-                      <div className="flex items-baseline gap-2 mb-2">
-                        <div className="text-3xl font-bold">{currentCalories}</div>
-                        <div className="text-lg text-white/80">/ {userSettings.calorieGoal}</div>
-                        <div className="text-xs text-white/60 ml-auto">kcal</div>
+                      <div className="font-semibold text-gray-800">{food.name}</div>
+                      <div className="text-sm text-gray-600">
+                        {food.calories} cal • P: {food.protein}g • C: {food.carbs}g • F: {food.fat}g • {food.time}
                       </div>
-                      <div className="bg-white/20 rounded-full h-2 overflow-hidden mb-2">
-                        <div
-                          className="bg-white h-full rounded-full transition-all duration-500"
-                          style={{ width: `${Math.min((currentCalories / (userSettings.calorieGoal || 2000)) * 100, 100)}%` }}
-                        />
-                      </div>
-                      <div className="flex items-center justify-between text-xs text-white/80">
-                        <span>{Math.round((currentCalories / (userSettings.calorieGoal || 2000)) * 100)}%</span>
-                        <span>{(userSettings.calorieGoal || 2000) - currentCalories} left</span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Discipline & Consistency - Compact Card */}
-                <div
-                  ref={transition({ key: 'discipline-card', ...fly({ y: 20, opacity: true, delay: 100 }) })}
-                  className="bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl p-4 shadow-lg text-white relative overflow-hidden group hover:shadow-2xl transition-shadow cursor-pointer"
-                  onClick={() => setCurrentPage('discipline')}
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
-                        <Dumbbell className="w-5 h-5 text-white" />
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-bold">Discipline</h3>
-                        <p className="text-xs text-white/70">Track Consistency</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex items-baseline gap-2 mb-2">
-                      <div className="text-3xl font-bold">{disciplineData.currentStreak}</div>
-                      <div className="text-lg text-white/80">day streak</div>
-                    </div>
-                    <div className="bg-white/20 rounded-full h-2 overflow-hidden mb-2">
-                      <div
-                        className="bg-white h-full rounded-full transition-all duration-500"
-                        style={{
-                          width: `${disciplineData.totalDays > 0
-                            ? (disciplineData.currentStreak / disciplineData.totalDays) * 100
-                            : 0}%`
-                        }}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between text-xs text-white/80">
-                      <span>Click to view details</span>
-                      <span>→</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Weight Progress - Compact Card */}
-                <div
-                  ref={transition({ key: 'weight-card', ...fly({ y: 20, opacity: true, delay: 200 }) })}
-                  className="bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl p-4 shadow-lg text-white relative overflow-hidden group hover:shadow-2xl transition-shadow"
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
-                        <Activity className="w-5 h-5 text-white" />
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-bold">Weight Goal</h3>
-                        <p className="text-xs text-white/70">Current Progress</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex items-baseline gap-2 mb-2">
-                      <div className="text-3xl font-bold">{userSettings.weight || 75}</div>
-                      <div className="text-lg text-white/80">/ {userSettings.targetWeight || 70}</div>
-                      <div className="text-xs text-white/60 ml-auto">kg</div>
-                    </div>
-                    <div className="bg-white/20 rounded-full h-2 overflow-hidden mb-2">
-                      <div
-                        className="bg-white h-full rounded-full transition-all duration-500"
-                        style={{
-                          width: `${Math.min(((userSettings.startWeight || 80) - (userSettings.weight || 75)) / ((userSettings.startWeight || 80) - (userSettings.targetWeight || 70)) * 100, 100)}%`
-                        }}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between text-xs text-white/80">
-                      <span>{Math.round(((userSettings.startWeight || 80) - (userSettings.weight || 75)) / ((userSettings.startWeight || 80) - (userSettings.targetWeight || 70)) * 100)}%</span>
-                      <span>{(userSettings.weight || 75) - (userSettings.targetWeight || 70)} kg to go</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* AI Health Insights */}
-              <div className="mb-8">
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">🧠 AI Health Insights</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {healthInsights.map((insight, index) => (
-                    <div
-                      key={insight.id}
-                      ref={transition({
-                        key: `insight-${insight.id}`,
-                        ...fly({ x: -100 * (index + 1), y: 0, opacity: true })
-                      })}
-                      className={`bg-gradient-to-br ${insight.color} rounded-2xl p-6 text-white shadow-lg hover:shadow-xl transition-all hover:scale-105 cursor-pointer`}
-                    >
-                      <insight.icon className="w-10 h-10 mb-3" />
-                      <h4 className="font-bold text-lg mb-2">{insight.title}</h4>
-                      <p className="text-sm text-white/90">{insight.description}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Weekly Calendar */}
-              <div className="bg-white rounded-2xl p-6 shadow-lg mb-8">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">📅 Weekly Activity</h2>
-                <div className="grid grid-cols-7 gap-2">
-                  {weekDays.map((day, index) => (
-                    <div
-                      key={day}
-                      onClick={() => setSelectedDay(index)}
-                      className={`text-center p-4 rounded-xl cursor-pointer transition-all ${
-                        index === selectedDay
-                          ? 'bg-gradient-to-br from-orange-500 to-red-500 text-white shadow-lg scale-105'
-                          : 'bg-gray-50 hover:bg-gray-100'
-                      }`}
-                    >
-                      <div className="text-sm font-semibold mb-2">{day}</div>
-                      <div className={`w-2 h-2 rounded-full mx-auto ${
-                        activityDots[index] ? 'bg-green-500' : 'bg-gray-300'
-                      }`} />
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Progress Analytics */}
-              <div className="bg-white rounded-2xl p-6 shadow-lg">
-                <h2 className="text-xl font-bold text-gray-900 mb-6">📊 Progress Analytics</h2>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="text-center p-4 bg-orange-50 rounded-xl">
-                    <Flame className="w-8 h-8 text-orange-500 mx-auto mb-2" />
-                    <div className="text-3xl font-bold text-gray-900">150</div>
-                    <div className="text-sm text-gray-600">Days Streak</div>
-                  </div>
-                  <div className="text-center p-4 bg-blue-50 rounded-xl">
-                    <Dumbbell className="w-8 h-8 text-blue-500 mx-auto mb-2" />
-                    <div className="text-3xl font-bold text-gray-900">245</div>
-                    <div className="text-sm text-gray-600">Workouts</div>
-                  </div>
-                  <div className="text-center p-4 bg-red-50 rounded-xl">
-                    <Zap className="w-8 h-8 text-red-500 mx-auto mb-2" />
-                    <div className="text-3xl font-bold text-gray-900">52.4k</div>
-                    <div className="text-sm text-gray-600">Calories Burned</div>
-                  </div>
-                  <div className="text-center p-4 bg-green-50 rounded-xl">
-                    <Trophy className="w-8 h-8 text-green-500 mx-auto mb-2" />
-                    <div className="text-3xl font-bold text-gray-900">28</div>
-                    <div className="text-sm text-gray-600">Goals Achieved</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* AI Agents Page - Enhanced with All Features */}
-          {currentPage === 'ai-agents' && (
-            <div
-              ref={transition({ key: 'ai-agents-content', ...fly({ x: 100, y: 0, opacity: true }) })}
-            >
-              {/* Header */}
-              <div className="mb-10">
-                <h2 className="text-4xl font-bold bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent mb-3">
-                  🤖 AI-Powered Fitness Suite
-                </h2>
-                <p className="text-lg text-gray-600">12 intelligent agents transforming your fitness journey</p>
-              </div>
-
-              {/* Active Features Section */}
-              <div className="mb-12">
-                <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                  <Zap className="w-6 h-6 text-orange-500" />
-                  Active Features
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {/* Reddy AI Chatbot - ACTIVE */}
-                <div
-                  onClick={() => setCurrentPage('reddy')}
-                  className="bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl p-8 shadow-xl hover:shadow-2xl transition-all cursor-pointer group hover:scale-105 text-white relative overflow-hidden"
-                >
-                  <div className="absolute top-4 right-4 px-3 py-1 bg-white/20 backdrop-blur-sm text-white text-xs font-bold rounded-full">
-                    ✨ ACTIVE
-                  </div>
-                  <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                    <Bot className="w-10 h-10 text-white" />
-                  </div>
-                  <h3 className="text-2xl font-bold mb-2">AI Chatbot</h3>
-                  <p className="text-white/90 mb-4 text-sm">Chat with Reddy, your 24/7 AI fitness coach for personalized guidance</p>
-                  <div className="flex items-center font-semibold">
-                    Start Chat <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-2 transition-transform" />
-                  </div>
-                </div>
-                </div>
-              </div>
-
-              {/* Health & Analytics Section */}
-              <div className="mb-12">
-                <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                  <Activity className="w-6 h-6 text-teal-500" />
-                  Health & Analytics
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-
-                {/* AI Photo Analysis */}
-                <div
-                  onClick={() => alert('📸 AI Photo Analysis\n\n✨ Upload a photo to get:\n• Body fat percentage estimate\n• Muscle mass analysis\n• Posture correction tips\n\nThis feature is coming soon!')}
-                  className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all relative overflow-hidden group cursor-pointer hover:scale-105"
-                >
-                  <div className="absolute top-4 right-4 px-3 py-1 bg-purple-100 text-purple-800 text-xs font-bold rounded-full">
-                    COMING SOON
-                  </div>
-                  <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mb-6 opacity-50 group-hover:opacity-100 transition-opacity">
-                    <Camera className="w-10 h-10 text-white" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">AI Photo Analysis</h3>
-                  <p className="text-gray-600 mb-4 text-sm">Upload photos for AI-powered body composition and posture analysis</p>
-                  <div className="space-y-2 text-sm text-gray-500">
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-purple-500"></div>
-                      Body fat percentage estimate
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-purple-500"></div>
-                      Muscle mass analysis
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-purple-500"></div>
-                      Posture correction tips
-                    </div>
-                  </div>
-                </div>
-
-                {/* AI Body Fat Calculator */}
-                <div
-                  onClick={() => alert('📊 AI Body Fat Calculator\n\n✨ Calculate your:\n• Multi-point body measurements\n• BMI & BMR values\n• Personalized health recommendations\n\nThis feature is coming soon!')}
-                  className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all relative overflow-hidden group cursor-pointer hover:scale-105"
-                >
-                  <div className="absolute top-4 right-4 px-3 py-1 bg-blue-100 text-blue-800 text-xs font-bold rounded-full">
-                    COMING SOON
-                  </div>
-                  <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center mb-6 opacity-50 group-hover:opacity-100 transition-opacity">
-                    <Activity className="w-10 h-10 text-white" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">AI Body Fat Calculator</h3>
-                  <p className="text-gray-600 mb-4 text-sm">Advanced AI algorithm for accurate body composition metrics</p>
-                  <div className="space-y-2 text-sm text-gray-500">
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
-                      Multi-point measurements
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
-                      BMI & BMR calculation
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
-                      Personalized recommendations
-                    </div>
-                  </div>
-                </div>
-
-                {/* AI Progress Tracking */}
-                <div
-                  onClick={() => alert('📈 AI Progress Tracking\n\n✨ Track your progress with:\n• Weight & measurement trends\n• Goal achievement predictions\n• Smart AI recommendations\n\nThis feature is coming soon!')}
-                  className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all relative overflow-hidden group cursor-pointer hover:scale-105"
-                >
-                  <div className="absolute top-4 right-4 px-3 py-1 bg-green-100 text-green-800 text-xs font-bold rounded-full">
-                    COMING SOON
-                  </div>
-                  <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center mb-6 opacity-50 group-hover:opacity-100 transition-opacity">
-                    <TrendingUp className="w-10 h-10 text-white" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">AI Progress Tracking</h3>
-                  <p className="text-gray-600 mb-4 text-sm">Intelligent tracking with predictive insights and trend analysis</p>
-                  <div className="space-y-2 text-sm text-gray-500">
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
-                      Weight & measurement trends
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
-                      Goal achievement predictions
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
-                      Smart recommendations
-                    </div>
-                  </div>
-                </div>
-                </div>
-              </div>
-
-              {/* Nutrition & Training Section */}
-              <div className="mb-12">
-                <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                  <Utensils className="w-6 h-6 text-orange-500" />
-                  Nutrition & Training
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-
-                {/* AI Meal Planner */}
-                <div
-                  onClick={() => alert('🍽️ AI Meal Planner\n\n✨ Get personalized:\n• Custom macro calculations\n• Recipe suggestions\n• Grocery list generator\n\nThis feature is coming soon!')}
-                  className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all relative overflow-hidden group cursor-pointer hover:scale-105"
-                >
-                  <div className="absolute top-4 right-4 px-3 py-1 bg-orange-100 text-orange-800 text-xs font-bold rounded-full">
-                    COMING SOON
-                  </div>
-                  <div className="w-20 h-20 bg-gradient-to-br from-orange-500 to-amber-500 rounded-2xl flex items-center justify-center mb-6 opacity-50 group-hover:opacity-100 transition-opacity">
-                    <Utensils className="w-10 h-10 text-white" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">AI Meal Planner</h3>
-                  <p className="text-gray-600 mb-4 text-sm">Personalized meal plans based on your goals and preferences</p>
-                  <div className="space-y-2 text-sm text-gray-500">
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-orange-500"></div>
-                      Custom macro calculations
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-orange-500"></div>
-                      Recipe suggestions
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-orange-500"></div>
-                      Grocery list generator
-                    </div>
-                  </div>
-                </div>
-
-                {/* AI Workout Generator */}
-                <div
-                  onClick={() => alert('💪 AI Workout Generator\n\n✨ Get dynamic workouts:\n• Personalized routines\n• Exercise form videos\n• Progressive overload tracking\n\nThis feature is coming soon!')}
-                  className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all relative overflow-hidden group cursor-pointer hover:scale-105"
-                >
-                  <div className="absolute top-4 right-4 px-3 py-1 bg-red-100 text-red-800 text-xs font-bold rounded-full">
-                    COMING SOON
-                  </div>
-                  <div className="w-20 h-20 bg-gradient-to-br from-red-500 to-pink-500 rounded-2xl flex items-center justify-center mb-6 opacity-50 group-hover:opacity-100 transition-opacity">
-                    <Dumbbell className="w-10 h-10 text-white" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">AI Workout Generator</h3>
-                  <p className="text-gray-600 mb-4 text-sm">Dynamic workout plans that adapt to your progress and feedback</p>
-                  <div className="space-y-2 text-sm text-gray-500">
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-red-500"></div>
-                      Personalized routines
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-red-500"></div>
-                      Exercise form videos
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-red-500"></div>
-                      Progressive overload tracking
-                    </div>
-                  </div>
-                </div>
-
-                {/* AI Voice Coach */}
-                <div
-                  onClick={() => alert('🎤 AI Voice Coach\n\n✨ Voice-activated coaching:\n• Hands-free workout tracking\n• Real-time form corrections\n• Motivational coaching\n\nThis feature is coming soon!')}
-                  className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all relative overflow-hidden group cursor-pointer hover:scale-105"
-                >
-                  <div className="absolute top-4 right-4 px-3 py-1 bg-indigo-100 text-indigo-800 text-xs font-bold rounded-full">
-                    COMING SOON
-                  </div>
-                  <div className="w-20 h-20 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-2xl flex items-center justify-center mb-6 opacity-50 group-hover:opacity-100 transition-opacity">
-                    <Mic className="w-10 h-10 text-white" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">AI Voice Coach</h3>
-                  <p className="text-gray-600 mb-4 text-sm">Voice-activated coaching during workouts with real-time guidance</p>
-                  <div className="space-y-2 text-sm text-gray-500">
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-indigo-500"></div>
-                      Hands-free workout tracking
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-indigo-500"></div>
-                      Real-time form corrections
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-indigo-500"></div>
-                      Motivational coaching
-                    </div>
-                  </div>
-                </div>
-                </div>
-              </div>
-
-              {/* Advanced AI Tools Section */}
-              <div className="mb-12">
-                <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                  <Crown className="w-6 h-6 text-purple-500" />
-                  Advanced AI Tools
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-
-                {/* AI Health Monitoring */}
-                <div
-                  onClick={() => alert('❤️ AI Health Monitoring\n\n✨ Monitor your health:\n• Heart rate & sleep tracking\n• Recovery score analysis\n• Health risk predictions\n\nThis feature is coming soon!')}
-                  className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all relative overflow-hidden group cursor-pointer hover:scale-105"
-                >
-                  <div className="absolute top-4 right-4 px-3 py-1 bg-teal-100 text-teal-800 text-xs font-bold rounded-full">
-                    COMING SOON
-                  </div>
-                  <div className="w-20 h-20 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-2xl flex items-center justify-center mb-6 opacity-50 group-hover:opacity-100 transition-opacity">
-                    <Activity className="w-10 h-10 text-white" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">AI Health Monitoring</h3>
-                  <p className="text-gray-600 mb-4 text-sm">Real-time health metrics tracking with AI-powered insights and alerts</p>
-                  <div className="space-y-2 text-sm text-gray-500">
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-teal-500"></div>
-                      Heart rate & sleep tracking
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-teal-500"></div>
-                      Recovery score analysis
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-teal-500"></div>
-                      Health risk predictions
-                    </div>
-                  </div>
-                </div>
-
-                {/* Social AI - Cupid */}
-                <div
-                  onClick={() => alert('💘 Cupid AI Dating\n\n✨ Find your fitness match:\n• Fitness compatibility scores\n• Activity-based matching\n• Workout date suggestions\n\nThis feature is coming soon!')}
-                  className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all relative overflow-hidden group cursor-pointer hover:scale-105"
-                >
-                  <div className="absolute top-4 right-4 px-3 py-1 bg-pink-100 text-pink-800 text-xs font-bold rounded-full">
-                    COMING SOON
-                  </div>
-                  <div className="w-20 h-20 bg-gradient-to-br from-pink-500 to-red-500 rounded-2xl flex items-center justify-center mb-6 opacity-50 group-hover:opacity-100 transition-opacity">
-                    <Heart className="w-10 h-10 text-white" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">Cupid AI Dating</h3>
-                  <p className="text-gray-600 mb-4 text-sm">AI-powered matchmaking with fitness-focused compatibility</p>
-                  <div className="space-y-2 text-sm text-gray-500">
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-pink-500"></div>
-                      Fitness compatibility scores
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-pink-500"></div>
-                      Activity-based matching
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-pink-500"></div>
-                      Workout date suggestions
-                    </div>
-                  </div>
-                </div>
-
-                {/* AI Nutrition Analyzer */}
-                <div
-                  onClick={() => alert('🥗 AI Nutrition Analyzer\n\n✨ Advanced nutrition tracking:\n• Photo-based meal scanning\n• Real-time macro breakdown\n• Nutritional deficit alerts\n\nThis feature is coming soon!')}
-                  className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all relative overflow-hidden group cursor-pointer hover:scale-105"
-                >
-                  <div className="absolute top-4 right-4 px-3 py-1 bg-amber-100 text-amber-800 text-xs font-bold rounded-full">
-                    COMING SOON
-                  </div>
-                  <div className="w-20 h-20 bg-gradient-to-br from-amber-500 to-yellow-500 rounded-2xl flex items-center justify-center mb-6 opacity-50 group-hover:opacity-100 transition-opacity">
-                    <Utensils className="w-10 h-10 text-white" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">AI Nutrition Analyzer</h3>
-                  <p className="text-gray-600 mb-4 text-sm">Advanced meal scanning with instant macro tracking and nutrition insights</p>
-                  <div className="space-y-2 text-sm text-gray-500">
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-amber-500"></div>
-                      Photo-based meal scanning
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-amber-500"></div>
-                      Real-time macro breakdown
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-amber-500"></div>
-                      Nutritional deficit alerts
-                    </div>
-                  </div>
-                </div>
-
-                {/* AI Form Checker */}
-                <div
-                  onClick={() => alert('📹 AI Form Checker\n\n✨ Perfect your form:\n• Live video form analysis\n• Joint angle tracking\n• Instant correction feedback\n\nThis feature is coming soon!')}
-                  className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all relative overflow-hidden group cursor-pointer hover:scale-105"
-                >
-                  <div className="absolute top-4 right-4 px-3 py-1 bg-violet-100 text-violet-800 text-xs font-bold rounded-full">
-                    COMING SOON
-                  </div>
-                  <div className="w-20 h-20 bg-gradient-to-br from-violet-500 to-purple-500 rounded-2xl flex items-center justify-center mb-6 opacity-50 group-hover:opacity-100 transition-opacity">
-                    <Camera className="w-10 h-10 text-white" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">AI Form Checker</h3>
-                  <p className="text-gray-600 mb-4 text-sm">Video analysis for real-time exercise form correction and injury prevention</p>
-                  <div className="space-y-2 text-sm text-gray-500">
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-violet-500"></div>
-                      Live video form analysis
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-violet-500"></div>
-                      Joint angle tracking
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-violet-500"></div>
-                      Instant correction feedback
-                    </div>
-                  </div>
-                </div>
-
-                {/* AI Recovery Optimizer */}
-                <div
-                  onClick={() => alert('😴 AI Recovery Optimizer\n\n✨ Optimize your recovery:\n• Sleep quality analysis\n• Stress level monitoring\n• Recovery protocol builder\n\nThis feature is coming soon!')}
-                  className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all relative overflow-hidden group cursor-pointer hover:scale-105"
-                >
-                  <div className="absolute top-4 right-4 px-3 py-1 bg-sky-100 text-sky-800 text-xs font-bold rounded-full">
-                    COMING SOON
-                  </div>
-                  <div className="w-20 h-20 bg-gradient-to-br from-sky-500 to-blue-500 rounded-2xl flex items-center justify-center mb-6 opacity-50 group-hover:opacity-100 transition-opacity">
-                    <Activity className="w-10 h-10 text-white" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">AI Recovery Optimizer</h3>
-                  <p className="text-gray-600 mb-4 text-sm">Smart recovery protocols with sleep quality and stress management insights</p>
-                  <div className="space-y-2 text-sm text-gray-500">
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-sky-500"></div>
-                      Sleep quality analysis
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-sky-500"></div>
-                      Stress level monitoring
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-sky-500"></div>
-                      Recovery protocol builder
-                    </div>
-                  </div>
-                </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Workout Buddies Page */}
-          {currentPage === 'workout-buddies' && (
-            <div
-              ref={transition({ key: 'workout-buddies-content', ...fly({ x: 100, y: 0, opacity: true }) })}
-            >
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {workoutBuddies.map((buddy, index) => (
-                  <div
-                    key={buddy.id}
-                    ref={transition({
-                      key: `buddy-${buddy.id}`,
-                      ...fly({ x: 100 * (index + 1), y: 0, opacity: true })
-                    })}
-                    className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all"
-                  >
-                    <div className="flex items-center gap-4 mb-4">
-                      <div className="text-5xl">{buddy.photo}</div>
-                      <div className="flex-1">
-                        <h4 className="font-bold text-gray-900 text-lg">{buddy.name}</h4>
-                        <div className="text-xs text-gray-500">{buddy.lastActive}</div>
-                        <div className="flex items-center gap-1 text-sm text-gray-500 mt-1">
-                          <MapPin className="w-3 h-3" />
-                          {buddy.distance}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex gap-2 flex-wrap mb-4">
-                      {buddy.commonWorkouts.map(workout => (
-                        <span key={workout} className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-semibold">
-                          {workout}
-                        </span>
-                      ))}
                     </div>
                     <button
-                      onClick={() => handleConnectBuddy(buddy.id)}
-                      className="w-full py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-semibold hover:shadow-lg transition-all hover:scale-105"
+                      onClick={() => handleDeleteFood(food.id)}
+                      className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition"
                     >
-                      Connect
+                      <Trash2 className="w-5 h-5" />
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Workout Tracking */}
+          <div
+            ref={transition({
+              key: 'workout',
+              ...fly({ x: 100, opacity: true })
+            })}
+            className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-2xl p-8 mb-8 border border-gray-200 hover:shadow-3xl transition-all"
+          >
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-2xl font-bold flex items-center bg-gradient-to-r from-blue-500 to-cyan-500 bg-clip-text text-transparent">
+                <Dumbbell className="w-7 h-7 mr-2 text-blue-500" />
+                Workout Log
+              </h3>
+              <button
+                onClick={() => setShowAddWorkout(!showAddWorkout)}
+                className="px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-xl hover:shadow-lg transition-all transform hover:scale-105 flex items-center font-semibold"
+              >
+                <Plus className="w-5 h-5 mr-2" />
+                Add Workout
+              </button>
+            </div>
+
+            {showAddWorkout && (
+              <div className="bg-blue-50 p-4 rounded-xl mb-4">
+                <div className="grid grid-cols-3 gap-4 mb-4">
+                  <input
+                    type="text"
+                    placeholder="Workout name"
+                    value={newWorkout.name}
+                    onChange={(e) => setNewWorkout({ ...newWorkout, name: e.target.value })}
+                    className="px-4 py-2 border-2 border-blue-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                  />
+                  <input
+                    type="number"
+                    placeholder="Duration (min)"
+                    value={newWorkout.duration}
+                    onChange={(e) => setNewWorkout({ ...newWorkout, duration: e.target.value })}
+                    className="px-4 py-2 border-2 border-blue-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                  />
+                  <input
+                    type="number"
+                    placeholder="Calories burned"
+                    value={newWorkout.caloriesBurned}
+                    onChange={(e) => setNewWorkout({ ...newWorkout, caloriesBurned: e.target.value })}
+                    className="px-4 py-2 border-2 border-blue-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                  />
+                </div>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={handleAddWorkout}
+                    className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition flex items-center"
+                  >
+                    <Check className="w-5 h-5 mr-2" />
+                    Add
+                  </button>
+                  <button
+                    onClick={() => setShowAddWorkout(false)}
+                    className="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition flex items-center"
+                  >
+                    <X className="w-5 h-5 mr-2" />
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-3">
+              {dailyData.workouts.length === 0 ? (
+                <div className="text-center py-8 text-gray-400">
+                  <Dumbbell className="w-16 h-16 mx-auto mb-2 opacity-50" />
+                  <p>No workouts logged today. Get moving!</p>
+                </div>
+              ) : (
+                dailyData.workouts.map(workout => (
+                  <div key={workout.id} className="flex justify-between items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+                    <div>
+                      <div className="font-semibold text-gray-800">{workout.name}</div>
+                      <div className="text-sm text-gray-600">
+                        {workout.duration} min • {workout.caloriesBurned} cal burned • {workout.time}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleDeleteWorkout(workout.id)}
+                      className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Photo Gallery */}
+          <div
+            ref={transition({
+              key: 'photos',
+              ...fly({ y: 100, opacity: true })
+            })}
+            className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-2xl p-8 border border-gray-200 hover:shadow-3xl transition-all"
+          >
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-2xl font-bold flex items-center bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">
+                <Camera className="w-7 h-7 mr-2 text-purple-500" />
+                Progress Photos
+              </h3>
+              <label className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:shadow-lg transition-all transform hover:scale-105 flex items-center cursor-pointer font-semibold">
+                <Upload className="w-5 h-5 mr-2" />
+                Upload Photos
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handlePhotoUpload}
+                  className="hidden"
+                />
+              </label>
+            </div>
+
+            {dailyData.photos.length === 0 ? (
+              <div className="text-center py-8 text-gray-400">
+                <ImageIcon className="w-16 h-16 mx-auto mb-2 opacity-50" />
+                <p>No photos uploaded yet. Track your progress visually!</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {dailyData.photos.map((photo, index) => (
+                  <div key={index} className="relative group">
+                    <img src={photo} alt={`Progress ${index + 1}`} className="w-full h-48 object-cover rounded-lg" />
+                    <button
+                      onClick={() => setDailyData(prev => ({ ...prev, photos: prev.photos.filter((_, i) => i !== index) }))}
+                      className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition"
+                    >
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 ))}
               </div>
+            )}
+          </div>
+          </>
+          )}
+
+          {/* Diet & Nutrition Page */}
+          {currentPage === 'diet' && (
+            <div className="text-center py-20">
+              <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-12 max-w-2xl mx-auto shadow-2xl">
+                <Lock className="w-24 h-24 mx-auto mb-6 text-orange-500" />
+                <h2 className="text-4xl font-bold bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent mb-4">
+                  Diet & Nutrition
+                </h2>
+                <p className="text-xl text-gray-600 mb-6">
+                  AI-powered meal planning and nutrition tracking coming soon!
+                </p>
+                <div className="text-left bg-gradient-to-r from-orange-50 to-red-50 p-6 rounded-xl">
+                  <h3 className="font-bold text-lg mb-3 flex items-center">
+                    <Sparkles className="w-5 h-5 mr-2 text-orange-500" />
+                    What's Coming:
+                  </h3>
+                  <ul className="space-y-2 text-gray-700">
+                    <li className="flex items-start">
+                      <Check className="w-5 h-5 mr-2 text-green-500 mt-0.5" />
+                      <span>AI meal recommendations based on your goals</span>
+                    </li>
+                    <li className="flex items-start">
+                      <Check className="w-5 h-5 mr-2 text-green-500 mt-0.5" />
+                      <span>Photo-based calorie & macro tracking</span>
+                    </li>
+                    <li className="flex items-start">
+                      <Check className="w-5 h-5 mr-2 text-green-500 mt-0.5" />
+                      <span>Personalized nutrition plans</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
             </div>
           )}
 
-          {/* Dating & Matches Page */}
-          {currentPage === 'dating-matches' && (
-            <div
-              ref={transition({ key: 'dating-matches-content', ...fly({ x: 100, y: 0, opacity: true }) })}
-            >
-              {/* Premium Banner */}
-              <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl p-8 shadow-xl mb-8 text-white">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <Crown className="w-8 h-8" />
-                      <h2 className="text-3xl font-bold">Cupid AI Premium</h2>
-                    </div>
-                    <p className="text-white/90 mb-4">Unlock advanced matchmaking with AI-powered compatibility analysis</p>
+          {/* Workout Page */}
+          {currentPage === 'workout' && (
+            <div className="text-center py-20">
+              <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-12 max-w-2xl mx-auto shadow-2xl">
+                <Lock className="w-24 h-24 mx-auto mb-6 text-blue-500" />
+                <h2 className="text-4xl font-bold bg-gradient-to-r from-blue-500 to-cyan-500 bg-clip-text text-transparent mb-4">
+                  Smart Workouts
+                </h2>
+                <p className="text-xl text-gray-600 mb-6">
+                  AI-generated workout plans tailored to your fitness level!
+                </p>
+                <div className="text-left bg-gradient-to-r from-blue-50 to-cyan-50 p-6 rounded-xl">
+                  <h3 className="font-bold text-lg mb-3 flex items-center">
+                    <Sparkles className="w-5 h-5 mr-2 text-blue-500" />
+                    What's Coming:
+                  </h3>
+                  <ul className="space-y-2 text-gray-700">
+                    <li className="flex items-start">
+                      <Check className="w-5 h-5 mr-2 text-green-500 mt-0.5" />
+                      <span>Personalized workout routines</span>
+                    </li>
+                    <li className="flex items-start">
+                      <Check className="w-5 h-5 mr-2 text-green-500 mt-0.5" />
+                      <span>Form correction with AI video analysis</span>
+                    </li>
+                    <li className="flex items-start">
+                      <Check className="w-5 h-5 mr-2 text-green-500 mt-0.5" />
+                      <span>Progressive overload tracking</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* AI Agents Page */}
+          {currentPage === 'ai-agents' && (
+            <div>
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent mb-8">
+                Your AI Fitness Squad
+              </h1>
+              <div className="grid md:grid-cols-3 gap-6">
+                {/* Reddy AI */}
+                <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-2xl hover:shadow-3xl transition-all">
+                  <div className="w-20 h-20 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Bot className="w-10 h-10 text-white" />
                   </div>
-                  <button
-                    onClick={handleUpgradePremium}
-                    className="px-8 py-4 bg-white text-purple-600 rounded-xl font-bold hover:shadow-2xl transition-all hover:scale-105"
-                  >
-                    Upgrade Now
+                  <h3 className="text-2xl font-bold text-center mb-2">Reddy AI</h3>
+                  <p className="text-gray-600 text-center mb-4">Your Personal Fitness Coach</p>
+                  <div className="bg-orange-50 p-4 rounded-xl">
+                    <p className="text-sm text-gray-700">24/7 AI coaching, meal plans, workout routines, and motivation!</p>
+                  </div>
+                  <button className="w-full mt-4 px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-semibold hover:shadow-lg transition flex items-center justify-center">
+                    <Lock className="w-5 h-5 mr-2" />
+                    Coming Soon
+                  </button>
+                </div>
+
+                {/* Rapid AI */}
+                <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-2xl hover:shadow-3xl transition-all border-2 border-purple-500">
+                  <div className="w-20 h-20 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Zap className="w-10 h-10 text-white" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-center mb-2">Rapid AI</h3>
+                  <p className="text-gray-600 text-center mb-4">Get Your Six Pack Fast!</p>
+                  <div className="bg-purple-50 p-4 rounded-xl">
+                    <p className="text-sm text-gray-700 font-semibold mb-2">🎯 The Six-Pack System:</p>
+                    <ul className="text-xs space-y-1 text-gray-600">
+                      <li>• AI body fat % analysis</li>
+                      <li>• Daily scoring & rewards</li>
+                      <li>• Personalized 6-pack roadmap</li>
+                      <li>• Progress streaks & badges</li>
+                    </ul>
+                  </div>
+                  <button className="w-full mt-4 px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-semibold hover:shadow-lg transition flex items-center justify-center">
+                    <Lock className="w-5 h-5 mr-2" />
+                    Coming Soon
+                  </button>
+                </div>
+
+                {/* Cupid AI */}
+                <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-2xl hover:shadow-3xl transition-all">
+                  <div className="w-20 h-20 bg-gradient-to-r from-pink-500 to-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Heart className="w-10 h-10 text-white" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-center mb-2">Cupid AI</h3>
+                  <p className="text-gray-600 text-center mb-4">Find Your Fitness Soulmate</p>
+                  <div className="bg-pink-50 p-4 rounded-xl">
+                    <p className="text-sm text-gray-700">Match with fitness partners who share your goals and vibe!</p>
+                  </div>
+                  <button className="w-full mt-4 px-6 py-3 bg-gradient-to-r from-pink-500 to-red-500 text-white rounded-xl font-semibold hover:shadow-lg transition flex items-center justify-center">
+                    <Lock className="w-5 h-5 mr-2" />
+                    Coming Soon
                   </button>
                 </div>
               </div>
 
-              {/* Today's Matches */}
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">💕 Today's Matches</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {todaysMatches.map((match, index) => (
-                  <div
-                    key={match.id}
-                    ref={transition({
-                      key: `match-${match.id}`,
-                      ...fly({ x: 100 * (index + 1), y: 0, opacity: true })
-                    })}
-                    className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all cursor-pointer group"
-                  >
-                    <div className="flex items-start gap-4 mb-4">
-                      <div className="text-6xl">{match.photo}</div>
-                      <div className="flex-1">
-                        <h4 className="font-bold text-gray-900 text-xl">{match.name}, {match.age}</h4>
-                        <div className="flex items-center gap-1 text-sm text-gray-500 mt-1">
-                          <MapPin className="w-3 h-3" />
-                          {match.distance}
-                        </div>
-                        <div className="mt-2 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold inline-block">
-                          {match.fitnessGoal}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-bold">
-                        <Star className="w-4 h-4" />
-                        {match.compatibility}%
-                      </div>
-                    </div>
+              {/* The Journey */}
+              <div className="mt-12 bg-gradient-to-r from-orange-500 to-pink-500 rounded-3xl p-8 text-white">
+                <h3 className="text-3xl font-bold text-center mb-6">Your Fitness Journey</h3>
+                <div className="flex items-center justify-center space-x-4 text-center">
+                  <div>
+                    <Bot className="w-12 h-12 mx-auto mb-2" />
+                    <p className="font-semibold">Reddy</p>
+                    <p className="text-xs opacity-90">Get Fit</p>
+                  </div>
+                  <div className="text-2xl">→</div>
+                  <div>
+                    <Zap className="w-12 h-12 mx-auto mb-2" />
+                    <p className="font-semibold">Rapid</p>
+                    <p className="text-xs opacity-90">Get Shredded</p>
+                  </div>
+                  <div className="text-2xl">→</div>
+                  <div>
+                    <Heart className="w-12 h-12 mx-auto mb-2" />
+                    <p className="font-semibold">Cupid</p>
+                    <p className="text-xs opacity-90">Get Love</p>
+                  </div>
+                  <div className="text-2xl">→</div>
+                  <div>
+                    <Trophy className="w-12 h-12 mx-auto mb-2" />
+                    <p className="font-semibold">Together</p>
+                    <p className="text-xs opacity-90">Win Life!</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Friends Page */}
+          {currentPage === 'friends' && (
+            <div>
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent mb-8">
+                Your Fitness Crew
+              </h1>
+
+              <div className="grid md:grid-cols-2 gap-6 mb-8">
+                <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-2xl">
+                  <h3 className="text-2xl font-bold mb-4 flex items-center">
+                    <Users className="w-7 h-7 mr-2 text-purple-500" />
+                    Friends List
+                  </h3>
+                  <div className="text-center py-8 text-gray-400">
+                    <Users className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                    <p>No friends yet. Start sharing!</p>
                     <button
-                      onClick={() => handleConnectMatch(match.id)}
-                      className="w-full py-3 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-xl font-semibold hover:shadow-lg transition-all group-hover:scale-105"
+                      onClick={() => setShowNFCShare(true)}
+                      className="mt-4 px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-semibold hover:shadow-lg transition"
                     >
-                      Connect
+                      <UserPlus className="w-5 h-5 inline mr-2" />
+                      Add Friends
                     </button>
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
+                </div>
 
-          {/* Community Page */}
-          {/* Discipline & Consistency Page */}
-          {currentPage === 'discipline' && (
-            <div
-              ref={transition({ key: 'discipline-content', ...fly({ x: 100, y: 0, opacity: true }) })}
-            >
-              <div className="mb-10">
-                <h2 className="text-4xl font-bold bg-gradient-to-r from-blue-500 to-cyan-500 bg-clip-text text-transparent mb-3">
-                  💪 Discipline & Consistency Tracker
-                </h2>
-                <p className="text-lg text-gray-600">Build unstoppable habits and track your fitness journey</p>
-              </div>
-
-              {/* Current Streak */}
-              <div className="bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl p-8 shadow-xl text-white mb-8">
-                <div className="text-center">
-                  <h3 className="text-xl font-bold mb-4">🔥 Current Streak</h3>
-                  <div className="text-7xl font-black mb-2">{disciplineData.currentStreak}</div>
-                  <p className="text-2xl text-white/90">Days</p>
-                  <p className="text-sm text-white/70 mt-4">
-                    {disciplineData.currentStreak > 0
-                      ? "Keep going! You're building momentum"
-                      : "Start your journey today!"}
-                  </p>
+                <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-2xl">
+                  <h3 className="text-2xl font-bold mb-4 flex items-center">
+                    <Trophy className="w-7 h-7 mr-2 text-orange-500" />
+                    Group Challenges
+                  </h3>
+                  <div className="bg-gradient-to-r from-orange-50 to-red-50 p-6 rounded-xl">
+                    <Lock className="w-12 h-12 mx-auto mb-4 text-orange-500" />
+                    <p className="text-center text-gray-600 font-semibold">Coming Soon!</p>
+                    <p className="text-center text-sm text-gray-500 mt-2">Compete with friends in fitness challenges</p>
+                  </div>
                 </div>
               </div>
 
-              {/* Habits Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <div className="bg-white rounded-xl p-6 shadow-lg">
-                  <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-                    <Dumbbell className="w-5 h-5 text-orange-600" />
-                    Daily Workout
-                  </h4>
-                  <div className="flex gap-2 mb-4">
-                    {disciplineData.workoutHistory.slice(-7).map((completed, index) => (
-                      <div
-                        key={index}
-                        className={`w-10 h-10 rounded-lg ${completed ? 'bg-orange-500' : 'bg-gray-200'} flex items-center justify-center text-white font-bold`}
-                      >
-                        {completed ? '✓' : ''}
-                      </div>
-                    ))}
-                  </div>
-                  <p className="text-sm text-gray-600">{disciplineData.workoutStreak}-day streak</p>
-                </div>
-
-                <div className="bg-white rounded-xl p-6 shadow-lg">
-                  <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-                    <Flame className="w-5 h-5 text-red-600" />
-                    Calorie Tracking
-                  </h4>
-                  <div className="flex gap-2 mb-4">
-                    {disciplineData.calorieHistory.slice(-7).map((completed, index) => (
-                      <div
-                        key={index}
-                        className={`w-10 h-10 rounded-lg ${completed ? 'bg-red-500' : 'bg-gray-200'} flex items-center justify-center text-white font-bold`}
-                      >
-                        {completed ? '✓' : ''}
-                      </div>
-                    ))}
-                  </div>
-                  <p className="text-sm text-gray-600">{disciplineData.calorieStreak}-day streak</p>
-                </div>
-
-                <div className="bg-white rounded-xl p-6 shadow-lg">
-                  <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-                    <Activity className="w-5 h-5 text-green-600" />
-                    Weight Logging
-                  </h4>
-                  <div className="flex gap-2 mb-4">
-                    {disciplineData.weightHistory.slice(-7).map((completed, index) => (
-                      <div
-                        key={index}
-                        className={`w-10 h-10 rounded-lg ${completed ? 'bg-green-500' : 'bg-gray-200'} flex items-center justify-center text-white font-bold`}
-                      >
-                        {completed ? '✓' : ''}
-                      </div>
-                    ))}
-                  </div>
-                  <p className="text-sm text-gray-600">{disciplineData.weightStreak}-day streak</p>
-                </div>
-
-                <div className="bg-white rounded-xl p-6 shadow-lg">
-                  <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-                    <Bot className="w-5 h-5 text-purple-600" />
-                    AI Chatbot Usage
-                  </h4>
-                  <div className="flex gap-2 mb-4">
-                    {disciplineData.aiChatHistory.slice(-7).map((completed, index) => (
-                      <div
-                        key={index}
-                        className={`w-10 h-10 rounded-lg ${completed ? 'bg-purple-500' : 'bg-gray-200'} flex items-center justify-center text-white font-bold`}
-                      >
-                        {completed ? '✓' : ''}
-                      </div>
-                    ))}
-                  </div>
-                  <p className="text-sm text-gray-600">{disciplineData.aiChatStreak}-day streak</p>
-                </div>
-              </div>
-
-              {/* Stats Overview */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-gradient-to-br from-orange-100 to-red-100 rounded-xl p-4 text-center">
-                  <div className="text-3xl font-bold text-orange-600">{disciplineData.totalDays}</div>
-                  <div className="text-sm text-gray-700">Total Days</div>
-                </div>
-                <div className="bg-gradient-to-br from-blue-100 to-cyan-100 rounded-xl p-4 text-center">
-                  <div className="text-3xl font-bold text-blue-600">
-                    {disciplineData.totalDays > 0
-                      ? Math.round((disciplineData.currentStreak / disciplineData.totalDays) * 100)
-                      : 0}%
-                  </div>
-                  <div className="text-sm text-gray-700">Consistency</div>
-                </div>
-                <div className="bg-gradient-to-br from-green-100 to-emerald-100 rounded-xl p-4 text-center">
-                  <div className="text-3xl font-bold text-green-600">{disciplineData.bestStreak}</div>
-                  <div className="text-sm text-gray-700">Best Streak</div>
-                </div>
-                <div className="bg-gradient-to-br from-purple-100 to-pink-100 rounded-xl p-4 text-center">
-                  <div className="text-3xl font-bold text-purple-600">
-                    {[
-                      disciplineData.workoutStreak > 0 ? 1 : 0,
-                      disciplineData.calorieStreak > 0 ? 1 : 0,
-                      disciplineData.weightStreak > 0 ? 1 : 0,
-                      disciplineData.aiChatStreak > 0 ? 1 : 0
-                    ].reduce((a, b) => a + b, 0)}
-                  </div>
-                  <div className="text-sm text-gray-700">Active Habits</div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {currentPage === 'community' && (
-            <div
-              ref={transition({ key: 'community-content', ...fly({ x: 100, y: 0, opacity: true }) })}
-            >
-              <div className="space-y-6">
-                {communityPosts.map((post, index) => (
-                  <div
-                    key={post.id}
-                    ref={transition({
-                      key: `post-${post.id}`,
-                      ...fly({ x: 0, y: 100 * (index + 1), opacity: true })
-                    })}
-                    className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all"
+              {/* Share Methods */}
+              <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-3xl p-8 text-white">
+                <h3 className="text-2xl font-bold mb-6 text-center">Share with Friends</h3>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <button
+                    onClick={() => setShowNFCShare(true)}
+                    className="bg-white/20 backdrop-blur-sm p-6 rounded-xl hover:bg-white/30 transition"
                   >
-                    <div className="flex items-start gap-4">
-                      <div className="text-4xl">{post.authorPhoto}</div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between mb-2">
-                          <h4 className="font-bold text-gray-900 text-lg">{post.author}</h4>
-                          <span className="text-xs text-gray-500">{post.timestamp}</span>
-                        </div>
-                        <p className="text-gray-700 mb-4 text-lg">{post.content}</p>
-                        <div className="flex items-center gap-6">
-                          <button
-                            onClick={() => handleLikePost(post.id)}
-                            className={`flex items-center gap-2 transition-colors ${
-                              likedPosts.has(post.id) ? 'text-red-500' : 'text-gray-500 hover:text-red-500'
-                            }`}
-                          >
-                            <Heart className={`w-5 h-5 ${likedPosts.has(post.id) ? 'fill-red-500' : ''}`} />
-                            <span className="font-semibold">{post.likes + (likedPosts.has(post.id) ? 1 : 0)}</span>
-                          </button>
-                          <button className="flex items-center gap-2 text-gray-500 hover:text-blue-500 transition-colors">
-                            <MessageCircle className="w-5 h-5" />
-                            <span className="font-semibold">{post.comments}</span>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                    <Smartphone className="w-12 h-12 mx-auto mb-3" />
+                    <p className="font-semibold">Touch Phones (NFC)</p>
+                    <p className="text-sm opacity-90 mt-1">Instantly connect by touching devices</p>
+                  </button>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(`https://reddyfit.app/add/${user?.uid}`);
+                      setToast({ message: '🔗 Link copied!', type: 'success' });
+                    }}
+                    className="bg-white/20 backdrop-blur-sm p-6 rounded-xl hover:bg-white/30 transition"
+                  >
+                    <Share2 className="w-12 h-12 mx-auto mb-3" />
+                    <p className="font-semibold">Share Link</p>
+                    <p className="text-sm opacity-90 mt-1">Copy and share your friend code</p>
+                  </button>
+                </div>
               </div>
             </div>
           )}
         </div>
-      </main>
+      </div>
+
+      {/* Animation Styles */}
+      <style>{`
+        @keyframes blob {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          25% { transform: translate(20px, -30px) scale(1.1); }
+          50% { transform: translate(-20px, 20px) scale(0.9); }
+          75% { transform: translate(30px, 10px) scale(1.05); }
+        }
+        .animate-blob {
+          animation: blob 8s infinite;
+        }
+        .animation-delay-2000 {
+          animation-delay: 2s;
+        }
+        .animation-delay-4000 {
+          animation-delay: 4s;
+        }
+        .shadow-3xl {
+          box-shadow: 0 35px 60px -15px rgba(0, 0, 0, 0.3);
+        }
+      `}</style>
     </div>
   );
 }

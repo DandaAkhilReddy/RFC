@@ -9,6 +9,7 @@ import { useAuth } from './components/AuthProvider';
 import Logo from './components/Logo';
 import DOMPurify from 'isomorphic-dompurify';
 import ToastNotification from './components/ToastNotification';
+import EmailSignup from './pages/EmailSignup';
 
 export default function LandingPage() {
   const { signInWithGoogle, signInWithGithub, signInWithEmail, signUpWithEmail, user } = useAuth();
@@ -17,9 +18,7 @@ export default function LandingPage() {
   const [gender, setGender] = useState<'male' | 'female'>('male');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState('');
-  const [loginEmail, setLoginEmail] = useState<string>("");
-  const [loginPassword, setLoginPassword] = useState<string>("");
-  const [showEmailLogin, setShowEmailLogin] = useState(false);
+  const [showEmailSignup, setShowEmailSignup] = useState(false);
   const [toast, setToast] = useState<{message: string, type: 'success' | 'error' | 'info'} | null>(null);
 
   console.log('LandingPage rendered - current user:', user?.email || 'none');
@@ -57,6 +56,11 @@ export default function LandingPage() {
       signInWithGoogle();
     }, 2000);
   };
+
+  // Show EmailSignup page if user selected email signup
+  if (showEmailSignup) {
+    return <EmailSignup onBack={() => setShowEmailSignup(false)} />;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-red-50">
@@ -152,12 +156,12 @@ export default function LandingPage() {
                 <span>GitHub</span>
               </button>
 
-              {/* Email Login Toggle */}
+              {/* Email Signup Button */}
               <button
-                onClick={() => setShowEmailLogin(!showEmailLogin)}
+                onClick={() => setShowEmailSignup(true)}
                 className="group relative overflow-hidden bg-blue-600 text-white px-6 py-3 rounded-full font-semibold hover:shadow-xl transition transform hover:scale-105 flex items-center justify-center space-x-2"
               >
-                <span>{showEmailLogin ? '✕ Hide' : '📧 Email'}</span>
+                <span>📧 Email</span>
               </button>
 
               {/* Google Login - Secondary */}
@@ -176,58 +180,6 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Email/Password Login Form */}
-          {showEmailLogin && (
-            <div className="mb-8 bg-white p-6 rounded-2xl shadow-xl max-w-md mx-auto">
-              <h3 className="text-xl font-bold mb-4 text-center text-gray-800">Email & Password</h3>
-              <form onSubmit={async (e) => {
-                e.preventDefault();
-                try {
-                  await signInWithEmail(loginEmail, loginPassword);
-                  setToast({ message: 'Successfully logged in!', type: 'success' });
-                  setLoginEmail('');
-                  setLoginPassword('');
-                } catch (error: any) {
-                  if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-                    try {
-                      await signUpWithEmail(loginEmail, loginPassword);
-                      setToast({ message: 'Account created! Welcome to ReddyFit!', type: 'success' });
-                      setLoginEmail('');
-                      setLoginPassword('');
-                    } catch (signUpError: any) {
-                      setToast({ message: signUpError.message, type: 'error' });
-                    }
-                  } else {
-                    setToast({ message: error.message, type: 'error' });
-                  }
-                }
-              }} className="space-y-3">
-                <input
-                  type="email"
-                  placeholder="Email"
-                  value={loginEmail}
-                  onChange={(e) => setLoginEmail(e.target.value)}
-                  required
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-orange-500 focus:outline-none"
-                />
-                <input
-                  type="password"
-                  placeholder="Password (min 6 characters)"
-                  value={loginPassword}
-                  onChange={(e) => setLoginPassword(e.target.value)}
-                  required
-                  minLength={6}
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-orange-500 focus:outline-none"
-                />
-                <button
-                  type="submit"
-                  className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-3 rounded-lg font-bold hover:shadow-lg transition"
-                >
-                  Sign In / Sign Up
-                </button>
-              </form>
-            </div>
-          )}
           {/* Privacy & AI Stats - Replacing fake user stats */}
           <div
             ref={transition({
