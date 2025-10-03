@@ -1,4 +1,4 @@
-import { Heart, Users, Sparkles, Target, TrendingUp, CheckCircle2, ArrowRight, MessageCircle, Calendar, Award } from 'lucide-react';
+import { Heart, Users, Sparkles, Target, TrendingUp, CheckCircle2, ArrowRight, MessageCircle, Calendar, Award, Activity, Zap, Crown } from 'lucide-react';
 
 export default function CupidAIPage() {
   return (
@@ -208,6 +208,128 @@ export default function CupidAIPage() {
           </div>
         </div>
 
+        {/* ML Matching Algorithm Section */}
+        <div className="bg-gradient-to-br from-purple-900 via-indigo-900 to-blue-900 rounded-2xl p-8 text-white mb-8 shadow-2xl">
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center mb-8">
+              <Crown className="w-16 h-16 mx-auto mb-4 text-yellow-400" />
+              <h2 className="text-3xl font-bold mb-4">🧠 Multi-Scenario ML Matching Algorithm</h2>
+              <p className="text-purple-200 text-lg">
+                Cupid analyzes <strong>50+ compatibility factors</strong> across multiple scenarios to find your perfect fitness buddy
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-6 mb-8">
+              {/* Scenario 1: Fitness Alignment */}
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border-2 border-purple-400/50">
+                <div className="text-4xl mb-4">🎯</div>
+                <h3 className="text-xl font-bold mb-4">Fitness Alignment</h3>
+                <ul className="space-y-2 text-sm text-purple-100">
+                  <li className="flex items-start">
+                    <CheckCircle2 className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0 text-green-400" />
+                    <span><strong>Current Fitness Level</strong> - Beginner to advanced matching</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle2 className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0 text-green-400" />
+                    <span><strong>Workout Preferences</strong> - Gym, home, outdoor, sports</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle2 className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0 text-green-400" />
+                    <span><strong>Training Frequency</strong> - 2-7 days per week alignment</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle2 className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0 text-green-400" />
+                    <span><strong>Goal Compatibility</strong> - Weight loss, muscle gain, endurance</span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Scenario 2: Lifestyle Sync */}
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border-2 border-blue-400/50">
+                <div className="text-4xl mb-4">📅</div>
+                <h3 className="text-xl font-bold mb-4">Lifestyle Sync</h3>
+                <ul className="space-y-2 text-sm text-blue-100">
+                  <li className="flex items-start">
+                    <CheckCircle2 className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0 text-green-400" />
+                    <span><strong>Schedule Compatibility</strong> - Morning, afternoon, evening workout times</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle2 className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0 text-green-400" />
+                    <span><strong>Geographic Proximity</strong> - Location-based matching within USA</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle2 className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0 text-green-400" />
+                    <span><strong>Availability Patterns</strong> - Weekdays vs weekends preference</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle2 className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0 text-green-400" />
+                    <span><strong>Time Zone Matching</strong> - Coordinate across different zones</span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Scenario 3: Values Match */}
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border-2 border-pink-400/50">
+                <div className="text-4xl mb-4">💡</div>
+                <h3 className="text-xl font-bold mb-4">Values Match</h3>
+                <ul className="space-y-2 text-sm text-pink-100">
+                  <li className="flex items-start">
+                    <CheckCircle2 className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0 text-green-400" />
+                    <span><strong>Motivation Style</strong> - Competitive, supportive, or balanced</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle2 className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0 text-green-400" />
+                    <span><strong>Communication Preferences</strong> - Chat frequency and style</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle2 className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0 text-green-400" />
+                    <span><strong>Accountability Needs</strong> - High, medium, or low check-ins</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle2 className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0 text-green-400" />
+                    <span><strong>Personality Compatibility</strong> - Introverted vs extroverted balance</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Technology Details */}
+            <div className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-xl p-6 border-2 border-purple-400/30">
+              <div className="flex items-start space-x-4">
+                <Zap className="w-12 h-12 text-yellow-400 flex-shrink-0" />
+                <div>
+                  <h3 className="text-xl font-bold mb-3">Self-Learning AI Powered by Tinker API & LLama 3.3 70B</h3>
+                  <p className="text-purple-100 mb-4">
+                    Our matching algorithm uses Meta's LLama 3.3 70B model (70 billion parameters) through Thinking Labs' Tinker API
+                    to continuously learn and improve match quality based on your interactions, feedback, and success patterns.
+                  </p>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="flex items-start space-x-2">
+                      <Activity className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
+                      <div className="text-sm">
+                        <strong className="text-white">Real-Time Learning:</strong>
+                        <p className="text-purple-200">Algorithm adapts as you swipe, chat, and connect</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start space-x-2">
+                      <TrendingUp className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
+                      <div className="text-sm">
+                        <strong className="text-white">Improving Accuracy:</strong>
+                        <p className="text-purple-200">The more you use ReddyFit, the smarter Cupid becomes</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-4 pt-4 border-t border-purple-400/30">
+                    <p className="text-sm text-center text-purple-200">
+                      <strong className="text-yellow-400">🚀 Result:</strong> One carefully curated, high-quality match per day that truly understands you
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* CTA Section */}
         <div className="bg-gradient-to-r from-pink-600 to-purple-600 rounded-2xl p-8 text-white text-center shadow-2xl">
           <h2 className="text-3xl font-bold mb-4">Ready to Find Your Perfect Match?</h2>
@@ -219,6 +341,9 @@ export default function CupidAIPage() {
             <span>Unlock Cupid Now</span>
             <ArrowRight className="w-6 h-6" />
           </button>
+          <p className="text-sm text-pink-200 mt-4">
+            ⚡ Use Rapid AI → Cupid unlocks → ML matching finds your perfect fitness partner
+          </p>
         </div>
       </div>
     </div>

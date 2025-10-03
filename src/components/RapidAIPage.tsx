@@ -193,6 +193,61 @@ export default function RapidAIPage() {
           </div>
         </div>
 
+        {/* Unlock Cupid Section */}
+        <div className="bg-gradient-to-r from-pink-500 via-red-500 to-purple-500 rounded-2xl p-8 text-white mb-8 shadow-2xl">
+          <div className="max-w-4xl mx-auto text-center">
+            <div className="text-6xl mb-4">🔓</div>
+            <h2 className="text-3xl font-bold mb-4">Unlock Cupid AI by Using Rapid!</h2>
+            <p className="text-lg text-pink-100 mb-6">
+              When you use Rapid AI to get your fitness plan, you automatically become eligible for <strong>Cupid AI</strong> - our dating coach and fitness buddy matching agent!
+            </p>
+
+            <div className="grid md:grid-cols-2 gap-6 text-left">
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border-2 border-white/30">
+                <h3 className="text-xl font-bold mb-3">💕 What is Cupid AI?</h3>
+                <ul className="space-y-2 text-sm text-pink-100">
+                  <li className="flex items-start">
+                    <CheckCircle2 className="w-5 h-5 mr-2 mt-0.5 flex-shrink-0" />
+                    <span><strong>AI Dating Coach</strong> - Get personalized dating advice and profile optimization tips</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle2 className="w-5 h-5 mr-2 mt-0.5 flex-shrink-0" />
+                    <span><strong>Fitness Buddy Matching</strong> - Find your perfect workout accountability partner</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle2 className="w-5 h-5 mr-2 mt-0.5 flex-shrink-0" />
+                    <span><strong>One Match Per Day</strong> - Quality over quantity, carefully curated by AI</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border-2 border-white/30">
+                <h3 className="text-xl font-bold mb-3">🤖 How ML Matching Works</h3>
+                <ul className="space-y-2 text-sm text-pink-100">
+                  <li className="flex items-start">
+                    <CheckCircle2 className="w-5 h-5 mr-2 mt-0.5 flex-shrink-0" />
+                    <span><strong>50+ Compatibility Factors</strong> - Fitness level, goals, schedule, location, values</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle2 className="w-5 h-5 mr-2 mt-0.5 flex-shrink-0" />
+                    <span><strong>Multi-Scenario Analysis</strong> - Fitness alignment, lifestyle sync, personality match</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle2 className="w-5 h-5 mr-2 mt-0.5 flex-shrink-0" />
+                    <span><strong>Self-Learning Algorithm</strong> - Gets smarter with every interaction</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <div className="mt-6 p-4 bg-yellow-400/20 border-2 border-yellow-300/50 rounded-xl">
+              <p className="text-sm font-semibold">
+                ⚡ <strong>Quick Unlock:</strong> Use Rapid AI once → Cupid AI activates automatically → ML Matching begins finding your perfect fitness partner!
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* CTA Section */}
         <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl p-8 text-white text-center shadow-2xl">
           <h2 className="text-3xl font-bold mb-4">Ready to Transform Your Fitness Journey?</h2>
@@ -204,6 +259,9 @@ export default function RapidAIPage() {
             <span>Start with Rapid Now</span>
             <ArrowRight className="w-6 h-6" />
           </button>
+          <p className="text-sm text-purple-200 mt-4">
+            ✨ Plus unlock Cupid AI for dating coaching & fitness buddy matching
+          </p>
         </div>
       </div>
     </div>
