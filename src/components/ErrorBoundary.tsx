@@ -1,5 +1,6 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertCircle, RefreshCw } from 'lucide-react';
+import { errorLogger } from '../utils/errorLogger';
 
 interface Props {
   children: ReactNode;
@@ -36,8 +37,12 @@ class ErrorBoundary extends Component<Props, State> {
       errorInfo
     });
 
-    // You can also log the error to an error reporting service here
-    // Example: logErrorToService(error, errorInfo);
+    // Log to centralized error logger
+    errorLogger.logError({
+      errorType: 'ReactErrorBoundary',
+      message: error.message || 'Unknown React error',
+      stack: error.stack,
+    });
   }
 
   handleReset = () => {

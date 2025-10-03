@@ -5,11 +5,15 @@ import { film } from '@ssgoi/react/view-transitions';
 import { AuthProvider } from './components/AuthProvider.tsx';
 import AppRouter from './AppRouter.tsx';
 import './index.css';
+import { errorLogger } from './utils/errorLogger';
 
 
 const ssgConfig = {
   defaultTransition: film()
 };
+
+// Initialize error logger
+console.log('✅ Error logging initialized');
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
