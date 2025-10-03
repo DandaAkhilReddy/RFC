@@ -568,14 +568,50 @@ export default function ImprovedDashboard() {
       {/* Main Content */}
       <div className={`transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-20'} relative z-10`}>
         <div className="p-8">
-          {/* Share Button */}
-          <button
-            onClick={() => setShowNFCShare(true)}
-            className="fixed bottom-8 right-8 z-50 p-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full shadow-2xl hover:shadow-3xl transition-all transform hover:scale-110 flex items-center space-x-2"
-          >
-            <Share2 className="w-6 h-6" />
-            <span className="font-semibold">Share</span>
-          </button>
+          {/* Quick Action Buttons - Add Meal & Add Workout */}
+          {(currentPage === 'dashboard' || currentPage === 'diet' || currentPage === 'workout') && (
+            <div className="fixed bottom-8 right-8 z-50 flex flex-col-reverse gap-3">
+              {/* Share Button */}
+              <button
+                onClick={() => setShowNFCShare(true)}
+                className="p-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full shadow-2xl hover:shadow-3xl transition-all transform hover:scale-110 flex items-center space-x-2"
+              >
+                <Share2 className="w-6 h-6" />
+                <span className="font-semibold">Share</span>
+              </button>
+
+              {/* Add Workout Button */}
+              <button
+                onClick={() => setShowAddWorkout(true)}
+                className="p-4 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-full shadow-2xl hover:shadow-3xl transition-all transform hover:scale-110 flex items-center space-x-2 group"
+                title="Add Workout"
+              >
+                <Dumbbell className="w-6 h-6" />
+                <span className="font-semibold">Add Workout</span>
+              </button>
+
+              {/* Add Meal Button */}
+              <button
+                onClick={() => setShowAddFood(true)}
+                className="p-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-full shadow-2xl hover:shadow-3xl transition-all transform hover:scale-110 flex items-center space-x-2 group"
+                title="Add Meal"
+              >
+                <Utensils className="w-6 h-6" />
+                <span className="font-semibold">Add Meal</span>
+              </button>
+            </div>
+          )}
+
+          {/* Keep original Share button visible on other pages */}
+          {currentPage !== 'dashboard' && currentPage !== 'diet' && currentPage !== 'workout' && (
+            <button
+              onClick={() => setShowNFCShare(true)}
+              className="fixed bottom-8 right-8 z-50 p-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full shadow-2xl hover:shadow-3xl transition-all transform hover:scale-110 flex items-center space-x-2"
+            >
+              <Share2 className="w-6 h-6" />
+              <span className="font-semibold">Share</span>
+            </button>
+          )}
 
           {/* NFC Share Modal */}
           {showNFCShare && (

@@ -37,5 +37,14 @@ export const Collections = {
   CHAT_MESSAGES: 'chat_messages',
   VIDEOS: 'videos',
   DAILY_STREAKS: 'daily_streaks',
-  COMMUNITY_POSTS: 'community_posts'
+  COMMUNITY_POSTS: 'community_posts',
+  // New collections for Rapid AI
+  BODY_FAT_REFERENCES: 'body_fat_references',
+  RAPID_AI_ASSESSMENTS: 'rapid_ai_assessments',
+  MEAL_PLANS: 'meal_plans',
+  WORKOUT_PLANS: 'workout_plans',
+  // New collections for Cupid AI accountability matching
+  ACCOUNTABILITY_PARTNERS: 'accountability_partners',
+  CHECK_INS: 'check_ins',
+  PARTNER_REQUESTS: 'partner_requests'
 };
