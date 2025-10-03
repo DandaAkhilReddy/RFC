@@ -17,8 +17,9 @@ import ToastNotification from './ToastNotification';
 import Logo from './Logo';
 import RapidAIPage from './RapidAIPage';
 import CupidAIPage from './CupidAIPage';
+import SettingsPage from './SettingsPage';
 
-type PageType = 'dashboard' | 'diet' | 'workout' | 'ai-agents' | 'friends' | 'rapid-ai' | 'cupid-ai';
+type PageType = 'dashboard' | 'diet' | 'workout' | 'ai-agents' | 'friends' | 'rapid-ai' | 'cupid-ai' | 'settings';
 
 interface FoodEntry {
   id: string;
@@ -540,6 +541,22 @@ export default function ImprovedDashboard() {
           </button>
 
           <div className="border-t border-gray-200 mt-4 pt-4">
+            <button
+              onClick={() => setCurrentPage('settings')}
+              className={`w-full flex items-center px-6 py-3 transition group ${
+                currentPage === 'settings'
+                  ? 'bg-blue-50 text-blue-600'
+                  : 'text-gray-600 hover:bg-blue-50'
+              }`}
+            >
+              <Settings className={`w-5 h-5 transition ${
+                currentPage === 'settings' ? 'text-blue-600' : 'group-hover:text-blue-600'
+              }`} />
+              {sidebarOpen && <span className={`ml-3 font-semibold transition ${
+                currentPage === 'settings' ? 'text-blue-600' : 'group-hover:text-blue-600'
+              }`}>Settings</span>}
+            </button>
+
             <button onClick={signOut} className="w-full flex items-center px-6 py-3 hover:bg-orange-50 text-gray-600 transition group">
               <LogOut className="w-5 h-5 group-hover:text-orange-500 transition" />
               {sidebarOpen && <span className="ml-3 group-hover:text-orange-500 transition">Logout</span>}
@@ -1539,6 +1556,11 @@ export default function ImprovedDashboard() {
               </button>
               <CupidAIPage />
             </div>
+          )}
+
+          {/* Settings Page */}
+          {currentPage === 'settings' && (
+            <SettingsPage onBack={() => setCurrentPage('dashboard')} />
           )}
 
           {/* Other Pages - Coming Soon */}
