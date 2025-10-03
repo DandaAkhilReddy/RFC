@@ -123,7 +123,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Show user-friendly error message
       if (error.code === 'auth/unauthorized-domain') {
-        alert('Authentication error: This domain is not authorized in Firebase Console. Please add white-meadow-001c09f0f.2.azurestaticapps.net to authorized domains.');
+        const currentDomain = window.location.hostname;
+        alert(`Authentication Error: Domain Not Authorized
+
+The domain "${currentDomain}" is not authorized in Firebase Console.
+
+Please add this domain to Firebase:
+1. Go to Firebase Console > Authentication > Settings
+2. Add "${currentDomain}" to Authorized Domains
+3. Try signing in again.`);
         console.error('Domain not authorized in Firebase Console');
       } else if (error.code === 'auth/network-request-failed') {
         alert('Network error. Please check your internet connection and try again.');
