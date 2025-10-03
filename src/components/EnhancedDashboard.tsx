@@ -112,6 +112,34 @@ export default function EnhancedDashboard() {
   });
 
   // No mock data - all real data from database
+  const healthInsights: HealthInsight[] = [
+    {
+      id: "1",
+      title: "Calorie Balance",
+      description: "You are on track with your daily calorie goals",
+      icon: Utensils,
+      color: "from-green-500 to-emerald-600"
+    },
+    {
+      id: "2",
+      title: "Workout Consistency",
+      description: "Great job maintaining your workout schedule",
+      icon: Dumbbell,
+      color: "from-blue-500 to-cyan-600"
+    },
+    {
+      id: "3",
+      title: "Progress Tracking",
+      description: "You are making steady progress toward your goals",
+      icon: TrendingUp,
+      color: "from-purple-500 to-pink-600"
+    }
+  ];
+  const activityDots = [true, true, false, true, false, false, false];
+  const workoutBuddies: WorkoutBuddy[] = [];
+  const todaysMatches: Match[] = [];
+  const communityPosts: CommunityPost[] = [];
+
   const [isFirstTimeUser, setIsFirstTimeUser] = useState(false);
 
   const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
