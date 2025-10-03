@@ -1,6 +1,7 @@
 import { useAuth } from './components/AuthProvider';
 import LandingPage from './App';
 import ImprovedDashboard from './components/ImprovedDashboard';
+import ErrorBoundary from './components/ErrorBoundary';
 
 export default function AppRouter() {
   const { user, loading } = useAuth();
@@ -26,10 +27,18 @@ export default function AppRouter() {
   // NOT logged in - show landing page
   if (!user) {
     console.log('[AppRouter] No user - showing landing page');
-    return <LandingPage />;
+    return (
+      <ErrorBoundary>
+        <LandingPage />
+      </ErrorBoundary>
+    );
   }
 
   // Logged in - show improved dashboard
   console.log('[AppRouter] User logged in - showing improved dashboard');
-  return <ImprovedDashboard />;
+  return (
+    <ErrorBoundary>
+      <ImprovedDashboard />
+    </ErrorBoundary>
+  );
 }

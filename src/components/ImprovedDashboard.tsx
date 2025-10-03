@@ -137,81 +137,234 @@ export default function ImprovedDashboard() {
   const workoutStatus = totalWorkoutMinutes >= userGoals.dailyWorkoutMinutes ? 'good' : 'pending';
 
   const handleAddFood = () => {
-    if (!newFood.name || !newFood.calories) {
-      setToast({ message: 'Please enter food name and calories', type: 'error' });
-      return;
+    try {
+      // Validate food name
+      if (!newFood.name || newFood.name.trim().length === 0) {
+        setToast({ message: '⚠️ Please enter a food name', type: 'error' });
+        return;
+      }
+
+      if (newFood.name.trim().length > 100) {
+        setToast({ message: '⚠️ Food name is too long (max 100 characters)', type: 'error' });
+        return;
+      }
+
+      // Validate calories
+      if (!newFood.calories || newFood.calories.trim().length === 0) {
+        setToast({ message: '⚠️ Please enter calories', type: 'error' });
+        return;
+      }
+
+      const calories = parseInt(newFood.calories);
+      if (isNaN(calories) || calories < 0 || calories > 10000) {
+        setToast({ message: '⚠️ Calories must be between 0 and 10000', type: 'error' });
+        return;
+      }
+
+      // Validate protein (optional but if provided must be valid)
+      let protein = 0;
+      if (newFood.protein && newFood.protein.trim().length > 0) {
+        protein = parseInt(newFood.protein);
+        if (isNaN(protein) || protein < 0 || protein > 1000) {
+          setToast({ message: '⚠️ Protein must be between 0 and 1000g', type: 'error' });
+          return;
+        }
+      }
+
+      // Validate carbs (optional)
+      let carbs = 0;
+      if (newFood.carbs && newFood.carbs.trim().length > 0) {
+        carbs = parseInt(newFood.carbs);
+        if (isNaN(carbs) || carbs < 0 || carbs > 1000) {
+          setToast({ message: '⚠️ Carbs must be between 0 and 1000g', type: 'error' });
+          return;
+        }
+      }
+
+      // Validate fat (optional)
+      let fat = 0;
+      if (newFood.fat && newFood.fat.trim().length > 0) {
+        fat = parseInt(newFood.fat);
+        if (isNaN(fat) || fat < 0 || fat > 1000) {
+          setToast({ message: '⚠️ Fat must be between 0 and 1000g', type: 'error' });
+          return;
+        }
+      }
+
+      const foodEntry: FoodEntry = {
+        id: Date.now().toString(),
+        name: newFood.name.trim(),
+        calories,
+        protein,
+        carbs,
+        fat,
+        time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+      };
+
+      setDailyData(prev => ({
+        ...prev,
+        foods: [...prev.foods, foodEntry]
+      }));
+
+      setNewFood({ name: '', calories: '', protein: '', carbs: '', fat: '' });
+      setShowAddFood(false);
+      setToast({ message: `✅ Added ${foodEntry.name}!`, type: 'success' });
+    } catch (error) {
+      console.error('Error adding food:', error);
+      setToast({ message: '❌ Failed to add food. Please try again.', type: 'error' });
     }
-
-    const foodEntry: FoodEntry = {
-      id: Date.now().toString(),
-      name: newFood.name,
-      calories: parseInt(newFood.calories) || 0,
-      protein: parseInt(newFood.protein) || 0,
-      carbs: parseInt(newFood.carbs) || 0,
-      fat: parseInt(newFood.fat) || 0,
-      time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-    };
-
-    setDailyData(prev => ({
-      ...prev,
-      foods: [...prev.foods, foodEntry]
-    }));
-
-    setNewFood({ name: '', calories: '', protein: '', carbs: '', fat: '' });
-    setShowAddFood(false);
-    setToast({ message: `✅ Added ${newFood.name}!`, type: 'success' });
   };
 
   const handleAddWorkout = () => {
-    if (!newWorkout.name || !newWorkout.duration) {
-      setToast({ message: 'Please enter workout name and duration', type: 'error' });
-      return;
+    try {
+      // Validate workout name
+      if (!newWorkout.name || newWorkout.name.trim().length === 0) {
+        setToast({ message: '⚠️ Please enter a workout name', type: 'error' });
+        return;
+      }
+
+      if (newWorkout.name.trim().length > 100) {
+        setToast({ message: '⚠️ Workout name is too long (max 100 characters)', type: 'error' });
+        return;
+      }
+
+      // Validate duration
+      if (!newWorkout.duration || newWorkout.duration.trim().length === 0) {
+        setToast({ message: '⚠️ Please enter workout duration', type: 'error' });
+        return;
+      }
+
+      const duration = parseInt(newWorkout.duration);
+      if (isNaN(duration) || duration <= 0 || duration > 600) {
+        setToast({ message: '⚠️ Duration must be between 1 and 600 minutes', type: 'error' });
+        return;
+      }
+
+      // Validate calories burned (optional)
+      let caloriesBurned = 0;
+      if (newWorkout.caloriesBurned && newWorkout.caloriesBurned.trim().length > 0) {
+        caloriesBurned = parseInt(newWorkout.caloriesBurned);
+        if (isNaN(caloriesBurned) || caloriesBurned < 0 || caloriesBurned > 5000) {
+          setToast({ message: '⚠️ Calories burned must be between 0 and 5000', type: 'error' });
+          return;
+        }
+      }
+
+      const workoutEntry: WorkoutEntry = {
+        id: Date.now().toString(),
+        name: newWorkout.name.trim(),
+        duration,
+        caloriesBurned,
+        time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+      };
+
+      setDailyData(prev => ({
+        ...prev,
+        workouts: [...prev.workouts, workoutEntry]
+      }));
+
+      setNewWorkout({ name: '', duration: '', caloriesBurned: '' });
+      setShowAddWorkout(false);
+      setToast({ message: `💪 Added ${workoutEntry.name}!`, type: 'success' });
+    } catch (error) {
+      console.error('Error adding workout:', error);
+      setToast({ message: '❌ Failed to add workout. Please try again.', type: 'error' });
     }
-
-    const workoutEntry: WorkoutEntry = {
-      id: Date.now().toString(),
-      name: newWorkout.name,
-      duration: parseInt(newWorkout.duration) || 0,
-      caloriesBurned: parseInt(newWorkout.caloriesBurned) || 0,
-      time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-    };
-
-    setDailyData(prev => ({
-      ...prev,
-      workouts: [...prev.workouts, workoutEntry]
-    }));
-
-    setNewWorkout({ name: '', duration: '', caloriesBurned: '' });
-    setShowAddWorkout(false);
-    setToast({ message: `💪 Added ${newWorkout.name}!`, type: 'success' });
   };
 
   const handleSaveStats = () => {
-    setDailyData(prev => ({
-      ...prev,
-      steps: parseInt(tempStats.steps) || prev.steps,
-      water: parseInt(tempStats.water) || prev.water,
-      sleep: parseInt(tempStats.sleep) || prev.sleep,
-      weight: parseFloat(tempStats.weight) || prev.weight
-    }));
-    setEditingStats(false);
-    setToast({ message: '✅ Stats updated!', type: 'success' });
+    try {
+      let steps = 0;
+      let water = 0;
+      let sleep = 0;
+      let weight = 0;
+
+      // Validate steps
+      if (tempStats.steps && tempStats.steps.trim().length > 0) {
+        steps = parseInt(tempStats.steps);
+        if (isNaN(steps) || steps < 0 || steps > 100000) {
+          setToast({ message: '⚠️ Steps must be between 0 and 100,000', type: 'error' });
+          return;
+        }
+      }
+
+      // Validate water
+      if (tempStats.water && tempStats.water.trim().length > 0) {
+        water = parseInt(tempStats.water);
+        if (isNaN(water) || water < 0 || water > 10000) {
+          setToast({ message: '⚠️ Water must be between 0 and 10,000ml', type: 'error' });
+          return;
+        }
+      }
+
+      // Validate sleep
+      if (tempStats.sleep && tempStats.sleep.trim().length > 0) {
+        sleep = parseFloat(tempStats.sleep);
+        if (isNaN(sleep) || sleep < 0 || sleep > 24) {
+          setToast({ message: '⚠️ Sleep must be between 0 and 24 hours', type: 'error' });
+          return;
+        }
+      }
+
+      // Validate weight
+      if (tempStats.weight && tempStats.weight.trim().length > 0) {
+        weight = parseFloat(tempStats.weight);
+        if (isNaN(weight) || weight < 20 || weight > 300) {
+          setToast({ message: '⚠️ Weight must be between 20 and 300kg', type: 'error' });
+          return;
+        }
+      }
+
+      setDailyData(prev => ({
+        ...prev,
+        steps: steps > 0 ? steps : prev.steps,
+        water: water > 0 ? water : prev.water,
+        sleep: sleep > 0 ? sleep : prev.sleep,
+        weight: weight > 0 ? weight : prev.weight
+      }));
+
+      setEditingStats(false);
+      setToast({ message: '✅ Stats updated successfully!', type: 'success' });
+    } catch (error) {
+      console.error('Error saving stats:', error);
+      setToast({ message: '❌ Failed to save stats. Please try again.', type: 'error' });
+    }
   };
 
   const handleDeleteFood = (id: string) => {
-    setDailyData(prev => ({
-      ...prev,
-      foods: prev.foods.filter(food => food.id !== id)
-    }));
-    setToast({ message: 'Food deleted', type: 'info' });
+    try {
+      if (!id) {
+        setToast({ message: '⚠️ Invalid food entry', type: 'error' });
+        return;
+      }
+
+      setDailyData(prev => ({
+        ...prev,
+        foods: prev.foods.filter(food => food.id !== id)
+      }));
+      setToast({ message: '🗑️ Food entry deleted', type: 'info' });
+    } catch (error) {
+      console.error('Error deleting food:', error);
+      setToast({ message: '❌ Failed to delete food entry', type: 'error' });
+    }
   };
 
   const handleDeleteWorkout = (id: string) => {
-    setDailyData(prev => ({
-      ...prev,
-      workouts: prev.workouts.filter(workout => workout.id !== id)
-    }));
-    setToast({ message: 'Workout deleted', type: 'info' });
+    try {
+      if (!id) {
+        setToast({ message: '⚠️ Invalid workout entry', type: 'error' });
+        return;
+      }
+
+      setDailyData(prev => ({
+        ...prev,
+        workouts: prev.workouts.filter(workout => workout.id !== id)
+      }));
+      setToast({ message: '🗑️ Workout entry deleted', type: 'info' });
+    } catch (error) {
+      console.error('Error deleting workout:', error);
+      setToast({ message: '❌ Failed to delete workout entry', type: 'error' });
+    }
   };
 
   // Initialize temp stats when editing
