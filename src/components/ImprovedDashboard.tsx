@@ -557,7 +557,7 @@ export default function ImprovedDashboard() {
             }`}
           >
             <Bot className="w-5 h-5" />
-            {sidebarOpen && <span className="ml-3 font-semibold">AI Agents</span>}
+            {sidebarOpen && <span className="ml-3 font-semibold">AI Features</span>}
           </button>
 
           <button
@@ -1474,75 +1474,94 @@ export default function ImprovedDashboard() {
             </div>
           )}
 
-          {/* AI Agents Hub */}
+          {/* AI Features Hub */}
           {currentPage === 'ai-agents' && (
             <div>
-              <h2 className="text-3xl font-bold mb-6">🤖 AI Agents Hub</h2>
+              <h2 className="text-3xl font-bold mb-6">🤖 AI Features</h2>
               <p className="text-gray-600 mb-8 text-lg">
-                Choose your AI-powered fitness companion. Each agent is designed to help you achieve your goals in unique ways.
+                AI-powered tools to help you track and achieve your fitness goals.
               </p>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Rapid AI Card */}
+                {/* Body Fat Checker - LIVE */}
                 <div
                   onClick={() => setCurrentPage('rapid-ai')}
                   className="bg-gradient-to-br from-purple-500 to-blue-500 rounded-2xl p-8 text-white cursor-pointer hover:shadow-2xl transition-all transform hover:scale-105 relative"
                 >
-                  {/* BETA Badge */}
-                  <div className="absolute top-4 right-4 px-3 py-1 bg-yellow-400 text-yellow-900 text-xs font-bold rounded-full">
-                    BETA
+                  {/* LIVE Badge */}
+                  <div className="absolute top-4 right-4 px-3 py-1 bg-green-400 text-green-900 text-xs font-bold rounded-full">
+                    LIVE
                   </div>
 
                   <div className="flex items-center justify-between mb-4">
                     <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
-                      <Zap className="w-8 h-8" />
+                      <BarChart3 className="w-8 h-8" />
                     </div>
                     <ChevronRight className="w-6 h-6" />
                   </div>
-                  <h3 className="text-2xl font-bold mb-3">Body Fat Checker (Beta)</h3>
+                  <h3 className="text-2xl font-bold mb-3">Body Fat % Checker</h3>
                   <p className="text-purple-100 mb-4">
-                    Upload photos to get AI-estimated body fat percentage. Full Llama 3.3 70B fitness agent coming soon!
+                    Upload photos to get AI-estimated body fat percentage using Gemini Vision API
                   </p>
                   <div className="flex items-center space-x-4 text-sm">
                     <div className="flex items-center space-x-1">
-                      <Mic className="w-4 h-4" />
-                      <span>Voice Input</span>
+                      <Sparkles className="w-4 h-4" />
+                      <span>AI Analysis</span>
                     </div>
                     <div className="flex items-center space-x-1">
-                      <Sparkles className="w-4 h-4" />
-                      <span>AI Plans</span>
+                      <Camera className="w-4 h-4" />
+                      <span>Multi-Photo</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Cupid AI Card */}
-                <div
-                  onClick={() => setCurrentPage('cupid-ai')}
-                  className="bg-gradient-to-br from-pink-500 to-red-500 rounded-2xl p-8 text-white cursor-pointer hover:shadow-2xl transition-all transform hover:scale-105 relative overflow-hidden"
-                >
-                  <div className="absolute top-2 right-2 px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-xs font-semibold">
-                    Unlocked with Rapid
+                {/* Coming Soon Cards */}
+                <div className="bg-gradient-to-br from-gray-400 to-gray-500 rounded-2xl p-8 text-white relative opacity-60 cursor-not-allowed">
+                  <div className="absolute top-4 right-4 px-3 py-1 bg-yellow-400 text-yellow-900 text-xs font-bold rounded-full">
+                    COMING SOON
+                  </div>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                      <Zap className="w-8 h-8" />
+                    </div>
+                    <Lock className="w-6 h-6" />
+                  </div>
+                  <h3 className="text-2xl font-bold mb-3">AgentRapid ⚡</h3>
+                  <p className="text-gray-100 mb-4">
+                    Full AI agent with personalized meal plans, workout generation, and voice commands
+                  </p>
+                </div>
+
+                <div className="bg-gradient-to-br from-gray-400 to-gray-500 rounded-2xl p-8 text-white relative opacity-60 cursor-not-allowed">
+                  <div className="absolute top-4 right-4 px-3 py-1 bg-yellow-400 text-yellow-900 text-xs font-bold rounded-full">
+                    COMING SOON
                   </div>
                   <div className="flex items-center justify-between mb-4">
                     <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
                       <Heart className="w-8 h-8" />
                     </div>
-                    <ChevronRight className="w-6 h-6" />
+                    <Lock className="w-6 h-6" />
                   </div>
-                  <h3 className="text-2xl font-bold mb-3">Cupid AI</h3>
-                  <p className="text-pink-100 mb-4">
-                    Find your perfect fitness buddy or dating match. AI-powered matching & dating coach to help you connect.
+                  <h3 className="text-2xl font-bold mb-3">AgentCupid ♥️</h3>
+                  <p className="text-gray-100 mb-4">
+                    AI-powered fitness dating and matching with workout buddies
                   </p>
-                  <div className="flex items-center space-x-4 text-sm">
-                    <div className="flex items-center space-x-1">
-                      <Users className="w-4 h-4" />
-                      <span>Buddy Match</span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <Heart className="w-4 h-4" />
-                      <span>Dating Coach</span>
-                    </div>
+                </div>
+
+                <div className="bg-gradient-to-br from-gray-400 to-gray-500 rounded-2xl p-8 text-white relative opacity-60 cursor-not-allowed">
+                  <div className="absolute top-4 right-4 px-3 py-1 bg-yellow-400 text-yellow-900 text-xs font-bold rounded-full">
+                    COMING SOON
                   </div>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                      <TrendingUp className="w-8 h-8" />
+                    </div>
+                    <Lock className="w-6 h-6" />
+                  </div>
+                  <h3 className="text-2xl font-bold mb-3">More AI Agents</h3>
+                  <p className="text-gray-100 mb-4">
+                    AgentLean, AgentRise, AgentFuel, AgentForge - Coming weekly!
+                  </p>
                 </div>
               </div>
 
@@ -1554,21 +1573,21 @@ export default function ImprovedDashboard() {
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="bg-white rounded-xl p-4 border border-blue-200">
-                    <h4 className="font-bold text-gray-800 mb-2">🚀 Tinker API</h4>
+                    <h4 className="font-bold text-gray-800 mb-2">🚀 Gemini Vision API</h4>
                     <p className="text-sm text-gray-600">
-                      By Thinking Labs - Enterprise-grade AI infrastructure with 99.9% uptime
+                      Google's advanced vision AI for body composition analysis
                     </p>
                   </div>
                   <div className="bg-white rounded-xl p-4 border border-purple-200">
-                    <h4 className="font-bold text-gray-800 mb-2">🧠 LLama 3.3 70B</h4>
+                    <h4 className="font-bold text-gray-800 mb-2">🧠 Training LLama 3.3 70B</h4>
                     <p className="text-sm text-gray-600">
-                      Meta's latest open-source model with 70 billion parameters for deep understanding
+                      Building custom fitness models with 10M+ datasets from Hugging Face
                     </p>
                   </div>
                   <div className="bg-white rounded-xl p-4 border border-green-200">
-                    <h4 className="font-bold text-gray-800 mb-2">📈 Self-Learning</h4>
+                    <h4 className="font-bold text-gray-800 mb-2">📈 Weekly Updates</h4>
                     <p className="text-sm text-gray-600">
-                      <strong>The more you use ReddyFit, the smarter it gets!</strong> Continuous training & improvement
+                      <strong>New AI features every week!</strong> We're building the future of fitness
                     </p>
                   </div>
                 </div>
@@ -1576,7 +1595,7 @@ export default function ImprovedDashboard() {
             </div>
           )}
 
-          {/* Rapid AI Page */}
+          {/* Body Fat Checker Page */}
           {currentPage === 'rapid-ai' && (
             <div>
               <button
@@ -1584,7 +1603,7 @@ export default function ImprovedDashboard() {
                 className="flex items-center text-gray-600 hover:text-purple-600 mb-6 transition group"
               >
                 <ArrowLeft className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform" />
-                Back to AI Agents Hub
+                Back to AI Features
               </button>
               <RapidAIPage />
             </div>
