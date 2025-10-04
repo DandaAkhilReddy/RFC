@@ -8,6 +8,7 @@ import { useAuth } from './AuthProvider';
 import { storage, db, Collections } from '../lib/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { analyzeProgressPhotoWithGemini } from '../lib/geminiService';
 
 interface AssessmentData {
   // Photos
@@ -55,6 +56,7 @@ export default function RapidAIPage() {
   const [photoURLs, setPhotoURLs] = useState<string[]>([]);
   const [assessmentData, setAssessmentData] = useState<Partial<AssessmentData>>({});
   const [estimatedBodyFat, setEstimatedBodyFat] = useState<number | null>(null);
+  const [photoAnalyses, setPhotoAnalyses] = useState<any[]>([]);
   const [generatedPlan, setGeneratedPlan] = useState<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -304,30 +306,70 @@ export default function RapidAIPage() {
   const analyzeAndGenerate = async () => {
     setStep('analyzing');
 
-    // TODO: Call Gemini Vision API to estimate body fat from photos
-    // For now, mock the analysis
-    setTimeout(async () => {
-      const mockBodyFat = 18.5; // This should come from AI analysis
-      setEstimatedBodyFat(mockBodyFat);
+    try {
+      // Prepare user context for Gemini API
+      const userContext = {
+        name: user?.displayName || 'User',
+        email: user?.email || '',
+        startWeight: assessmentData.currentWeight || 70,
+        currentWeight: assessmentData.currentWeight || 70,
+        targetWeight: assessmentData.targetWeight || 65,
+        fitnessGoal: assessmentData.primaryGoal || 'General Health',
+        currentLevel: assessmentData.fitnessExperience || 'Beginner',
+        dailyCalories: 2000,
+        dailyProtein: 150
+      };
+
+      // Analyze each photo with Gemini Vision API
+      const analyses = [];
+      const bodyFatEstimates = [];
+
+      for (let i = 0; i < photoURLs.length; i++) {
+        try {
+          // Fetch the image and convert to base64
+          const response = await fetch(photoURLs[i]);
+          const blob = await response.blob();
+          const base64 = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.readAsDataURL(blob);
+          });
+
+          // Analyze with Gemini
+          const analysis = await analyzeProgressPhotoWithGemini(base64, userContext);
+          analyses.push({ photoIndex: i + 1, ...analysis });
+          bodyFatEstimates.push(analysis.bodyFat);
+        } catch (error) {
+          console.error(`Error analyzing photo ${i + 1}:`, error);
+          // Continue with other photos even if one fails
+        }
+      }
+
+      // Calculate average body fat from all photos
+      const avgBodyFat = bodyFatEstimates.length > 0
+        ? Math.round(bodyFatEstimates.reduce((a, b) => a + b, 0) / bodyFatEstimates.length * 10) / 10
+        : 20;
+
+      setEstimatedBodyFat(avgBodyFat);
+      setPhotoAnalyses(analyses);
 
       // Save assessment to Firestore
       if (user?.uid) {
         await setDoc(doc(db, Collections.RAPID_AI_ASSESSMENTS, user.uid), {
           ...assessmentData,
-          estimatedBodyFat: mockBodyFat,
+          estimatedBodyFat: avgBodyFat,
+          photoAnalyses: analyses,
           createdAt: new Date().toISOString(),
           userId: user.uid
         });
       }
 
-      // Generate mock plan (should be AI-generated)
-      const mockPlan = {
-        mealPlan: 'Your personalized meal plan will be generated here based on your food preferences...',
-        workoutPlan: 'Your personalized workout plan will be generated here based on your schedule and location...'
-      };
-      setGeneratedPlan(mockPlan);
       setStep('results');
-    }, 3000);
+    } catch (error) {
+      console.error('Error during analysis:', error);
+      alert('Error analyzing photos. Please try again.');
+      setStep('assessment');
+    }
   };
 
   const currentQ = questions[currentQuestion];
@@ -343,9 +385,27 @@ export default function RapidAIPage() {
               <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
                 <Zap className="w-10 h-10 text-white" />
               </div>
-              <div>
-                <h1 className="text-4xl font-bold mb-2">Rapid AI Fitness Planner</h1>
-                <p className="text-purple-100 text-lg">Comprehensive Body Analysis & Personalized Plans</p>
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-2">
+                  <h1 className="text-4xl font-bold">Body Fat Percentage Checker</h1>
+                  <span className="px-3 py-1 bg-yellow-400 text-yellow-900 text-sm font-bold rounded-full">BETA</span>
+                </div>
+                <p className="text-purple-100 text-lg">AI-Powered Body Composition Analysis</p>
+              </div>
+            </div>
+
+            {/* Beta Disclaimer */}
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+              <div className="flex items-start space-x-3">
+                <AlertCircle className="w-5 h-5 text-yellow-300 flex-shrink-0 mt-0.5" />
+                <div className="text-sm">
+                  <p className="text-white font-semibold mb-1">🧪 Beta Version - Accuracy Notice</p>
+                  <p className="text-purple-100">
+                    This tool uses Gemini Vision API for body fat estimation. We're training our own Llama models with 10M+ datasets
+                    from Hugging Face and Tinker API for improved accuracy. Results are for informational purposes only and should not
+                    replace professional medical advice.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -353,7 +413,7 @@ export default function RapidAIPage() {
           <div className="bg-white rounded-2xl p-8 shadow-xl mb-6">
             <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
               <Brain className="w-6 h-6 text-purple-600 mr-2" />
-              How Rapid Works
+              How It Works
             </h2>
 
             <div className="space-y-6">
@@ -362,9 +422,9 @@ export default function RapidAIPage() {
                   <span className="text-purple-600 font-bold">1</span>
                 </div>
                 <div>
-                  <h3 className="font-bold text-lg text-gray-800 mb-2">Upload Your Photos</h3>
+                  <h3 className="font-bold text-lg text-gray-800 mb-2">Upload Multiple Photos</h3>
                   <p className="text-gray-600 text-sm">
-                    Upload photos of your current physique. Our AI will analyze your body composition to estimate body fat percentage.
+                    Upload 1-3 clear photos (front, side, back views recommended). More photos = better accuracy. Our Gemini Vision AI analyzes your body composition.
                   </p>
                 </div>
               </div>
@@ -374,9 +434,9 @@ export default function RapidAIPage() {
                   <span className="text-blue-600 font-bold">2</span>
                 </div>
                 <div>
-                  <h3 className="font-bold text-lg text-gray-800 mb-2">Complete Comprehensive Assessment</h3>
+                  <h3 className="font-bold text-lg text-gray-800 mb-2">Quick Assessment</h3>
                   <p className="text-gray-600 text-sm">
-                    Answer 26 detailed questions covering your habits, nutrition, goals, and lifestyle. This takes about 5-7 minutes.
+                    Answer basic questions about your height, weight, age, and fitness background to help calibrate the AI analysis.
                   </p>
                 </div>
               </div>
@@ -386,12 +446,24 @@ export default function RapidAIPage() {
                   <span className="text-green-600 font-bold">3</span>
                 </div>
                 <div>
-                  <h3 className="font-bold text-lg text-gray-800 mb-2">Receive Your Personalized Plans</h3>
+                  <h3 className="font-bold text-lg text-gray-800 mb-2">Get Body Fat Estimate</h3>
                   <p className="text-gray-600 text-sm">
-                    Get a custom meal plan using the foods you already eat, and a workout plan designed for your schedule, location, and experience level.
+                    Receive AI-estimated body fat percentage with analysis. Full meal & workout plans coming soon with our Llama-powered agent!
                   </p>
                 </div>
               </div>
+            </div>
+
+            {/* Coming Soon Banner */}
+            <div className="mt-6 bg-gradient-to-r from-orange-50 to-yellow-50 border-2 border-orange-200 rounded-xl p-4">
+              <div className="flex items-center space-x-2 mb-2">
+                <Sparkles className="w-5 h-5 text-orange-500" />
+                <h4 className="font-bold text-orange-900">🚀 Coming Soon: Full AI Fitness Agent</h4>
+              </div>
+              <p className="text-sm text-orange-800">
+                We're training custom Llama models on 10M+ fitness datasets to provide personalized meal plans, workout routines,
+                and comprehensive fitness coaching. Stay tuned!
+              </p>
             </div>
           </div>
 
@@ -426,9 +498,21 @@ export default function RapidAIPage() {
               <Camera className="w-6 h-6 text-purple-600 mr-2" />
               Upload Your Photos
             </h2>
-            <p className="text-gray-600 mb-6">
-              Upload clear photos showing your current physique. Front, side, and back views work best for accurate body fat analysis.
+            <p className="text-gray-600 mb-4">
+              Upload 1-3 clear photos showing your current physique. Front, side, and back views work best for accurate body fat analysis.
             </p>
+
+            {/* Photo Guidelines */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+              <h4 className="font-bold text-blue-900 mb-2 text-sm">📸 Photo Quality Tips:</h4>
+              <ul className="text-xs text-blue-800 space-y-1">
+                <li>• Good lighting (natural light preferred)</li>
+                <li>• Form-fitting clothing or shirtless for males</li>
+                <li>• Stand 6-8 feet from camera</li>
+                <li>• Neutral posture (relaxed, arms at sides)</li>
+                <li>• Multiple angles increase accuracy</li>
+              </ul>
+            </div>
 
             <input
               ref={fileInputRef}
@@ -623,19 +707,31 @@ export default function RapidAIPage() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 p-6">
         <div className="max-w-6xl mx-auto">
+          {/* Beta Notice */}
+          <div className="bg-yellow-50 border-2 border-yellow-300 rounded-xl p-4 mb-6">
+            <div className="flex items-center space-x-3">
+              <AlertCircle className="w-6 h-6 text-yellow-600" />
+              <div>
+                <h4 className="font-bold text-yellow-900">Beta Results - For Informational Purposes Only</h4>
+                <p className="text-sm text-yellow-800">These estimates are generated by Gemini Vision AI and should not replace professional body composition analysis.</p>
+              </div>
+            </div>
+          </div>
+
           <div className="bg-white rounded-2xl p-8 shadow-xl mb-6">
             <h2 className="text-3xl font-bold text-gray-800 mb-6 flex items-center">
               <CheckCircle2 className="w-8 h-8 text-green-500 mr-3" />
-              Your Personalized Fitness Plan is Ready!
+              Body Fat Analysis Complete!
             </h2>
 
             {/* Body Composition */}
             <div className="bg-gradient-to-r from-purple-100 to-blue-100 rounded-xl p-6 mb-6">
               <h3 className="text-xl font-bold text-gray-800 mb-4">📊 Body Composition Analysis</h3>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-3 gap-4 mb-6">
                 <div className="bg-white rounded-lg p-4">
-                  <p className="text-sm text-gray-600 mb-1">Estimated Body Fat</p>
-                  <p className="text-3xl font-bold text-purple-600">{estimatedBodyFat}%</p>
+                  <p className="text-sm text-gray-600 mb-1">Avg Body Fat Estimate</p>
+                  <p className="text-4xl font-bold text-purple-600">{estimatedBodyFat}%</p>
+                  <p className="text-xs text-gray-500 mt-1">From {photoAnalyses.length} photo{photoAnalyses.length !== 1 ? 's' : ''}</p>
                 </div>
                 <div className="bg-white rounded-lg p-4">
                   <p className="text-sm text-gray-600 mb-1">Current Weight</p>
@@ -646,28 +742,70 @@ export default function RapidAIPage() {
                   <p className="text-3xl font-bold text-green-600">{assessmentData.targetWeight} kg</p>
                 </div>
               </div>
+
+              {/* Individual Photo Analysis */}
+              {photoAnalyses.length > 1 && (
+                <div className="bg-white rounded-lg p-4">
+                  <h4 className="font-bold text-gray-800 mb-3">Per-Photo Analysis:</h4>
+                  <div className="grid grid-cols-3 gap-3">
+                    {photoAnalyses.map((analysis, idx) => (
+                      <div key={idx} className="text-center p-3 bg-gray-50 rounded-lg">
+                        <p className="text-xs text-gray-600 mb-1">Photo {analysis.photoIndex}</p>
+                        <p className="text-2xl font-bold text-purple-600">{analysis.bodyFat}%</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* Meal Plan */}
-            <div className="mb-6">
-              <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                <Utensils className="w-6 h-6 text-green-500 mr-2" />
-                Your Personalized Meal Plan
-              </h3>
-              <div className="bg-gray-50 rounded-xl p-6">
-                <p className="text-gray-700">{generatedPlan?.mealPlan}</p>
+            {/* Detailed Analysis */}
+            {photoAnalyses.length > 0 && (
+              <div className="mb-6 space-y-4">
+                {photoAnalyses.map((analysis, idx) => (
+                  <div key={idx} className="bg-gray-50 rounded-xl p-6">
+                    <h4 className="font-bold text-gray-800 mb-3">Photo {analysis.photoIndex} Analysis:</h4>
+                    <div className="space-y-3 text-sm">
+                      {analysis.muscleMass && (
+                        <div>
+                          <span className="font-semibold text-gray-700">Muscle Mass:</span>
+                          <p className="text-gray-600 mt-1">{analysis.muscleMass}</p>
+                        </div>
+                      )}
+                      {analysis.posture && (
+                        <div>
+                          <span className="font-semibold text-gray-700">Posture:</span>
+                          <p className="text-gray-600 mt-1">{analysis.posture}</p>
+                        </div>
+                      )}
+                      {analysis.recommendations && analysis.recommendations.length > 0 && (
+                        <div>
+                          <span className="font-semibold text-gray-700">Recommendations:</span>
+                          <ul className="list-disc list-inside text-gray-600 mt-1 space-y-1">
+                            {analysis.recommendations.map((rec: string, i: number) => (
+                              <li key={i}>{rec}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
-            </div>
+            )}
 
-            {/* Workout Plan */}
-            <div className="mb-6">
-              <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                <Dumbbell className="w-6 h-6 text-orange-500 mr-2" />
-                Your Personalized Workout Plan
-              </h3>
-              <div className="bg-gray-50 rounded-xl p-6">
-                <p className="text-gray-700">{generatedPlan?.workoutPlan}</p>
+            {/* Coming Soon Banner */}
+            <div className="bg-gradient-to-r from-orange-50 to-yellow-50 border-2 border-orange-300 rounded-xl p-6 mb-6">
+              <div className="flex items-center space-x-3 mb-3">
+                <Sparkles className="w-6 h-6 text-orange-500" />
+                <h3 className="font-bold text-orange-900 text-lg">🚀 Full AI Agent Coming Soon!</h3>
               </div>
+              <p className="text-orange-800 mb-3">
+                We're developing a comprehensive AI fitness agent powered by custom-trained Llama models with 10M+ datasets from Hugging Face and Tinker API.
+              </p>
+              <p className="text-sm text-orange-700 font-semibold">
+                Future features: Personalized meal plans, custom workout routines, progress tracking, and real-time coaching!
+              </p>
             </div>
 
             <button
@@ -675,7 +813,10 @@ export default function RapidAIPage() {
                 setStep('intro');
                 setCurrentQuestion(0);
                 setUploadedPhotos([]);
+                setPhotoURLs([]);
                 setAssessmentData({});
+                setPhotoAnalyses([]);
+                setEstimatedBodyFat(null);
               }}
               className="w-full px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl font-bold text-lg hover:shadow-xl transition-all transform hover:scale-105"
             >

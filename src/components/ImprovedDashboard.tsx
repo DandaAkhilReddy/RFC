@@ -1486,17 +1486,22 @@ export default function ImprovedDashboard() {
                 {/* Rapid AI Card */}
                 <div
                   onClick={() => setCurrentPage('rapid-ai')}
-                  className="bg-gradient-to-br from-purple-500 to-blue-500 rounded-2xl p-8 text-white cursor-pointer hover:shadow-2xl transition-all transform hover:scale-105"
+                  className="bg-gradient-to-br from-purple-500 to-blue-500 rounded-2xl p-8 text-white cursor-pointer hover:shadow-2xl transition-all transform hover:scale-105 relative"
                 >
+                  {/* BETA Badge */}
+                  <div className="absolute top-4 right-4 px-3 py-1 bg-yellow-400 text-yellow-900 text-xs font-bold rounded-full">
+                    BETA
+                  </div>
+
                   <div className="flex items-center justify-between mb-4">
                     <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
                       <Zap className="w-8 h-8" />
                     </div>
                     <ChevronRight className="w-6 h-6" />
                   </div>
-                  <h3 className="text-2xl font-bold mb-3">Rapid AI</h3>
+                  <h3 className="text-2xl font-bold mb-3">Body Fat Checker (Beta)</h3>
                   <p className="text-purple-100 mb-4">
-                    One voice note or click to get your complete fitness plan instantly. Powered by Tinker API & LLama 3.3 70B.
+                    Upload photos to get AI-estimated body fat percentage. Full Llama 3.3 70B fitness agent coming soon!
                   </p>
                   <div className="flex items-center space-x-4 text-sm">
                     <div className="flex items-center space-x-1">
