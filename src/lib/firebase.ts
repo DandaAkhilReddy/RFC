@@ -40,6 +40,7 @@ export const Collections = {
   COMMUNITY_POSTS: 'community_posts',
   // New collections for Rapid AI
   BODY_FAT_REFERENCES: 'body_fat_references',
+  BODY_ANALYSIS: 'body_analysis',
   RAPID_AI_ASSESSMENTS: 'rapid_ai_assessments',
   MEAL_PLANS: 'meal_plans',
   WORKOUT_PLANS: 'workout_plans',
