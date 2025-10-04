@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
-import { Camera, Upload, X, Loader, Sparkles, Star, CheckCircle2, Edit2 } from 'lucide-react';
+import { Camera, Upload, X, Loader, Sparkles, Star, CheckCircle2, Edit2, AlertCircle } from 'lucide-react';
 import { analyzeMealPhotoWithGemini, MealAnalysis, UserContext } from '../lib/geminiService';
+import { analyzeFoodPhoto, extractNutritionLabel } from '../lib/firebaseFunctions';
 
 interface PhotoFoodInputProps {
   onAnalysisComplete: (result: MealAnalysis & { photoUrl: string }) => void;
@@ -15,6 +16,8 @@ export default function PhotoFoodInput({ onAnalysisComplete, onCancel, userConte
   const [analysisResult, setAnalysisResult] = useState<MealAnalysis | null>(null);
   const [error, setError] = useState<string>('');
   const [editableResult, setEditableResult] = useState<MealAnalysis | null>(null);
+  const [loadingStep, setLoadingStep] = useState<string>('');
+  const [detectedLabels, setDetectedLabels] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const compressImage = async (file: File): Promise<string> => {
@@ -79,23 +82,57 @@ export default function PhotoFoodInput({ onAnalysisComplete, onCancel, userConte
 
     setPhoto(file);
     setError('');
+    setDetectedLabels([]);
 
     try {
       // Create preview
+      setLoadingStep('Preparing image...');
       const preview = await compressImage(file);
       setPhotoPreview(preview);
 
-      // Start analysis
+      // Step 1: Quick food detection with Cloud Vision
       setAnalyzing(true);
+      setLoadingStep('Detecting food with AI...');
+
+      const base64Data = preview.split(',')[1]; // Remove data:image/jpeg;base64, prefix
+      const foodCheck = await analyzeFoodPhoto(base64Data);
+
+      if (!foodCheck.isFood) {
+        setError(`❌ No food detected in this image.
+
+Detected: ${foodCheck.labels.slice(0, 3).join(', ')}
+
+Please upload a photo of food for nutrition analysis.`);
+        setAnalyzing(false);
+        setLoadingStep('');
+        return;
+      }
+
+      // Show detected food labels
+      setDetectedLabels(foodCheck.labels.slice(0, 5));
+
+      // Step 2: Detailed nutrition analysis with Gemini
+      setLoadingStep(`Analyzing nutrition... (${Math.round(foodCheck.confidence * 100)}% confidence)`);
       const result = await analyzeMealPhotoWithGemini(preview, userContext);
+
+      // If nutrition label was detected, use those values if available
+      if (foodCheck.nutritionFromLabel) {
+        const labelNutrition = foodCheck.nutritionFromLabel;
+        if (labelNutrition.calories) result.calories = labelNutrition.calories;
+        if (labelNutrition.protein) result.protein = labelNutrition.protein;
+        if (labelNutrition.carbs) result.carbs = labelNutrition.carbs;
+        if (labelNutrition.fat) result.fats = labelNutrition.fat;
+      }
 
       setAnalysisResult(result);
       setEditableResult(result);
       setAnalyzing(false);
-    } catch (err) {
+      setLoadingStep('');
+    } catch (err: any) {
       console.error('Error analyzing food photo:', err);
-      setError('Failed to analyze image. Please try again.');
+      setError(err.message || 'Failed to analyze image. Please try again.');
       setAnalyzing(false);
+      setLoadingStep('');
     }
   };
 
@@ -115,6 +152,8 @@ export default function PhotoFoodInput({ onAnalysisComplete, onCancel, userConte
     setAnalysisResult(null);
     setEditableResult(null);
     setError('');
+    setDetectedLabels([]);
+    setLoadingStep('');
   };
 
   // No photo selected - show upload options
@@ -162,8 +201,11 @@ export default function PhotoFoodInput({ onAnalysisComplete, onCancel, userConte
         </div>
 
         {error && (
-          <div className="bg-red-50 border-2 border-red-300 rounded-xl p-4 text-red-700">
-            {error}
+          <div className="bg-red-50 border-2 border-red-300 rounded-xl p-4 text-red-700 flex items-start space-x-3">
+            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <pre className="whitespace-pre-wrap font-sans">{error}</pre>
+            </div>
           </div>
         )}
 
@@ -190,8 +232,18 @@ export default function PhotoFoodInput({ onAnalysisComplete, onCancel, userConte
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-8">
               <Loader className="w-12 h-12 text-green-500 animate-spin mx-auto mb-4" />
-              <h3 className="text-xl font-bold text-gray-800 mb-2">Analyzing your meal...</h3>
-              <p className="text-gray-600 animate-pulse">AI is detecting foods and calculating nutrition</p>
+              <h3 className="text-xl font-bold text-gray-800 mb-2">
+                {loadingStep || 'Analyzing your meal...'}
+              </h3>
+              <p className="text-gray-600 animate-pulse">
+                {detectedLabels.length > 0 ? (
+                  <span className="text-green-600 font-semibold">
+                    Detected: {detectedLabels.slice(0, 3).join(', ')}
+                  </span>
+                ) : (
+                  'AI is detecting foods and calculating nutrition'
+                )}
+              </p>
             </div>
           </div>
         </div>
@@ -226,6 +278,26 @@ export default function PhotoFoodInput({ onAnalysisComplete, onCancel, userConte
             <p className="text-sm text-green-700">Review and adjust if needed</p>
           </div>
         </div>
+
+        {/* Cloud Vision Detection Results */}
+        {detectedLabels.length > 0 && (
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
+            <p className="text-xs text-blue-600 font-semibold mb-2 flex items-center">
+              <Sparkles className="w-3 h-3 mr-1" />
+              Cloud Vision Detected
+            </p>
+            <div className="flex flex-wrap gap-1">
+              {detectedLabels.map((label, idx) => (
+                <span
+                  key={idx}
+                  className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs"
+                >
+                  {label}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Detected Foods */}
         <div>
