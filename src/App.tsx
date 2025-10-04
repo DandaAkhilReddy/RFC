@@ -236,6 +236,12 @@ export default function LandingPage() {
                 <div className="text-center mb-4">
                   <div className="text-3xl font-bold mb-2">Step 1</div>
                   <h3 className="text-2xl font-bold mb-4">Rapid AI</h3>
+                  <div className="inline-block px-3 py-1 bg-yellow-400 text-yellow-900 rounded-full text-xs font-bold mb-2">
+                    🚧 COMING SOON
+                  </div>
+                  <div className="inline-block px-3 py-1 bg-green-400 text-green-900 rounded-full text-xs font-bold ml-2 mb-2">
+                    ✅ BETA: Body Fat Checker
+                  </div>
                 </div>
                 <ul className="space-y-3 text-purple-100">
                   <li className="flex items-start">
@@ -253,7 +259,7 @@ export default function LandingPage() {
                 </ul>
                 <div className="mt-6 pt-6 border-t border-purple-400/30">
                   <div className="text-sm text-purple-200">
-                    <strong>Unlock:</strong> Using Rapid AI makes you eligible for Cupid AI
+                    <strong>Try Now:</strong> Body Fat % Checker is live in beta!
                   </div>
                 </div>
               </div>
@@ -266,8 +272,11 @@ export default function LandingPage() {
                 <div className="text-center mb-4">
                   <div className="text-3xl font-bold mb-2">Step 2</div>
                   <h3 className="text-2xl font-bold mb-4">Cupid AI</h3>
-                  <div className="inline-block px-3 py-1 bg-pink-500/30 rounded-full text-xs font-semibold mb-4">
-                    Unlocked with Rapid ✓
+                  <div className="inline-block px-3 py-1 bg-yellow-400 text-yellow-900 rounded-full text-xs font-bold mb-2">
+                    🚧 COMING SOON
+                  </div>
+                  <div className="inline-block px-3 py-1 bg-green-400 text-green-900 rounded-full text-xs font-bold ml-2 mb-2">
+                    ✅ BETA: Community Browser
                   </div>
                 </div>
                 <ul className="space-y-3 text-pink-100">
@@ -286,7 +295,7 @@ export default function LandingPage() {
                 </ul>
                 <div className="mt-6 pt-6 border-t border-pink-400/30">
                   <div className="text-sm text-pink-200">
-                    <strong>Unlock:</strong> Cupid AI activates the Matching Algorithm
+                    <strong>Try Now:</strong> Browse our fitness community in beta!
                   </div>
                 </div>
               </div>
@@ -299,8 +308,8 @@ export default function LandingPage() {
                 <div className="text-center mb-4">
                   <div className="text-3xl font-bold mb-2">Step 3</div>
                   <h3 className="text-2xl font-bold mb-4">ML Matching</h3>
-                  <div className="inline-block px-3 py-1 bg-green-500/30 rounded-full text-xs font-semibold mb-4">
-                    Auto-activated ✓
+                  <div className="inline-block px-3 py-1 bg-yellow-400 text-yellow-900 rounded-full text-xs font-bold mb-4">
+                    🚧 COMING SOON
                   </div>
                 </div>
                 <ul className="space-y-3 text-green-100">

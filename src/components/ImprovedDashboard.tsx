@@ -19,8 +19,10 @@ import RapidAIPage from './RapidAIPage';
 import CupidAIPage from './CupidAIPage';
 import SettingsPage from './SettingsPage';
 import CommunityPage from './CommunityPage';
+import AgentRapidInfo from './AgentRapidInfo';
+import AgentCupidInfo from './AgentCupidInfo';
 
-type PageType = 'dashboard' | 'diet' | 'workout' | 'ai-agents' | 'friends' | 'rapid-ai' | 'cupid-ai' | 'settings';
+type PageType = 'dashboard' | 'diet' | 'workout' | 'ai-agents' | 'friends' | 'rapid-ai' | 'cupid-ai' | 'settings' | 'agent-rapid-info' | 'agent-cupid-info';
 
 interface FoodEntry {
   id: string;
@@ -867,25 +869,25 @@ export default function ImprovedDashboard() {
                 </div>
               </div>
 
-              {/* Today's Progress - 2x2 Grid */}
-              <div className="grid grid-cols-2 gap-4 mb-6">
+              {/* Today's Progress - 4 Cards Grid */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
                 {/* Weight Card */}
                 <div
                   onClick={() => setEditingWeight(true)}
-                  className="bg-gradient-to-br from-blue-500 to-purple-600 p-6 rounded-2xl shadow-xl text-white cursor-pointer hover:shadow-2xl transition-all aspect-square flex flex-col justify-between"
+                  className="bg-gradient-to-br from-blue-500 to-purple-600 p-4 rounded-xl shadow-lg text-white cursor-pointer hover:shadow-xl transition-all flex flex-col justify-between min-h-[140px]"
                 >
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold opacity-90">Weight</h3>
-                    <TrendingDown className="w-5 h-5 opacity-75" />
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-sm font-semibold opacity-90">Weight</h3>
+                    <TrendingDown className="w-4 h-4 opacity-75" />
                   </div>
                   {editingWeight ? (
-                    <div className="flex flex-col items-center space-y-3">
+                    <div className="flex flex-col items-center space-y-2">
                       <input
                         type="number"
                         step="0.1"
                         value={dailyData.weight}
                         onChange={(e) => setDailyData({...dailyData, weight: parseFloat(e.target.value) || 0})}
-                        className="w-full px-4 py-2 rounded-xl text-gray-800 text-2xl font-bold text-center"
+                        className="w-full px-2 py-1 rounded-lg text-gray-800 text-lg font-bold text-center"
                         placeholder="Enter weight"
                         autoFocus
                       />
@@ -894,34 +896,34 @@ export default function ImprovedDashboard() {
                           e.stopPropagation();
                           setEditingWeight(false);
                         }}
-                        className="px-4 py-2 bg-white/20 rounded-lg hover:bg-white/30 transition text-sm"
+                        className="px-3 py-1 bg-white/20 rounded-lg hover:bg-white/30 transition text-xs"
                       >
                         Done
                       </button>
                     </div>
                   ) : (
                     <>
-                      <div className="text-5xl font-bold text-center">
+                      <div className="text-3xl font-bold text-center my-2">
                         {dailyData.weight > 0 ? dailyData.weight : '--'}
-                        <span className="text-2xl ml-1">kg</span>
+                        <span className="text-lg ml-1">kg</span>
                       </div>
-                      <div className="flex justify-between items-center text-sm opacity-90">
+                      <div className="flex justify-between items-center text-xs opacity-90">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             setDailyData({...dailyData, weight: Math.max(0, dailyData.weight - 0.1)});
                           }}
-                          className="px-3 py-1 bg-white/20 rounded-lg hover:bg-white/30 transition"
+                          className="px-2 py-1 bg-white/20 rounded hover:bg-white/30 transition"
                         >
                           -
                         </button>
-                        <span>Goal: {userGoals.targetWeight}kg</span>
+                        <span className="text-xs">→ {userGoals.targetWeight}kg</span>
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             setDailyData({...dailyData, weight: dailyData.weight + 0.1});
                           }}
-                          className="px-3 py-1 bg-white/20 rounded-lg hover:bg-white/30 transition"
+                          className="px-2 py-1 bg-white/20 rounded hover:bg-white/30 transition"
                         >
                           +
                         </button>
@@ -933,19 +935,19 @@ export default function ImprovedDashboard() {
                 {/* Steps Card */}
                 <div
                   onClick={() => setEditingSteps(true)}
-                  className="bg-gradient-to-br from-green-500 to-emerald-600 p-6 rounded-2xl shadow-xl text-white cursor-pointer hover:shadow-2xl transition-all aspect-square flex flex-col justify-between"
+                  className="bg-gradient-to-br from-green-500 to-emerald-600 p-4 rounded-xl shadow-lg text-white cursor-pointer hover:shadow-xl transition-all flex flex-col justify-between min-h-[140px]"
                 >
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold opacity-90">Steps</h3>
-                    <Activity className="w-5 h-5 opacity-75" />
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-sm font-semibold opacity-90">Steps</h3>
+                    <Activity className="w-4 h-4 opacity-75" />
                   </div>
                   {editingSteps ? (
-                    <div className="flex flex-col items-center space-y-3">
+                    <div className="flex flex-col items-center space-y-2">
                       <input
                         type="number"
                         value={dailyData.steps}
                         onChange={(e) => setDailyData({...dailyData, steps: parseInt(e.target.value) || 0})}
-                        className="w-full px-4 py-2 rounded-xl text-gray-800 text-2xl font-bold text-center"
+                        className="w-full px-2 py-1 rounded-lg text-gray-800 text-lg font-bold text-center"
                         placeholder="Enter steps"
                         autoFocus
                       />
@@ -954,43 +956,24 @@ export default function ImprovedDashboard() {
                           e.stopPropagation();
                           setEditingSteps(false);
                         }}
-                        className="px-4 py-2 bg-white/20 rounded-lg hover:bg-white/30 transition text-sm"
+                        className="px-3 py-1 bg-white/20 rounded-lg hover:bg-white/30 transition text-xs"
                       >
                         Done
                       </button>
                     </div>
                   ) : (
                     <>
-                      <div className="text-center">
-                        <div className="relative inline-flex items-center justify-center">
-                          <svg className="w-32 h-32 transform -rotate-90">
-                            <circle cx="64" cy="64" r="56" stroke="rgba(255,255,255,0.2)" strokeWidth="8" fill="none" />
-                            <circle
-                              cx="64"
-                              cy="64"
-                              r="56"
-                              stroke="white"
-                              strokeWidth="8"
-                              fill="none"
-                              strokeDasharray={`${2 * Math.PI * 56}`}
-                              strokeDashoffset={`${2 * Math.PI * 56 * (1 - Math.min(dailyData.steps / 10000, 1))}`}
-                              className="transition-all duration-500"
-                            />
-                          </svg>
-                          <div className="absolute text-3xl font-bold">{dailyData.steps.toLocaleString()}</div>
-                        </div>
+                      <div className="text-center flex-1 flex items-center justify-center">
+                        <div className="text-2xl font-bold">{dailyData.steps.toLocaleString()}</div>
                       </div>
                       <div className="text-center">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                          }}
-                          disabled
-                          className="px-3 py-1 bg-white/10 rounded-lg text-xs opacity-50 cursor-not-allowed"
-                          title="Coming soon"
-                        >
-                          Sync Apple Watch
-                        </button>
+                        <div className="w-full bg-white/20 rounded-full h-1.5">
+                          <div
+                            className="h-1.5 bg-white rounded-full transition-all duration-500"
+                            style={{ width: `${Math.min(100, (dailyData.steps / 10000) * 100)}%` }}
+                          ></div>
+                        </div>
+                        <div className="text-xs opacity-75 mt-1">Goal: 10k</div>
                       </div>
                     </>
                   )}
@@ -999,20 +982,20 @@ export default function ImprovedDashboard() {
                 {/* Sleep Card */}
                 <div
                   onClick={() => setEditingSleep(true)}
-                  className="bg-gradient-to-br from-purple-500 to-pink-600 p-6 rounded-2xl shadow-xl text-white cursor-pointer hover:shadow-2xl transition-all aspect-square flex flex-col justify-between"
+                  className="bg-gradient-to-br from-purple-500 to-pink-600 p-4 rounded-xl shadow-lg text-white cursor-pointer hover:shadow-xl transition-all flex flex-col justify-between min-h-[140px]"
                 >
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold opacity-90">Sleep</h3>
-                    <Clock className="w-5 h-5 opacity-75" />
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-sm font-semibold opacity-90">Sleep</h3>
+                    <Clock className="w-4 h-4 opacity-75" />
                   </div>
                   {editingSleep ? (
-                    <div className="flex flex-col items-center space-y-3">
+                    <div className="flex flex-col items-center space-y-2">
                       <input
                         type="number"
                         step="0.5"
                         value={dailyData.sleep}
                         onChange={(e) => setDailyData({...dailyData, sleep: parseFloat(e.target.value) || 0})}
-                        className="w-full px-4 py-2 rounded-xl text-gray-800 text-2xl font-bold text-center"
+                        className="w-full px-2 py-1 rounded-lg text-gray-800 text-lg font-bold text-center"
                         placeholder="Hours"
                         autoFocus
                       />
@@ -1021,18 +1004,18 @@ export default function ImprovedDashboard() {
                           e.stopPropagation();
                           setEditingSleep(false);
                         }}
-                        className="px-4 py-2 bg-white/20 rounded-lg hover:bg-white/30 transition text-sm"
+                        className="px-3 py-1 bg-white/20 rounded-lg hover:bg-white/30 transition text-xs"
                       >
                         Done
                       </button>
                     </div>
                   ) : (
                     <>
-                      <div className="text-5xl font-bold text-center">
+                      <div className="text-3xl font-bold text-center my-2">
                         {dailyData.sleep > 0 ? dailyData.sleep : '--'}
-                        <span className="text-2xl ml-1">hrs</span>
+                        <span className="text-lg ml-1">hrs</span>
                       </div>
-                      <div className="text-center text-sm opacity-90">
+                      <div className="text-center text-xs opacity-90">
                         Target: 8 hrs
                       </div>
                     </>
@@ -1042,18 +1025,18 @@ export default function ImprovedDashboard() {
                 {/* Workout Card */}
                 <div
                   onClick={() => setShowAddWorkout(true)}
-                  className="bg-gradient-to-br from-orange-500 to-red-600 p-6 rounded-2xl shadow-xl text-white cursor-pointer hover:shadow-2xl transition-all aspect-square flex flex-col justify-between"
+                  className="bg-gradient-to-br from-orange-500 to-red-600 p-4 rounded-xl shadow-lg text-white cursor-pointer hover:shadow-xl transition-all flex flex-col justify-between min-h-[140px]"
                 >
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold opacity-90">Workout</h3>
-                    <Dumbbell className="w-5 h-5 opacity-75" />
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-sm font-semibold opacity-90">Workout</h3>
+                    <Dumbbell className="w-4 h-4 opacity-75" />
                   </div>
-                  <div className="text-center">
-                    <div className="text-5xl font-bold">{totalWorkoutMinutes}</div>
-                    <div className="text-sm opacity-90 mt-1">minutes</div>
+                  <div className="text-center flex-1 flex flex-col items-center justify-center">
+                    <div className="text-3xl font-bold">{totalWorkoutMinutes}</div>
+                    <div className="text-xs opacity-90 mt-1">minutes today</div>
                   </div>
-                  <div className="flex items-center justify-center space-x-2 text-sm opacity-90">
-                    <Plus className="w-4 h-4" />
+                  <div className="flex items-center justify-center space-x-1 text-xs opacity-90">
+                    <Plus className="w-3 h-3" />
                     <span>Log workout</span>
                   </div>
                 </div>
@@ -1617,8 +1600,11 @@ export default function ImprovedDashboard() {
                   </div>
                 </div>
 
-                {/* Coming Soon Cards */}
-                <div className="bg-gradient-to-br from-gray-400 to-gray-500 rounded-2xl p-8 text-white relative opacity-60 cursor-not-allowed">
+                {/* Coming Soon Cards - Now Clickable */}
+                <div
+                  onClick={() => setCurrentPage('agent-rapid-info')}
+                  className="bg-gradient-to-br from-purple-400 to-blue-400 rounded-2xl p-8 text-white relative cursor-pointer hover:shadow-2xl transition-all transform hover:scale-105"
+                >
                   <div className="absolute top-4 right-4 px-3 py-1 bg-yellow-400 text-yellow-900 text-xs font-bold rounded-full">
                     COMING SOON
                   </div>
@@ -1626,15 +1612,18 @@ export default function ImprovedDashboard() {
                     <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
                       <Zap className="w-8 h-8" />
                     </div>
-                    <Lock className="w-6 h-6" />
+                    <ChevronRight className="w-6 h-6" />
                   </div>
                   <h3 className="text-2xl font-bold mb-3">AgentRapid ⚡</h3>
-                  <p className="text-gray-100 mb-4">
+                  <p className="text-purple-100 mb-4">
                     Full AI agent with personalized meal plans, workout generation, and voice commands
                   </p>
                 </div>
 
-                <div className="bg-gradient-to-br from-gray-400 to-gray-500 rounded-2xl p-8 text-white relative opacity-60 cursor-not-allowed">
+                <div
+                  onClick={() => setCurrentPage('agent-cupid-info')}
+                  className="bg-gradient-to-br from-pink-400 to-red-400 rounded-2xl p-8 text-white relative cursor-pointer hover:shadow-2xl transition-all transform hover:scale-105"
+                >
                   <div className="absolute top-4 right-4 px-3 py-1 bg-yellow-400 text-yellow-900 text-xs font-bold rounded-full">
                     COMING SOON
                   </div>
@@ -1642,10 +1631,10 @@ export default function ImprovedDashboard() {
                     <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
                       <Heart className="w-8 h-8" />
                     </div>
-                    <Lock className="w-6 h-6" />
+                    <ChevronRight className="w-6 h-6" />
                   </div>
                   <h3 className="text-2xl font-bold mb-3">AgentCupid ♥️</h3>
-                  <p className="text-gray-100 mb-4">
+                  <p className="text-pink-100 mb-4">
                     AI-powered fitness dating and matching with workout buddies
                   </p>
                 </div>
@@ -1728,6 +1717,15 @@ export default function ImprovedDashboard() {
           {/* Settings Page */}
           {currentPage === 'settings' && (
             <SettingsPage onBack={() => setCurrentPage('dashboard')} />
+          )}
+
+          {/* Agent Info Pages */}
+          {currentPage === 'agent-rapid-info' && (
+            <AgentRapidInfo onNavigate={setCurrentPage} />
+          )}
+
+          {currentPage === 'agent-cupid-info' && (
+            <AgentCupidInfo onNavigate={setCurrentPage} />
           )}
 
           {/* Other Pages - Coming Soon */}
