@@ -98,6 +98,10 @@ export default function ImprovedDashboard() {
   const [showAddWorkout, setShowAddWorkout] = useState(false);
   const [editingStats, setEditingStats] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const [streak, setStreak] = useState(0);
+  const [editingWeight, setEditingWeight] = useState(false);
+  const [editingSteps, setEditingSteps] = useState(false);
+  const [editingSleep, setEditingSleep] = useState(false);
 
   // Form states
   const [newFood, setNewFood] = useState({
@@ -146,6 +150,50 @@ export default function ImprovedDashboard() {
 
     loadUserData();
   }, [user, currentDate]);
+
+  // Calculate streak
+  useEffect(() => {
+    const calculateStreak = async () => {
+      if (!user?.uid) return;
+
+      try {
+        const activitiesRef = collection(db, Collections.USERS, user.uid, 'daily_activities');
+        const activitiesSnapshot = await getDocs(activitiesRef);
+
+        if (activitiesSnapshot.empty) {
+          setStreak(0);
+          return;
+        }
+
+        // Get all dates with activities and sort descending
+        const dates = activitiesSnapshot.docs
+          .map(doc => doc.id)
+          .sort((a, b) => b.localeCompare(a));
+
+        let currentStreak = 0;
+        const today = new Date().toISOString().split('T')[0];
+
+        // Start from today and count backwards
+        for (let i = 0; i < dates.length; i++) {
+          const expectedDate = new Date();
+          expectedDate.setDate(expectedDate.getDate() - i);
+          const expectedDateStr = expectedDate.toISOString().split('T')[0];
+
+          if (dates.includes(expectedDateStr)) {
+            currentStreak++;
+          } else {
+            break;
+          }
+        }
+
+        setStreak(currentStreak);
+      } catch (error) {
+        console.error('Error calculating streak:', error);
+      }
+    };
+
+    calculateStreak();
+  }, [user, dailyData]);
 
   // Save daily data to Firestore whenever it changes
   useEffect(() => {
@@ -692,308 +740,362 @@ export default function ImprovedDashboard() {
             </div>
           )}
 
+          {/* Set Goals Modal */}
+          {showSetGoals && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+              <div className="bg-white rounded-3xl p-8 max-w-md w-full mx-4 shadow-3xl">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-2xl font-bold flex items-center">
+                    <Target className="w-7 h-7 mr-2 text-blue-500" />
+                    Set Your Goals
+                  </h3>
+                  <button
+                    onClick={() => setShowSetGoals(false)}
+                    className="p-2 hover:bg-gray-100 rounded-full transition"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  {/* Target Weight */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Target Weight (kg)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={userGoals.targetWeight}
+                      onChange={(e) => setUserGoals({...userGoals, targetWeight: parseFloat(e.target.value) || 0})}
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:outline-none text-lg"
+                      placeholder="75"
+                    />
+                  </div>
+
+                  {/* Daily Steps Goal */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Daily Steps Goal
+                    </label>
+                    <input
+                      type="number"
+                      value={10000}
+                      disabled
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl bg-gray-50 text-lg"
+                      placeholder="10000"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Currently fixed at 10,000 steps/day</p>
+                  </div>
+
+                  {/* Daily Calories */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Daily Calorie Goal
+                    </label>
+                    <input
+                      type="number"
+                      value={userGoals.dailyCalories}
+                      onChange={(e) => setUserGoals({...userGoals, dailyCalories: parseInt(e.target.value) || 0})}
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:outline-none text-lg"
+                      placeholder="2000"
+                    />
+                  </div>
+
+                  {/* Daily Workout Minutes */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Daily Workout Minutes
+                    </label>
+                    <input
+                      type="number"
+                      value={userGoals.dailyWorkoutMinutes}
+                      onChange={(e) => setUserGoals({...userGoals, dailyWorkoutMinutes: parseInt(e.target.value) || 0})}
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:outline-none text-lg"
+                      placeholder="30"
+                    />
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-3 pt-4">
+                    <button
+                      onClick={() => setShowSetGoals(false)}
+                      className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition font-semibold"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={async () => {
+                        try {
+                          await setDoc(doc(db, Collections.USERS, user!.uid), {
+                            goals: userGoals
+                          }, { merge: true });
+                          setToast({ message: '✅ Goals saved successfully!', type: 'success' });
+                          setShowSetGoals(false);
+                        } catch (error) {
+                          console.error('Error saving goals:', error);
+                          setToast({ message: '⚠️ Failed to save goals', type: 'error' });
+                        }
+                      }}
+                      className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl hover:shadow-lg transition font-semibold"
+                    >
+                      Save Goals
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Dashboard Page */}
           {currentPage === 'dashboard' && (
             <>
               {/* Header */}
-              <div className="flex justify-between items-center mb-6">
+              <div className="flex justify-between items-center mb-8">
                 <div>
-                  <h1 className="text-4xl font-bold bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent mb-2">
-                    Welcome back, {user?.displayName || user?.email?.split('@')[0]}!
+                  <h1 className="text-4xl font-bold text-gray-800 mb-1">
+                    Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening'}, {user?.displayName?.split(' ')[0] || user?.email?.split('@')[0]}!
                   </h1>
-                  <p className="text-gray-600 flex items-center">
-                    <Sparkles className="w-5 h-5 mr-2 text-orange-500" />
-                    Let's crush your goals today!
+                  <p className="text-gray-500 text-sm">
+                    {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
                   </p>
                 </div>
-                <div className="flex items-center space-x-4">
-                  <input
-                    type="date"
-                    value={currentDate}
-                    onChange={(e) => setCurrentDate(e.target.value)}
-                    className="px-4 py-2 border-2 border-gray-300 rounded-xl focus:border-orange-500 focus:outline-none bg-white/80 backdrop-blur-sm shadow-lg hover:shadow-xl transition"
-                  />
-                  <button
-                    onClick={() => setShowSetGoals(true)}
-                    className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl hover:shadow-lg transition-all flex items-center space-x-2"
-                  >
-                    <Target className="w-5 h-5" />
-                    <span>Set Goals</span>
-                  </button>
+                <div className="flex items-center space-x-2 bg-gradient-to-r from-orange-500 to-red-500 px-4 py-2 rounded-full text-white shadow-lg">
+                  <Flame className="w-5 h-5" />
+                  <span className="font-bold text-lg">{streak}</span>
+                  <span className="text-sm opacity-90">day{streak !== 1 ? 's' : ''}</span>
                 </div>
               </div>
 
-              {/* COMPACT DASHBOARD - All Main Info Above Fold */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-                {/* Quick Weight Update Card */}
-                <div className="bg-gradient-to-br from-blue-500 to-purple-600 p-6 rounded-2xl shadow-xl text-white">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-xl font-bold flex items-center">
-                      <TrendingDown className="w-6 h-6 mr-2" />
-                      Today's Weight
-                    </h3>
-                    {editingStats ? (
-                      <button onClick={() => setEditingStats(false)} className="p-2 bg-white/20 rounded-lg hover:bg-white/30 transition">
-                        <Check className="w-5 h-5" />
-                      </button>
-                    ) : (
-                      <button onClick={() => setEditingStats(true)} className="p-2 bg-white/20 rounded-lg hover:bg-white/30 transition">
-                        <Edit2 className="w-5 h-5" />
-                      </button>
-                    )}
+              {/* Today's Progress - 2x2 Grid */}
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                {/* Weight Card */}
+                <div
+                  onClick={() => setEditingWeight(true)}
+                  className="bg-gradient-to-br from-blue-500 to-purple-600 p-6 rounded-2xl shadow-xl text-white cursor-pointer hover:shadow-2xl transition-all aspect-square flex flex-col justify-between"
+                >
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold opacity-90">Weight</h3>
+                    <TrendingDown className="w-5 h-5 opacity-75" />
                   </div>
-
-                  {editingStats ? (
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={dailyData.weight}
-                      onChange={(e) => setDailyData({...dailyData, weight: parseFloat(e.target.value) || 0})}
-                      className="w-full px-4 py-2 rounded-xl text-gray-800 text-3xl font-bold text-center"
-                      placeholder="Enter weight"
-                    />
+                  {editingWeight ? (
+                    <div className="flex flex-col items-center space-y-3">
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={dailyData.weight}
+                        onChange={(e) => setDailyData({...dailyData, weight: parseFloat(e.target.value) || 0})}
+                        className="w-full px-4 py-2 rounded-xl text-gray-800 text-2xl font-bold text-center"
+                        placeholder="Enter weight"
+                        autoFocus
+                      />
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingWeight(false);
+                        }}
+                        className="px-4 py-2 bg-white/20 rounded-lg hover:bg-white/30 transition text-sm"
+                      >
+                        Done
+                      </button>
+                    </div>
                   ) : (
-                    <div className="text-5xl font-bold mb-1">
-                      {dailyData.weight > 0 ? `${dailyData.weight}` : '--'}
-                      <span className="text-2xl ml-2">kg</span>
-                    </div>
+                    <>
+                      <div className="text-5xl font-bold text-center">
+                        {dailyData.weight > 0 ? dailyData.weight : '--'}
+                        <span className="text-2xl ml-1">kg</span>
+                      </div>
+                      <div className="flex justify-between items-center text-sm opacity-90">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDailyData({...dailyData, weight: Math.max(0, dailyData.weight - 0.1)});
+                          }}
+                          className="px-3 py-1 bg-white/20 rounded-lg hover:bg-white/30 transition"
+                        >
+                          -
+                        </button>
+                        <span>Goal: {userGoals.targetWeight}kg</span>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDailyData({...dailyData, weight: dailyData.weight + 0.1});
+                          }}
+                          className="px-3 py-1 bg-white/20 rounded-lg hover:bg-white/30 transition"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </>
                   )}
-
-                  <div className="flex items-center justify-between mt-3">
-                    <div className="text-sm opacity-90">
-                      Target: {userGoals.targetWeight} kg
-                    </div>
-                    {dailyData.weight > 0 && weightProgress > 0 && (
-                      <div className="px-3 py-1 bg-green-400/30 rounded-full text-xs font-semibold">
-                        -{weightProgress.toFixed(1)} kg lost! 🎉
-                      </div>
-                    )}
-                  </div>
                 </div>
 
-                {/* Today's Calories - Compact */}
-                <div className="bg-gradient-to-br from-orange-500 to-red-500 p-6 rounded-2xl shadow-xl text-white">
-                  <h3 className="text-xl font-bold mb-3 flex items-center">
-                    <Flame className="w-6 h-6 mr-2" />
-                    Today's Calories
-                  </h3>
-                  <div className="flex items-end justify-between">
+                {/* Steps Card */}
+                <div
+                  onClick={() => setEditingSteps(true)}
+                  className="bg-gradient-to-br from-green-500 to-emerald-600 p-6 rounded-2xl shadow-xl text-white cursor-pointer hover:shadow-2xl transition-all aspect-square flex flex-col justify-between"
+                >
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold opacity-90">Steps</h3>
+                    <Activity className="w-5 h-5 opacity-75" />
+                  </div>
+                  {editingSteps ? (
+                    <div className="flex flex-col items-center space-y-3">
+                      <input
+                        type="number"
+                        value={dailyData.steps}
+                        onChange={(e) => setDailyData({...dailyData, steps: parseInt(e.target.value) || 0})}
+                        className="w-full px-4 py-2 rounded-xl text-gray-800 text-2xl font-bold text-center"
+                        placeholder="Enter steps"
+                        autoFocus
+                      />
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingSteps(false);
+                        }}
+                        className="px-4 py-2 bg-white/20 rounded-lg hover:bg-white/30 transition text-sm"
+                      >
+                        Done
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="text-center">
+                        <div className="relative inline-flex items-center justify-center">
+                          <svg className="w-32 h-32 transform -rotate-90">
+                            <circle cx="64" cy="64" r="56" stroke="rgba(255,255,255,0.2)" strokeWidth="8" fill="none" />
+                            <circle
+                              cx="64"
+                              cy="64"
+                              r="56"
+                              stroke="white"
+                              strokeWidth="8"
+                              fill="none"
+                              strokeDasharray={`${2 * Math.PI * 56}`}
+                              strokeDashoffset={`${2 * Math.PI * 56 * (1 - Math.min(dailyData.steps / 10000, 1))}`}
+                              className="transition-all duration-500"
+                            />
+                          </svg>
+                          <div className="absolute text-3xl font-bold">{dailyData.steps.toLocaleString()}</div>
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                          }}
+                          disabled
+                          className="px-3 py-1 bg-white/10 rounded-lg text-xs opacity-50 cursor-not-allowed"
+                          title="Coming soon"
+                        >
+                          Sync Apple Watch
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* Sleep Card */}
+                <div
+                  onClick={() => setEditingSleep(true)}
+                  className="bg-gradient-to-br from-purple-500 to-pink-600 p-6 rounded-2xl shadow-xl text-white cursor-pointer hover:shadow-2xl transition-all aspect-square flex flex-col justify-between"
+                >
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold opacity-90">Sleep</h3>
+                    <Clock className="w-5 h-5 opacity-75" />
+                  </div>
+                  {editingSleep ? (
+                    <div className="flex flex-col items-center space-y-3">
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={dailyData.sleep}
+                        onChange={(e) => setDailyData({...dailyData, sleep: parseFloat(e.target.value) || 0})}
+                        className="w-full px-4 py-2 rounded-xl text-gray-800 text-2xl font-bold text-center"
+                        placeholder="Hours"
+                        autoFocus
+                      />
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingSleep(false);
+                        }}
+                        className="px-4 py-2 bg-white/20 rounded-lg hover:bg-white/30 transition text-sm"
+                      >
+                        Done
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="text-5xl font-bold text-center">
+                        {dailyData.sleep > 0 ? dailyData.sleep : '--'}
+                        <span className="text-2xl ml-1">hrs</span>
+                      </div>
+                      <div className="text-center text-sm opacity-90">
+                        Target: 8 hrs
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* Workout Card */}
+                <div
+                  onClick={() => setShowAddWorkout(true)}
+                  className="bg-gradient-to-br from-orange-500 to-red-600 p-6 rounded-2xl shadow-xl text-white cursor-pointer hover:shadow-2xl transition-all aspect-square flex flex-col justify-between"
+                >
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold opacity-90">Workout</h3>
+                    <Dumbbell className="w-5 h-5 opacity-75" />
+                  </div>
+                  <div className="text-center">
+                    <div className="text-5xl font-bold">{totalWorkoutMinutes}</div>
+                    <div className="text-sm opacity-90 mt-1">minutes</div>
+                  </div>
+                  <div className="flex items-center justify-center space-x-2 text-sm opacity-90">
+                    <Plus className="w-4 h-4" />
+                    <span>Log workout</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Goals Strip */}
+              <div
+                onClick={() => setShowSetGoals(true)}
+                className="bg-white/90 backdrop-blur-sm p-4 rounded-2xl shadow-lg mb-6 cursor-pointer hover:shadow-xl transition-all"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3 text-gray-700">
+                    <Target className="w-5 h-5 text-blue-500" />
+                    <span className="font-semibold">Goals:</span>
+                    <span className="text-sm">
+                      {userGoals.targetWeight}kg • {(userGoals.dailyCalories / 1000).toFixed(0)}k cal/day • {userGoals.dailyWorkoutMinutes}min workout
+                    </span>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-gray-400" />
+                </div>
+              </div>
+
+              {/* Apple Watch Banner */}
+              <div className="bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-200 p-6 rounded-2xl mb-8">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                      <Sparkles className="w-6 h-6 text-white" />
+                    </div>
                     <div>
-                      <div className="text-5xl font-bold">{totalCalories}</div>
-                      <div className="text-sm opacity-90 mt-1">of {userGoals.dailyCalories} cal</div>
-                    </div>
-                    <div className={`text-3xl font-bold ${remainingCalories >= 0 ? 'text-green-300' : 'text-red-300'}`}>
-                      {remainingCalories >= 0 ? `${remainingCalories}` : `+${Math.abs(remainingCalories)}`}
-                    </div>
-                  </div>
-                  <div className="w-full bg-white/20 rounded-full h-3 mt-3">
-                    <div
-                      className={`h-3 rounded-full transition-all duration-500 ${
-                        totalCalories > userGoals.dailyCalories ? 'bg-red-300' : 'bg-green-300'
-                      }`}
-                      style={{ width: `${Math.min(100, (totalCalories / userGoals.dailyCalories) * 100)}%` }}
-                    ></div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Today's Stats - Single Row */}
-              <div className="grid grid-cols-4 gap-3 mb-6">
-                <div className="bg-white/90 p-4 rounded-xl shadow-lg text-center">
-                  <Drumstick className="w-6 h-6 text-blue-500 mx-auto mb-1" />
-                  <div className="text-2xl font-bold text-blue-600">{totalProtein}g</div>
-                  <div className="text-xs text-gray-600">Protein</div>
-                </div>
-                <div className="bg-white/90 p-4 rounded-xl shadow-lg text-center">
-                  <Dumbbell className="w-6 h-6 text-orange-500 mx-auto mb-1" />
-                  <div className="text-2xl font-bold text-orange-600">{totalWorkoutMinutes}</div>
-                  <div className="text-xs text-gray-600">Minutes</div>
-                </div>
-                <div className="bg-white/90 p-4 rounded-xl shadow-lg text-center">
-                  <Activity className="w-6 h-6 text-green-500 mx-auto mb-1" />
-                  <div className="text-2xl font-bold text-green-600">{dailyData.steps}</div>
-                  <div className="text-xs text-gray-600">Steps</div>
-                </div>
-                <div className="bg-white/90 p-4 rounded-xl shadow-lg text-center">
-                  <Clock className="w-6 h-6 text-purple-500 mx-auto mb-1" />
-                  <div className="text-2xl font-bold text-purple-600">{dailyData.sleep}h</div>
-                  <div className="text-xs text-gray-600">Sleep</div>
-                </div>
-              </div>
-
-              {/* WEIGHT PROGRESS TIMELINE */}
-              <div className="mb-8">
-                <div className="bg-white/90 backdrop-blur-sm p-8 rounded-3xl shadow-2xl">
-                  <div className="flex items-center justify-between mb-6">
-                    <div>
-                      <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
-                        Weight Progress Journey
-                      </h2>
-                      <p className="text-gray-600">{daysToTarget} days remaining to reach your target</p>
-                    </div>
-                    <TrendingDown className="w-12 h-12 text-blue-500" />
-                  </div>
-
-                  {/* Progress Line */}
-                  <div className="relative">
-                    {/* Line */}
-                    <div className="absolute top-8 left-0 right-0 h-2 bg-gray-200 rounded-full">
-                      <div
-                        className="h-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all duration-1000"
-                        style={{ width: `${weightProgressPercent}%` }}
-                      ></div>
-                    </div>
-
-                    {/* Milestones */}
-                    <div className="relative flex justify-between items-start pt-16">
-                      {/* Current Weight */}
-                      <div className="flex flex-col items-center">
-                        <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg -mt-16 relative z-10">
-                          <Trophy className="w-8 h-8" />
-                        </div>
-                        <div className="mt-4 text-center">
-                          <div className="text-2xl font-bold text-blue-600">{userGoals.currentWeight} kg</div>
-                          <div className="text-sm text-gray-600 mt-1">Starting Weight</div>
-                          <div className="text-xs text-gray-500">{new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toLocaleDateString()}</div>
-                        </div>
-                      </div>
-
-                      {/* Current Progress */}
-                      <div className="flex flex-col items-center">
-                        <div className={`w-16 h-16 rounded-full flex items-center justify-center font-bold text-lg shadow-lg -mt-16 relative z-10 ${
-                          dailyData.weight > 0 ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white' : 'bg-gray-300 text-gray-600'
-                        }`}>
-                          {dailyData.weight > 0 ? '📍' : '?'}
-                        </div>
-                        <div className="mt-4 text-center">
-                          <div className={`text-2xl font-bold ${dailyData.weight > 0 ? 'text-orange-600' : 'text-gray-400'}`}>
-                            {dailyData.weight > 0 ? `${dailyData.weight} kg` : 'Set Today'}
-                          </div>
-                          <div className="text-sm text-gray-600 mt-1">Current Weight</div>
-                          <div className="text-xs text-gray-500">Today</div>
-                          {dailyData.weight > 0 && weightProgress > 0 && (
-                            <div className="mt-2 px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">
-                              -{weightProgress.toFixed(1)} kg lost! 🎉
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Target Weight */}
-                      <div className="flex flex-col items-center">
-                        <div className="w-16 h-16 bg-purple-500 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg -mt-16 relative z-10">
-                          <Target className="w-8 h-8" />
-                        </div>
-                        <div className="mt-4 text-center">
-                          <div className="text-2xl font-bold text-purple-600">{userGoals.targetWeight} kg</div>
-                          <div className="text-sm text-gray-600 mt-1">Target Weight</div>
-                          <div className="text-xs text-gray-500">{new Date(userGoals.targetDate).toLocaleDateString()}</div>
-                        </div>
-                      </div>
+                      <h3 className="font-bold text-gray-800 mb-1">Coming Soon: Apple Watch Integration</h3>
+                      <p className="text-sm text-gray-600">
+                        Automatically sync steps, workouts, and sleep data from your Apple Watch
+                      </p>
                     </div>
                   </div>
-
-                  {/* Stats Summary */}
-                  <div className="mt-8 grid grid-cols-3 gap-4">
-                    <div className="text-center p-4 bg-blue-50 rounded-xl">
-                      <div className="text-2xl font-bold text-blue-600">{Math.abs(weightDifference).toFixed(1)} kg</div>
-                      <div className="text-sm text-gray-600">Total to Lose</div>
-                    </div>
-                    <div className="text-center p-4 bg-green-50 rounded-xl">
-                      <div className="text-2xl font-bold text-green-600">
-                        {weightProgress > 0 ? `${weightProgress.toFixed(1)} kg` : 'Not started'}
-                      </div>
-                      <div className="text-sm text-gray-600">Progress Made</div>
-                    </div>
-                    <div className="text-center p-4 bg-purple-50 rounded-xl">
-                      <div className="text-2xl font-bold text-purple-600">
-                        {Math.abs(weightDifference - weightProgress).toFixed(1)} kg
-                      </div>
-                      <div className="text-sm text-gray-600">Remaining</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* TODAY'S PROGRESS DETAILS */}
-              <div className="mb-8">
-                <h2 className="text-2xl font-bold mb-4 flex items-center">
-                  <Activity className="w-6 h-6 mr-2 text-orange-500" />
-                  Today's Progress
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {/* Calories Detail */}
-                  <div className={`p-6 rounded-2xl shadow-xl transition-all transform hover:scale-105 ${
-                    calorieStatus === 'good' ? 'bg-gradient-to-br from-green-400 to-green-600' : 'bg-gradient-to-br from-red-400 to-red-600'
-                  } text-white`}>
-                    <div className="flex items-center justify-between mb-4">
-                      <Flame className="w-10 h-10" />
-                      <div className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        calorieStatus === 'good' ? 'bg-green-300/50' : 'bg-red-300/50'
-                      }`}>
-                        {calorieStatus === 'good' ? '✓ On Track' : '⚠ Over Limit'}
-                      </div>
-                    </div>
-                    <div className="text-4xl font-bold mb-2">{totalCalories}</div>
-                    <div className="text-sm opacity-90 mb-4">Calories Consumed</div>
-                    <div className="w-full bg-white/20 rounded-full h-3">
-                      <div
-                        className="h-3 bg-white/50 rounded-full transition-all duration-500"
-                        style={{ width: `${Math.min(100, (totalCalories / userGoals.dailyCalories) * 100)}%` }}
-                      ></div>
-                    </div>
-                    <div className="text-xs mt-2 opacity-75">
-                      {userGoals.dailyCalories - totalCalories > 0
-                        ? `${userGoals.dailyCalories - totalCalories} remaining`
-                        : `${Math.abs(userGoals.dailyCalories - totalCalories)} over limit`}
-                    </div>
-                  </div>
-
-                  {/* Protein Detail */}
-                  <div className={`p-6 rounded-2xl shadow-xl transition-all transform hover:scale-105 ${
-                    proteinStatus === 'good' ? 'bg-gradient-to-br from-blue-400 to-blue-600' : 'bg-gradient-to-br from-yellow-400 to-yellow-600'
-                  } text-white`}>
-                    <div className="flex items-center justify-between mb-4">
-                      <Drumstick className="w-10 h-10" />
-                      <div className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        proteinStatus === 'good' ? 'bg-blue-300/50' : 'bg-yellow-300/50'
-                      }`}>
-                        {proteinStatus === 'good' ? '✓ Great' : '⚠ Low'}
-                      </div>
-                    </div>
-                    <div className="text-4xl font-bold mb-2">{totalProtein}g</div>
-                    <div className="text-sm opacity-90 mb-4">Protein Intake</div>
-                    <div className="w-full bg-white/20 rounded-full h-3">
-                      <div
-                        className="h-3 bg-white/50 rounded-full transition-all duration-500"
-                        style={{ width: `${Math.min(100, (totalProtein / userGoals.dailyProtein) * 100)}%` }}
-                      ></div>
-                    </div>
-                    <div className="text-xs mt-2 opacity-75">{Math.max(0, userGoals.dailyProtein - totalProtein)}g remaining</div>
-                  </div>
-
-                  {/* Workout Minutes Detail */}
-                  <div className={`p-6 rounded-2xl shadow-xl transition-all transform hover:scale-105 ${
-                    workoutStatus === 'good' ? 'bg-gradient-to-br from-purple-400 to-purple-600' : 'bg-gradient-to-br from-gray-400 to-gray-600'
-                  } text-white`}>
-                    <div className="flex items-center justify-between mb-4">
-                      <Dumbbell className="w-10 h-10" />
-                      <div className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        workoutStatus === 'good' ? 'bg-purple-300/50' : 'bg-gray-300/50'
-                      }`}>
-                        {workoutStatus === 'good' ? '✓ Complete' : '⏳ Pending'}
-                      </div>
-                    </div>
-                    <div className="text-4xl font-bold mb-2">{totalWorkoutMinutes}</div>
-                    <div className="text-sm opacity-90 mb-4">Workout Minutes</div>
-                    <div className="w-full bg-white/20 rounded-full h-3">
-                      <div
-                        className="h-3 bg-white/50 rounded-full transition-all duration-500"
-                        style={{ width: `${Math.min(100, (totalWorkoutMinutes / userGoals.dailyWorkoutMinutes) * 100)}%` }}
-                      ></div>
-                    </div>
-                    <div className="text-xs mt-2 opacity-75">{Math.max(0, userGoals.dailyWorkoutMinutes - totalWorkoutMinutes)} min remaining</div>
-                  </div>
+                  <button
+                    onClick={() => setToast({ message: 'We\'ll notify you when Apple Watch integration is ready!', type: 'info' })}
+                    className="px-4 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition text-sm font-semibold"
+                  >
+                    Notify me
+                  </button>
                 </div>
               </div>
 
