@@ -26,6 +26,7 @@ import { useAuth } from './AuthProvider';
 import { db, Collections } from '../lib/firebase';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { uploadImageToAzure, BlobContainers } from '../lib/storage';
+import { useToast, ToastContainer } from './Toast';
 
 interface UserSettings {
   // Personal Info
@@ -92,6 +93,7 @@ export default function SettingsPage({ onBack }: SettingsPageProps) {
   const [activeSection, setActiveSection] = useState<'personal' | 'fitness' | 'nutrition' | 'health' | 'goals' | 'privacy'>('personal');
   const [uploadingProfile, setUploadingProfile] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
+  const { toasts, showToast, removeToast } = useToast();
 
   const [settings, setSettings] = useState<UserSettings>({
     fullName: user?.displayName || '',
@@ -255,6 +257,7 @@ export default function SettingsPage({ onBack }: SettingsPageProps) {
   const saveSettings = async () => {
     if (!user?.uid) {
       console.error('❌ No user UID found');
+      showToast('Please log in to save settings', 'error');
       return;
     }
 
@@ -274,10 +277,12 @@ export default function SettingsPage({ onBack }: SettingsPageProps) {
       await setDoc(docRef, dataToSave, { merge: true });
 
       console.log('✅ Settings saved successfully to users/' + user.uid);
+      showToast('✅ Settings saved successfully!', 'success');
     } catch (error: any) {
       console.error('❌ Error saving settings:', error);
       console.error('❌ Error code:', error.code);
       console.error('❌ Error message:', error.message);
+      showToast('Failed to save settings. Please try again.', 'error');
     } finally {
       setSaving(false);
     }
@@ -304,7 +309,9 @@ export default function SettingsPage({ onBack }: SettingsPageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-red-50">
+    <>
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-red-50">
       {/* Header */}
       <div className="bg-white border-b sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-4 py-4">
@@ -1015,5 +1022,6 @@ export default function SettingsPage({ onBack }: SettingsPageProps) {
         </div>
       </div>
     </div>
+    </>
   );
 }
