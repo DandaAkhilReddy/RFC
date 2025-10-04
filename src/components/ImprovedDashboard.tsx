@@ -48,7 +48,6 @@ interface DailyActivity {
   date: string;
   steps: number;
   water: number;
-  sleep: number;
   weight: number;
   photos: string[];
   foods: FoodEntry[];
@@ -88,7 +87,6 @@ export default function ImprovedDashboard() {
     date: currentDate,
     steps: 0,
     water: 0,
-    sleep: 0,
     weight: userGoals.currentWeight,
     photos: [],
     foods: [],
@@ -103,7 +101,6 @@ export default function ImprovedDashboard() {
   const [streak, setStreak] = useState(0);
   const [editingWeight, setEditingWeight] = useState(false);
   const [editingSteps, setEditingSteps] = useState(false);
-  const [editingSleep, setEditingSleep] = useState(false);
 
   // Form states
   const [newFood, setNewFood] = useState({
@@ -123,7 +120,6 @@ export default function ImprovedDashboard() {
   const [tempStats, setTempStats] = useState({
     steps: '',
     water: '',
-    sleep: '',
     weight: ''
   });
 
@@ -399,7 +395,6 @@ export default function ImprovedDashboard() {
     try {
       let steps = 0;
       let water = 0;
-      let sleep = 0;
       let weight = 0;
 
       // Validate steps
@@ -420,15 +415,6 @@ export default function ImprovedDashboard() {
         }
       }
 
-      // Validate sleep
-      if (tempStats.sleep && tempStats.sleep.trim().length > 0) {
-        sleep = parseFloat(tempStats.sleep);
-        if (isNaN(sleep) || sleep < 0 || sleep > 24) {
-          setToast({ message: '⚠️ Sleep must be between 0 and 24 hours', type: 'error' });
-          return;
-        }
-      }
-
       // Validate weight
       if (tempStats.weight && tempStats.weight.trim().length > 0) {
         weight = parseFloat(tempStats.weight);
@@ -442,7 +428,6 @@ export default function ImprovedDashboard() {
         ...prev,
         steps: steps > 0 ? steps : prev.steps,
         water: water > 0 ? water : prev.water,
-        sleep: sleep > 0 ? sleep : prev.sleep,
         weight: weight > 0 ? weight : prev.weight
       }));
 
@@ -517,7 +502,6 @@ export default function ImprovedDashboard() {
           date: today,
           steps: 0,
           water: 0,
-          sleep: 0,
           weight: 0,
           photos: [],
           foods: [],
@@ -985,49 +969,6 @@ export default function ImprovedDashboard() {
                   )}
                 </div>
 
-                {/* Sleep Card */}
-                <div
-                  onClick={() => setEditingSleep(true)}
-                  className="bg-gradient-to-br from-purple-500 to-pink-600 p-4 rounded-xl shadow-lg text-white cursor-pointer hover:shadow-xl transition-all flex flex-col justify-between min-h-[140px]"
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-sm font-semibold opacity-90">Sleep</h3>
-                    <Clock className="w-4 h-4 opacity-75" />
-                  </div>
-                  {editingSleep ? (
-                    <div className="flex flex-col items-center space-y-2">
-                      <input
-                        type="number"
-                        step="0.5"
-                        value={dailyData.sleep}
-                        onChange={(e) => setDailyData({...dailyData, sleep: parseFloat(e.target.value) || 0})}
-                        className="w-full px-2 py-1 rounded-lg text-gray-800 text-lg font-bold text-center"
-                        placeholder="Hours"
-                        autoFocus
-                      />
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setEditingSleep(false);
-                        }}
-                        className="px-3 py-1 bg-white/20 rounded-lg hover:bg-white/30 transition text-xs"
-                      >
-                        Done
-                      </button>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="text-3xl font-bold text-center my-2">
-                        {dailyData.sleep > 0 ? dailyData.sleep : '--'}
-                        <span className="text-lg ml-1">hrs</span>
-                      </div>
-                      <div className="text-center text-xs opacity-90">
-                        Target: 8 hrs
-                      </div>
-                    </>
-                  )}
-                </div>
-
                 {/* Workout Card */}
                 <div
                   onClick={() => setShowAddWorkout(true)}
@@ -1240,21 +1181,6 @@ export default function ImprovedDashboard() {
                     )}
                   </div>
 
-                  <div className="p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl">
-                    <div className="text-sm text-gray-600 mb-2">Sleep (hrs)</div>
-                    {editingStats ? (
-                      <input
-                        type="number"
-                        value={tempStats.sleep}
-                        onChange={(e) => setTempStats({...tempStats, sleep: e.target.value})}
-                        className="w-full px-2 py-1 border-2 border-purple-300 rounded text-2xl font-bold"
-                        placeholder="0"
-                        step="0.5"
-                      />
-                    ) : (
-                      <div className="text-2xl font-bold text-purple-600">{dailyData.sleep || 0}</div>
-                    )}
-                  </div>
 
                   <div className="p-4 bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl">
                     <div className="text-sm text-gray-600 mb-2">Weight (kg)</div>
