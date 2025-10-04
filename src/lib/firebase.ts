@@ -46,5 +46,8 @@ export const Collections = {
   // New collections for Cupid AI accountability matching
   ACCOUNTABILITY_PARTNERS: 'accountability_partners',
   CHECK_INS: 'check_ins',
-  PARTNER_REQUESTS: 'partner_requests'
+  PARTNER_REQUESTS: 'partner_requests',
+  // Community feature
+  COMMUNITY_USERS: 'community_users',
+  USER_LOCATIONS: 'user_locations'
 };

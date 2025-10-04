@@ -19,7 +19,8 @@ import {
   Upload,
   Image as ImageIcon,
   Shield,
-  Lock
+  Lock,
+  Users
 } from 'lucide-react';
 import { useAuth } from './AuthProvider';
 import { db, Collections } from '../lib/firebase';
@@ -74,6 +75,10 @@ interface UserSettings {
   targetBodyFat?: number;
   timeframe: string;
   specificGoals: string[];
+
+  // Privacy & Community
+  bio: string;
+  showInCommunity: boolean;
 }
 
 interface SettingsPageProps {
@@ -84,7 +89,7 @@ export default function SettingsPage({ onBack }: SettingsPageProps) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [activeSection, setActiveSection] = useState<'personal' | 'fitness' | 'nutrition' | 'health' | 'goals'>('personal');
+  const [activeSection, setActiveSection] = useState<'personal' | 'fitness' | 'nutrition' | 'health' | 'goals' | 'privacy'>('personal');
   const [uploadingProfile, setUploadingProfile] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
 
@@ -119,7 +124,9 @@ export default function SettingsPage({ onBack }: SettingsPageProps) {
     previousExperience: '',
     targetWeight: 65,
     timeframe: '',
-    specificGoals: []
+    specificGoals: [],
+    bio: '',
+    showInCommunity: true
   });
 
   useEffect(() => {
@@ -415,7 +422,8 @@ export default function SettingsPage({ onBack }: SettingsPageProps) {
               { id: 'fitness', label: 'Fitness Profile', icon: Dumbbell },
               { id: 'nutrition', label: 'Nutrition', icon: Utensils },
               { id: 'health', label: 'Health & Lifestyle', icon: Heart },
-              { id: 'goals', label: 'Goals & Targets', icon: Target }
+              { id: 'goals', label: 'Goals & Targets', icon: Target },
+              { id: 'privacy', label: 'Privacy & Community', icon: Shield }
             ].map(({ id, label, icon: Icon }) => (
               <button
                 key={id}
@@ -913,6 +921,91 @@ export default function SettingsPage({ onBack }: SettingsPageProps) {
                     <div className="flex justify-between text-sm">
                       <span>Target Weight</span>
                       <span className="font-semibold">{settings.targetWeight} kg</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Privacy & Community Section */}
+          {activeSection === 'privacy' && (
+            <div className="bg-white rounded-xl p-6 shadow-lg space-y-6">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Privacy & Community Settings</h2>
+
+              <div className="space-y-6">
+                {/* Bio */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Bio</label>
+                  <textarea
+                    value={settings.bio}
+                    onChange={(e) => setSettings({ ...settings, bio: e.target.value })}
+                    placeholder="Tell the community about yourself and your fitness journey..."
+                    rows={4}
+                    maxLength={200}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
+                  />
+                  <p className="text-xs text-gray-500 mt-1 text-right">{settings.bio.length}/200 characters</p>
+                </div>
+
+                {/* Community Visibility */}
+                <div className="p-5 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border-2 border-blue-200">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Users className="w-5 h-5 text-blue-600" />
+                        <h3 className="font-semibold text-gray-900">Show in Community</h3>
+                      </div>
+                      <p className="text-sm text-gray-600 mb-3">
+                        Allow other users to see your profile picture and bio in the community page.
+                        Users will be able to see you based on your location proximity.
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        <Shield className="w-3 h-3 inline mr-1" />
+                        Your name, location city, and bio will be visible. All other information remains private.
+                      </p>
+                    </div>
+                    <div className="ml-4">
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={settings.showInCommunity}
+                          onChange={(e) => setSettings({ ...settings, showInCommunity: e.target.checked })}
+                          className="sr-only peer"
+                        />
+                        <div className="w-14 h-7 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-blue-600"></div>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Privacy Information */}
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
+                    <Lock className="w-5 h-5 mr-2 text-gray-700" />
+                    What's Visible in Community?
+                  </h3>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center gap-2 text-green-600">
+                      <div className="w-1.5 h-1.5 bg-green-600 rounded-full"></div>
+                      <span>Profile picture</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-green-600">
+                      <div className="w-1.5 h-1.5 bg-green-600 rounded-full"></div>
+                      <span>Display name</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-green-600">
+                      <div className="w-1.5 h-1.5 bg-green-600 rounded-full"></div>
+                      <span>Bio (what you write above)</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-green-600">
+                      <div className="w-1.5 h-1.5 bg-green-600 rounded-full"></div>
+                      <span>City & country (for proximity matching)</span>
+                    </div>
+                    <hr className="my-2" />
+                    <div className="flex items-center gap-2 text-red-600">
+                      <div className="w-1.5 h-1.5 bg-red-600 rounded-full"></div>
+                      <span><strong>Private:</strong> Weight, body metrics, meals, workouts, health data</span>
                     </div>
                   </div>
                 </div>

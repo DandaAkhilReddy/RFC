@@ -18,6 +18,7 @@ import Logo from './Logo';
 import RapidAIPage from './RapidAIPage';
 import CupidAIPage from './CupidAIPage';
 import SettingsPage from './SettingsPage';
+import CommunityPage from './CommunityPage';
 
 type PageType = 'dashboard' | 'diet' | 'workout' | 'ai-agents' | 'friends' | 'rapid-ai' | 'cupid-ai' | 'settings';
 
@@ -451,6 +452,37 @@ export default function ImprovedDashboard() {
     }
   }, [editingStats]);
 
+  // Auto-update calendar at midnight
+  useEffect(() => {
+    const checkDate = () => {
+      const today = new Date().toISOString().split('T')[0];
+      if (today !== currentDate) {
+        setCurrentDate(today);
+        setToast({
+          message: '🌅 New day started! Good morning!',
+          type: 'success'
+        });
+        // Reset daily data for new day
+        setDailyData({
+          date: today,
+          steps: 0,
+          water: 0,
+          sleep: 0,
+          weight: 0,
+          photos: [],
+          foods: [],
+          workouts: [],
+          notes: ''
+        });
+      }
+    };
+
+    // Check every minute
+    const interval = setInterval(checkDate, 60000);
+
+    return () => clearInterval(interval);
+  }, [currentDate]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-red-50 relative overflow-hidden">
       {toast && <ToastNotification message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
@@ -537,7 +569,7 @@ export default function ImprovedDashboard() {
             }`}
           >
             <Users className="w-5 h-5" />
-            {sidebarOpen && <span className="ml-3 font-semibold">Friends</span>}
+            {sidebarOpen && <span className="ml-3 font-semibold">Community</span>}
           </button>
 
           <div className="border-t border-gray-200 mt-4 pt-4">
@@ -691,128 +723,101 @@ export default function ImprovedDashboard() {
                 </div>
               </div>
 
-              {/* Privacy & Trust Banner */}
-              <div className="mb-8 bg-gradient-to-r from-green-50 via-blue-50 to-purple-50 border-2 border-green-200 rounded-2xl p-6 shadow-lg">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start space-x-4 flex-1">
-                    <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
-                      <Lock className="w-6 h-6 text-white" />
+              {/* COMPACT DASHBOARD - All Main Info Above Fold */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+                {/* Quick Weight Update Card */}
+                <div className="bg-gradient-to-br from-blue-500 to-purple-600 p-6 rounded-2xl shadow-xl text-white">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-xl font-bold flex items-center">
+                      <TrendingDown className="w-6 h-6 mr-2" />
+                      Today's Weight
+                    </h3>
+                    {editingStats ? (
+                      <button onClick={() => setEditingStats(false)} className="p-2 bg-white/20 rounded-lg hover:bg-white/30 transition">
+                        <Check className="w-5 h-5" />
+                      </button>
+                    ) : (
+                      <button onClick={() => setEditingStats(true)} className="p-2 bg-white/20 rounded-lg hover:bg-white/30 transition">
+                        <Edit2 className="w-5 h-5" />
+                      </button>
+                    )}
+                  </div>
+
+                  {editingStats ? (
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={dailyData.weight}
+                      onChange={(e) => setDailyData({...dailyData, weight: parseFloat(e.target.value) || 0})}
+                      className="w-full px-4 py-2 rounded-xl text-gray-800 text-3xl font-bold text-center"
+                      placeholder="Enter weight"
+                    />
+                  ) : (
+                    <div className="text-5xl font-bold mb-1">
+                      {dailyData.weight > 0 ? `${dailyData.weight}` : '--'}
+                      <span className="text-2xl ml-2">kg</span>
                     </div>
-                    <div className="flex-1">
-                      <h3 className="text-lg font-bold text-gray-800 mb-2 flex items-center">
-                        🔒 Your Privacy is Our Priority
-                        <span className="ml-3 px-3 py-1 bg-green-500 text-white text-xs font-semibold rounded-full">256-bit Encrypted</span>
-                      </h3>
-                      <p className="text-sm text-gray-700 mb-3">
-                        <strong>End-to-End Encryption:</strong> All your photos, videos, and data are encrypted with military-grade AES-256 encryption.
-                        <strong className="text-green-700"> Even we cannot see your pictures or videos.</strong> Only you have the decryption keys.
-                      </p>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        <div className="flex items-center space-x-2 text-xs text-gray-600">
-                          <Shield className="w-4 h-4 text-green-600 flex-shrink-0" />
-                          <span><strong>Zero-knowledge encryption</strong> - We can't access your data</span>
-                        </div>
-                        <div className="flex items-center space-x-2 text-xs text-gray-600">
-                          <Lock className="w-4 h-4 text-blue-600 flex-shrink-0" />
-                          <span><strong>Client-side encryption</strong> - Encrypted before upload</span>
-                        </div>
-                        <div className="flex items-center space-x-2 text-xs text-gray-600">
-                          <CheckCircle2 className="w-4 h-4 text-purple-600 flex-shrink-0" />
-                          <span><strong>GDPR compliant</strong> - Full data control & deletion</span>
-                        </div>
+                  )}
+
+                  <div className="flex items-center justify-between mt-3">
+                    <div className="text-sm opacity-90">
+                      Target: {userGoals.targetWeight} kg
+                    </div>
+                    {dailyData.weight > 0 && weightProgress > 0 && (
+                      <div className="px-3 py-1 bg-green-400/30 rounded-full text-xs font-semibold">
+                        -{weightProgress.toFixed(1)} kg lost! 🎉
                       </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Today's Calories - Compact */}
+                <div className="bg-gradient-to-br from-orange-500 to-red-500 p-6 rounded-2xl shadow-xl text-white">
+                  <h3 className="text-xl font-bold mb-3 flex items-center">
+                    <Flame className="w-6 h-6 mr-2" />
+                    Today's Calories
+                  </h3>
+                  <div className="flex items-end justify-between">
+                    <div>
+                      <div className="text-5xl font-bold">{totalCalories}</div>
+                      <div className="text-sm opacity-90 mt-1">of {userGoals.dailyCalories} cal</div>
+                    </div>
+                    <div className={`text-3xl font-bold ${remainingCalories >= 0 ? 'text-green-300' : 'text-red-300'}`}>
+                      {remainingCalories >= 0 ? `${remainingCalories}` : `+${Math.abs(remainingCalories)}`}
                     </div>
                   </div>
-                  <button
-                    onClick={() => setShowPrivacyModal(true)}
-                    className="ml-4 px-4 py-2 bg-white border-2 border-green-500 text-green-700 rounded-xl hover:bg-green-50 transition-all text-sm font-semibold flex items-center space-x-2 flex-shrink-0"
-                  >
-                    <Info className="w-4 h-4" />
-                    <span>Learn More</span>
-                  </button>
+                  <div className="w-full bg-white/20 rounded-full h-3 mt-3">
+                    <div
+                      className={`h-3 rounded-full transition-all duration-500 ${
+                        totalCalories > userGoals.dailyCalories ? 'bg-red-300' : 'bg-green-300'
+                      }`}
+                      style={{ width: `${Math.min(100, (totalCalories / userGoals.dailyCalories) * 100)}%` }}
+                    ></div>
+                  </div>
                 </div>
               </div>
 
-              {/* TODAY'S CALORIE GOAL - Big Priority Card */}
-              <div className="mb-8">
-                <div className="bg-gradient-to-br from-orange-500 to-red-500 p-8 rounded-3xl shadow-2xl text-white relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32"></div>
-                  <div className="relative z-10">
-                    <div className="flex items-center justify-between mb-6">
-                      <div>
-                        <h2 className="text-3xl font-bold mb-2">Today's Calorie Goal</h2>
-                        <p className="opacity-90">Track your daily nutrition target</p>
-                      </div>
-                      <Flame className="w-16 h-16 opacity-50" />
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-6">
-                      <div className="bg-white/20 backdrop-blur-sm p-6 rounded-2xl">
-                        <div className="text-sm opacity-90 mb-2">Goal</div>
-                        <div className="text-4xl font-bold">{userGoals.dailyCalories}</div>
-                        <div className="text-sm opacity-75 mt-1">calories</div>
-                      </div>
-
-                      <div className={`p-6 rounded-2xl transition-all duration-500 ${totalCalories > 0 ? 'bg-white/20 backdrop-blur-sm scale-105' : 'bg-white/10 backdrop-blur-sm border-2 border-white/30 border-dashed'}`}>
-                        <div className="text-sm opacity-90 mb-2">Consumed</div>
-                        <div className="text-4xl font-bold animate-pulse">{totalCalories || '0'}</div>
-                        <div className="text-sm opacity-75 mt-1">calories</div>
-                      </div>
-
-                      <div className={`p-6 rounded-2xl ${
-                        remainingCalories >= 0
-                          ? 'bg-green-400/30 backdrop-blur-sm'
-                          : 'bg-red-400/30 backdrop-blur-sm'
-                      }`}>
-                        <div className="text-sm opacity-90 mb-2">Remaining</div>
-                        <div className="text-4xl font-bold flex items-center">
-                          {Math.abs(remainingCalories)}
-                          {remainingCalories >= 0 ? (
-                            <TrendingUp className="w-8 h-8 ml-2" />
-                          ) : (
-                            <TrendingDown className="w-8 h-8 ml-2" />
-                          )}
-                        </div>
-                        <div className="text-sm opacity-75 mt-1">
-                          {remainingCalories >= 0 ? 'calories left' : 'over limit'}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Progress Bar */}
-                    <div className="mt-6">
-                      <div className="flex justify-between text-sm mb-2">
-                        <span>Progress</span>
-                        <span>{Math.min(100, Math.round((totalCalories / userGoals.dailyCalories) * 100))}%</span>
-                      </div>
-                      <div className="w-full bg-white/20 rounded-full h-4 overflow-hidden">
-                        <div
-                          className={`h-4 rounded-full transition-all duration-500 ${
-                            totalCalories > userGoals.dailyCalories
-                              ? 'bg-red-300'
-                              : 'bg-green-300'
-                          }`}
-                          style={{ width: `${Math.min(100, (totalCalories / userGoals.dailyCalories) * 100)}%` }}
-                        ></div>
-                      </div>
-                    </div>
-
-                    {/* Status Message */}
-                    <div className="mt-4 text-center">
-                      {remainingCalories > 0 && (
-                        <p className="text-lg font-semibold">✨ You're doing great! {remainingCalories} calories to go!</p>
-                      )}
-                      {remainingCalories === 0 && (
-                        <p className="text-lg font-semibold">🎯 Perfect! You've hit your goal!</p>
-                      )}
-                      {remainingCalories < 0 && remainingCalories > -200 && (
-                        <p className="text-lg font-semibold">⚠️ Slightly over, but still okay!</p>
-                      )}
-                      {remainingCalories <= -200 && (
-                        <p className="text-lg font-semibold">🔥 Over target! Consider more workout tomorrow.</p>
-                      )}
-                    </div>
-                  </div>
+              {/* Today's Stats - Single Row */}
+              <div className="grid grid-cols-4 gap-3 mb-6">
+                <div className="bg-white/90 p-4 rounded-xl shadow-lg text-center">
+                  <Drumstick className="w-6 h-6 text-blue-500 mx-auto mb-1" />
+                  <div className="text-2xl font-bold text-blue-600">{totalProtein}g</div>
+                  <div className="text-xs text-gray-600">Protein</div>
+                </div>
+                <div className="bg-white/90 p-4 rounded-xl shadow-lg text-center">
+                  <Dumbbell className="w-6 h-6 text-orange-500 mx-auto mb-1" />
+                  <div className="text-2xl font-bold text-orange-600">{totalWorkoutMinutes}</div>
+                  <div className="text-xs text-gray-600">Minutes</div>
+                </div>
+                <div className="bg-white/90 p-4 rounded-xl shadow-lg text-center">
+                  <Activity className="w-6 h-6 text-green-500 mx-auto mb-1" />
+                  <div className="text-2xl font-bold text-green-600">{dailyData.steps}</div>
+                  <div className="text-xs text-gray-600">Steps</div>
+                </div>
+                <div className="bg-white/90 p-4 rounded-xl shadow-lg text-center">
+                  <Clock className="w-6 h-6 text-purple-500 mx-auto mb-1" />
+                  <div className="text-2xl font-bold text-purple-600">{dailyData.sleep}h</div>
+                  <div className="text-xs text-gray-600">Sleep</div>
                 </div>
               </div>
 
@@ -1600,13 +1605,14 @@ export default function ImprovedDashboard() {
           )}
 
           {/* Other Pages - Coming Soon */}
-          {(currentPage === 'diet' || currentPage === 'workout' || currentPage === 'friends') && (
+          {currentPage === 'friends' && <CommunityPage />}
+
+          {(currentPage === 'diet' || currentPage === 'workout') && (
             <div className="flex items-center justify-center min-h-[60vh]">
               <div className="text-center">
                 <div className="w-24 h-24 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
                   {currentPage === 'diet' && <Utensils className="w-12 h-12 text-white" />}
                   {currentPage === 'workout' && <Dumbbell className="w-12 h-12 text-white" />}
-                  {currentPage === 'friends' && <Users className="w-12 h-12 text-white" />}
                 </div>
                 <h2 className="text-3xl font-bold mb-4 capitalize">{currentPage.replace('-', ' ')}</h2>
                 <p className="text-gray-600 text-lg">Coming soon! Stay tuned for amazing features.</p>
