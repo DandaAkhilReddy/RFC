@@ -165,11 +165,11 @@ export default function Logo({ size = 48, className = '', showText = true }: Log
 
       {showText && (
         <div className="flex flex-col leading-tight">
-          <span className="text-2xl font-black bg-gradient-to-r from-orange-500 via-red-500 to-pink-600 bg-clip-text text-transparent drop-shadow-sm">
+          <span className="text-3xl font-black bg-gradient-to-r from-orange-500 via-red-500 to-pink-600 bg-clip-text text-transparent drop-shadow-lg">
             ReddyFit
           </span>
-          <span className="text-xs font-bold text-gray-600 tracking-wider uppercase">
-            Club RFC
+          <span className="text-[10px] font-semibold text-gray-500 tracking-wide">
+            RFC
           </span>
         </div>
       )}

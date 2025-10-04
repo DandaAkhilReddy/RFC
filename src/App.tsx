@@ -115,11 +115,27 @@ export default function LandingPage() {
               key: 'hero-subheadline',
               ...fly({ y: 100, opacity: true })
             })}
-            className="text-2xl text-gray-600 mb-12 max-w-3xl mx-auto leading-relaxed"
+            className="text-2xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed"
           >
-            Experience the future of fitness with AI-powered coaching, personalized workout plans,
-            intelligent meal tracking, and find your perfect workout partner or soulmate.
+            Enterprise-grade AI fitness platform powered by 6 intelligent agents and Temporal.io workflows.
+            99.9% uptime, automatic retries, and complete observability for your fitness journey.
           </p>
+
+          {/* Enterprise Trust Badges */}
+          <div className="flex items-center justify-center gap-4 mb-12 flex-wrap">
+            <div className="inline-flex items-center bg-purple-100 text-purple-700 rounded-full px-4 py-2 text-sm font-semibold">
+              <Zap className="w-4 h-4 mr-2" />
+              Powered by Temporal.io Cloud
+            </div>
+            <div className="inline-flex items-center bg-green-100 text-green-700 rounded-full px-4 py-2 text-sm font-semibold">
+              <CheckCircle2 className="w-4 h-4 mr-2" />
+              99.9% Uptime Guarantee
+            </div>
+            <div className="inline-flex items-center bg-blue-100 text-blue-700 rounded-full px-4 py-2 text-sm font-semibold">
+              <Shield className="w-4 h-4 mr-2" />
+              Enterprise Security
+            </div>
+          </div>
 
           {/* CTA Buttons - All Auth Options */}
           <div className="flex flex-col gap-4 justify-center items-center mb-8 max-w-2xl mx-auto">
@@ -540,210 +556,283 @@ export default function LandingPage() {
               })}
               className="text-5xl font-bold mb-6"
             >
-              9 Powerful <span className="bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">AI Features</span>
+              6 Core <span className="bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">AI Agents</span>
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Revolutionary AI technology to transform every aspect of your fitness journey
+              Your personal AI team working 24/7 to transform your fitness journey with enterprise-grade reliability
             </p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8 max-w-7xl mx-auto">
-            {/* AI Chatbot */}
+            {/* Agent Rapid */}
             <div
               ref={transition({
-                key: 'feature-chatbot',
+                key: 'agent-rapid',
                 ...fly({ x: -100, opacity: true })
               })}
-              className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl hover:scale-105 transition transform border-2 border-gray-100"
-            >
-              <div className="bg-gradient-to-r from-purple-500 to-pink-500 w-16 h-16 rounded-xl flex items-center justify-center mb-6">
-                <Bot className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-2xl font-bold mb-4">AI Chatbot</h3>
-              <p className="text-gray-600 mb-6 leading-relaxed">
-                24/7 intelligent fitness coach that understands context, remembers your preferences,
-                and provides personalized guidance for every question.
-              </p>
-              <button className="text-orange-600 font-semibold flex items-center space-x-2 hover:space-x-3 transition-all">
-                <span>Learn More</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* AI Photo Analysis */}
-            <div
-              ref={transition({
-                key: 'feature-photo',
-                ...fly({ y: -100, opacity: true })
-              })}
-              className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl hover:scale-105 transition transform border-2 border-gray-100"
-            >
-              <div className="bg-gradient-to-r from-blue-500 to-cyan-500 w-16 h-16 rounded-xl flex items-center justify-center mb-6">
-                <Camera className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-2xl font-bold mb-4">AI Photo Analysis</h3>
-              <p className="text-gray-600 mb-6 leading-relaxed">
-                Upload progress photos for instant AI analysis. Track muscle growth, body composition,
-                posture improvements with visual comparisons.
-              </p>
-              <button className="text-orange-600 font-semibold flex items-center space-x-2 hover:space-x-3 transition-all">
-                <span>Learn More</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* AI Body Fat Calculator */}
-            <div
-              ref={transition({
-                key: 'feature-bodyfat',
-                ...fly({ x: 100, opacity: true })
-              })}
-              className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl hover:scale-105 transition transform border-2 border-gray-100"
+              className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl hover:scale-105 transition transform border-2 border-orange-200"
             >
               <div className="bg-gradient-to-r from-orange-500 to-red-500 w-16 h-16 rounded-xl flex items-center justify-center mb-6">
-                <Activity className="w-8 h-8 text-white" />
+                <Zap className="w-8 h-8 text-white" />
               </div>
-              <h3 className="text-2xl font-bold mb-4">AI Body Fat Calculator</h3>
+              <div className="mb-3">
+                <span className="bg-orange-100 text-orange-700 text-xs font-semibold px-3 py-1 rounded-full">
+                  Body Composition & Nutrition
+                </span>
+              </div>
+              <h3 className="text-2xl font-bold mb-4">Agent Rapid</h3>
               <p className="text-gray-600 mb-6 leading-relaxed">
-                Advanced algorithms calculate accurate body fat percentage using measurements
-                and AI-powered analysis for precise tracking.
+                AI-powered body fat analysis and nutrition coach. Upload daily progress photos for instant body composition tracking with Temporal.io workflows ensuring 99.9% reliability and automatic retries.
               </p>
               <button className="text-orange-600 font-semibold flex items-center space-x-2 hover:space-x-3 transition-all">
-                <span>Learn More</span>
+                <span>Try Rapid</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
 
-            {/* AI Progress Tracking */}
+            {/* Agent Cupid */}
             <div
               ref={transition({
-                key: 'feature-progress',
-                ...fly({ x: -100, opacity: true })
+                key: 'agent-cupid',
+                ...fly({ y: -100, opacity: true })
               })}
-              className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl hover:scale-105 transition transform border-2 border-gray-100"
-            >
-              <div className="bg-gradient-to-r from-green-500 to-teal-500 w-16 h-16 rounded-xl flex items-center justify-center mb-6">
-                <TrendingUp className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-2xl font-bold mb-4">AI Progress Tracking</h3>
-              <p className="text-gray-600 mb-6 leading-relaxed">
-                Intelligent analytics track your fitness journey with beautiful visualizations,
-                trend analysis, and predictive insights for goal achievement.
-              </p>
-              <button className="text-orange-600 font-semibold flex items-center space-x-2 hover:space-x-3 transition-all">
-                <span>Learn More</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* AI Meal Planner */}
-            <div
-              ref={transition({
-                key: 'feature-meal',
-                ...fly({ y: 100, opacity: true })
-              })}
-              className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl hover:scale-105 transition transform border-2 border-gray-100"
-            >
-              <div className="bg-gradient-to-r from-yellow-500 to-orange-500 w-16 h-16 rounded-xl flex items-center justify-center mb-6">
-                <Utensils className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-2xl font-bold mb-4">AI Meal Planner</h3>
-              <p className="text-gray-600 mb-6 leading-relaxed">
-                Personalized meal plans tailored to your goals, dietary preferences, and macros.
-                AI adjusts recipes based on your progress and feedback.
-              </p>
-              <button className="text-orange-600 font-semibold flex items-center space-x-2 hover:space-x-3 transition-all">
-                <span>Learn More</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* AI Workout Generator */}
-            <div
-              ref={transition({
-                key: 'feature-workout',
-                ...fly({ x: 100, opacity: true })
-              })}
-              className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl hover:scale-105 transition transform border-2 border-gray-100"
-            >
-              <div className="bg-gradient-to-r from-red-500 to-pink-500 w-16 h-16 rounded-xl flex items-center justify-center mb-6">
-                <Dumbbell className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-2xl font-bold mb-4">AI Workout Generator</h3>
-              <p className="text-gray-600 mb-6 leading-relaxed">
-                Custom workout routines generated for your fitness level, available equipment,
-                and goals. Progressive overload built-in automatically.
-              </p>
-              <button className="text-orange-600 font-semibold flex items-center space-x-2 hover:space-x-3 transition-all">
-                <span>Learn More</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* AI Voice Coach */}
-            <div
-              ref={transition({
-                key: 'feature-voice',
-                ...fly({ x: -100, opacity: true })
-              })}
-              className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl hover:scale-105 transition transform border-2 border-gray-100"
-            >
-              <div className="bg-gradient-to-r from-indigo-500 to-purple-500 w-16 h-16 rounded-xl flex items-center justify-center mb-6">
-                <Mic className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-2xl font-bold mb-4">AI Voice Coach</h3>
-              <p className="text-gray-600 mb-6 leading-relaxed">
-                Hands-free workout guidance with voice commands. Real-time form corrections,
-                rep counting, and motivational coaching during exercise.
-              </p>
-              <button className="text-orange-600 font-semibold flex items-center space-x-2 hover:space-x-3 transition-all">
-                <span>Learn More</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* AI Injury Prevention */}
-            <div
-              ref={transition({
-                key: 'feature-injury',
-                ...fly({ y: 100, opacity: true })
-              })}
-              className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl hover:scale-105 transition transform border-2 border-gray-100"
-            >
-              <div className="bg-gradient-to-r from-teal-500 to-green-500 w-16 h-16 rounded-xl flex items-center justify-center mb-6">
-                <Shield className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-2xl font-bold mb-4">AI Injury Prevention</h3>
-              <p className="text-gray-600 mb-6 leading-relaxed">
-                Smart monitoring detects overtraining, muscle imbalances, and injury risks.
-                Preventive recommendations keep you training safely.
-              </p>
-              <button className="text-orange-600 font-semibold flex items-center space-x-2 hover:space-x-3 transition-all">
-                <span>Learn More</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Cupid AI Dating */}
-            <div
-              ref={transition({
-                key: 'feature-cupid',
-                ...fly({ x: 100, opacity: true })
-              })}
-              className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl hover:scale-105 transition transform border-2 border-gray-100"
+              className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl hover:scale-105 transition transform border-2 border-pink-200"
             >
               <div className="bg-gradient-to-r from-pink-500 to-red-500 w-16 h-16 rounded-xl flex items-center justify-center mb-6">
                 <Heart className="w-8 h-8 text-white" />
               </div>
-              <h3 className="text-2xl font-bold mb-4">Cupid AI Dating</h3>
+              <div className="mb-3">
+                <span className="bg-pink-100 text-pink-700 text-xs font-semibold px-3 py-1 rounded-full">
+                  Fitness Dating & Accountability
+                </span>
+              </div>
+              <h3 className="text-2xl font-bold mb-4">Agent Cupid</h3>
               <p className="text-gray-600 mb-6 leading-relaxed">
-                Find love with fitness-minded singles. One quality match per day based on
-                compatibility scores, values, and fitness goals alignment.
+                Find love with fitness-minded singles. One quality match per day based on AI compatibility scoring, shared values, and fitness goals. Built on Temporal workflows for reliable matching.
               </p>
               <button className="text-orange-600 font-semibold flex items-center space-x-2 hover:space-x-3 transition-all">
-                <span>Learn More</span>
+                <span>Meet Cupid</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
+            </div>
+
+            {/* Agent Temporal */}
+            <div
+              ref={transition({
+                key: 'agent-temporal',
+                ...fly({ x: 100, opacity: true })
+              })}
+              className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl hover:scale-105 transition transform border-2 border-purple-200"
+            >
+              <div className="bg-gradient-to-r from-purple-500 to-blue-500 w-16 h-16 rounded-xl flex items-center justify-center mb-6">
+                <Zap className="w-8 h-8 text-white" />
+              </div>
+              <div className="mb-3">
+                <span className="bg-purple-100 text-purple-700 text-xs font-semibold px-3 py-1 rounded-full inline-flex items-center">
+                  <Sparkles className="w-3 h-3 mr-1" />
+                  Powered by Temporal.io Cloud
+                </span>
+              </div>
+              <h3 className="text-2xl font-bold mb-4">Agent Temporal</h3>
+              <p className="text-gray-600 mb-6 leading-relaxed">
+                Enterprise-grade workflow orchestration powering all ReddyFit AI agents. Ensures 99.9% uptime, automatic retries, daily streak calculations, and observable workflows for every feature.
+              </p>
+              <Link to="/reliability" className="text-orange-600 font-semibold flex items-center space-x-2 hover:space-x-3 transition-all">
+                <span>View Reliability</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+
+            {/* Agent Trainer */}
+            <div
+              ref={transition({
+                key: 'agent-trainer',
+                ...fly({ x: -100, opacity: true })
+              })}
+              className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl hover:scale-105 transition transform border-2 border-red-200"
+            >
+              <div className="bg-gradient-to-r from-red-500 to-pink-500 w-16 h-16 rounded-xl flex items-center justify-center mb-6">
+                <Dumbbell className="w-8 h-8 text-white" />
+              </div>
+              <div className="mb-3">
+                <span className="bg-red-100 text-red-700 text-xs font-semibold px-3 py-1 rounded-full">
+                  Workout Planning & Coaching
+                </span>
+              </div>
+              <h3 className="text-2xl font-bold mb-4">Agent Trainer</h3>
+              <p className="text-gray-600 mb-6 leading-relaxed">
+                AI-powered workout generation and form coaching. Custom routines for your fitness level and equipment with progressive overload. Real-time voice feedback during exercises.
+              </p>
+              <button className="text-orange-600 font-semibold flex items-center space-x-2 hover:space-x-3 transition-all">
+                <span>Train Now</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Agent Chef */}
+            <div
+              ref={transition({
+                key: 'agent-chef',
+                ...fly({ y: 100, opacity: true })
+              })}
+              className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl hover:scale-105 transition transform border-2 border-yellow-200"
+            >
+              <div className="bg-gradient-to-r from-yellow-500 to-orange-500 w-16 h-16 rounded-xl flex items-center justify-center mb-6">
+                <Utensils className="w-8 h-8 text-white" />
+              </div>
+              <div className="mb-3">
+                <span className="bg-yellow-100 text-yellow-700 text-xs font-semibold px-3 py-1 rounded-full">
+                  Meal Planning & Macros
+                </span>
+              </div>
+              <h3 className="text-2xl font-bold mb-4">Agent Chef</h3>
+              <p className="text-gray-600 mb-6 leading-relaxed">
+                Personalized meal plans with automated macro tracking. Temporal workflows recalculate your nutrition every Sunday based on latest weight and activity. AI adjusts recipes based on progress.
+              </p>
+              <button className="text-orange-600 font-semibold flex items-center space-x-2 hover:space-x-3 transition-all">
+                <span>Plan Meals</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Agent Voice */}
+            <div
+              ref={transition({
+                key: 'agent-voice',
+                ...fly({ x: 100, opacity: true })
+              })}
+              className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl hover:scale-105 transition transform border-2 border-indigo-200"
+            >
+              <div className="bg-gradient-to-r from-indigo-500 to-purple-500 w-16 h-16 rounded-xl flex items-center justify-center mb-6">
+                <Mic className="w-8 h-8 text-white" />
+              </div>
+              <div className="mb-3">
+                <span className="bg-indigo-100 text-indigo-700 text-xs font-semibold px-3 py-1 rounded-full">
+                  Hands-Free Coaching
+                </span>
+              </div>
+              <h3 className="text-2xl font-bold mb-4">Agent Voice</h3>
+              <p className="text-gray-600 mb-6 leading-relaxed">
+                Hands-free AI coaching with voice commands and real-time feedback. Get form corrections, rep counting, and motivational support during workouts without touching your phone.
+              </p>
+              <button className="text-orange-600 font-semibold flex items-center space-x-2 hover:space-x-3 transition-all">
+                <span>Try Voice</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      {/* SUCCESS STORIES SECTION */}
+      <section className="relative z-10 py-24 bg-gradient-to-br from-orange-50 via-white to-red-50">
+        <div className="container mx-auto px-6">
+          <div className="text-center mb-16">
+            <h2
+              ref={transition({
+                key: 'success-title',
+                ...fly({ y: -50, opacity: true })
+              })}
+              className="text-5xl font-bold mb-6"
+            >
+              Amazing <span className="bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">Transformations</span>
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-4">
+              Real people, real results with ReddyFit's AI-powered platform
+            </p>
+            <div className="inline-flex items-center bg-orange-100 text-orange-700 rounded-full px-4 py-2 text-sm font-semibold">
+              <Sparkles className="w-4 h-4 mr-2" />
+              Transformation photos coming soon!
+            </div>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            {/* Success Story 1 - Dinesh Reddy */}
+            <div
+              ref={transition({
+                key: 'success-dinesh',
+                ...fly({ x: -100, opacity: true })
+              })}
+              className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition transform hover:-translate-y-1 border-2 border-orange-100"
+            >
+              <div className="mb-6">
+                <div className="w-20 h-20 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center text-white text-3xl font-bold mb-4 mx-auto">
+                  DR
+                </div>
+                <div className="flex justify-center mb-2">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="w-5 h-5 text-yellow-400 fill-yellow-400" />
+                  ))}
+                </div>
+              </div>
+              <h3 className="text-2xl font-bold mb-2 text-center">Dinesh Reddy</h3>
+              <p className="text-gray-500 text-sm mb-4 text-center">Corpus Christi, TX</p>
+              <p className="text-gray-600 leading-relaxed italic mb-4">
+                "ReddyFit's AI agents transformed my fitness journey. Agent Rapid's body fat tracking keeps me motivated, and Agent Cupid helped me find my workout partner!"
+              </p>
+              <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
+                <TrendingUp className="w-4 h-4 text-green-600" />
+                <span className="font-semibold text-green-600">-15% body fat</span>
+              </div>
+            </div>
+
+            {/* Success Story 2 - Sowju */}
+            <div
+              ref={transition({
+                key: 'success-sowju',
+                ...fly({ y: 100, opacity: true })
+              })}
+              className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition transform hover:-translate-y-1 border-2 border-orange-100"
+            >
+              <div className="mb-6">
+                <div className="w-20 h-20 bg-gradient-to-r from-pink-500 to-red-500 rounded-full flex items-center justify-center text-white text-3xl font-bold mb-4 mx-auto">
+                  S
+                </div>
+                <div className="flex justify-center mb-2">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="w-5 h-5 text-yellow-400 fill-yellow-400" />
+                  ))}
+                </div>
+              </div>
+              <h3 className="text-2xl font-bold mb-2 text-center">Sowju</h3>
+              <p className="text-gray-500 text-sm mb-4 text-center">Corpus Christi, TX</p>
+              <p className="text-gray-600 leading-relaxed italic mb-4">
+                "The daily streak feature powered by Temporal workflows keeps me accountable. Agent Chef's meal planning makes nutrition effortless. Best fitness app ever!"
+              </p>
+              <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
+                <TrendingUp className="w-4 h-4 text-green-600" />
+                <span className="font-semibold text-green-600">180 day streak</span>
+              </div>
+            </div>
+
+            {/* Success Story 3 - Jashwita */}
+            <div
+              ref={transition({
+                key: 'success-jashwita',
+                ...fly({ x: 100, opacity: true })
+              })}
+              className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition transform hover:-translate-y-1 border-2 border-orange-100"
+            >
+              <div className="mb-6">
+                <div className="w-20 h-20 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white text-3xl font-bold mb-4 mx-auto">
+                  J
+                </div>
+                <div className="flex justify-center mb-2">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="w-5 h-5 text-yellow-400 fill-yellow-400" />
+                  ))}
+                </div>
+              </div>
+              <h3 className="text-2xl font-bold mb-2 text-center">Jashwita</h3>
+              <p className="text-gray-500 text-sm mb-4 text-center">Corpus Christi, TX</p>
+              <p className="text-gray-600 leading-relaxed italic mb-4">
+                "Agent Trainer's personalized workouts and Agent Voice's hands-free coaching made fitness fun again. The 99.9% reliability means I never lose my progress!"
+              </p>
+              <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
+                <TrendingUp className="w-4 h-4 text-green-600" />
+                <span className="font-semibold text-green-600">-25 lbs</span>
+              </div>
             </div>
           </div>
         </div>
@@ -1130,6 +1219,254 @@ export default function LandingPage() {
                 Before & After transformation photos coming soon!<br />
                 See real results from our community members.
               </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* DAILY STREAK REQUIREMENTS */}
+      <section className="relative z-10 py-24 bg-white">
+        <div className="container mx-auto px-6">
+          <div className="text-center mb-16">
+            <h2
+              ref={transition({
+                key: 'streak-title',
+                ...fly({ y: -50, opacity: true })
+              })}
+              className="text-5xl font-bold mb-6"
+            >
+              Build Your <span className="bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">Daily Streak</span>
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-4">
+              Consistency is key. Complete these daily requirements to maintain your streak and unlock rewards.
+            </p>
+            <div className="inline-flex items-center bg-purple-100 text-purple-700 rounded-full px-4 py-2 text-sm font-semibold">
+              <Zap className="w-4 h-4 mr-2" />
+              Powered by Temporal.io for 99.9% reliable streak tracking
+            </div>
+          </div>
+
+          <div className="max-w-5xl mx-auto">
+            <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-3xl p-12 border-2 border-orange-200">
+              <div className="grid md:grid-cols-3 gap-8 mb-12">
+                {/* Requirement 1 - Daily Progress Photo */}
+                <div
+                  ref={transition({
+                    key: 'req-photo',
+                    ...fly({ x: -100, opacity: true })
+                  })}
+                  className="bg-white p-6 rounded-2xl shadow-lg"
+                >
+                  <div className="bg-gradient-to-r from-orange-500 to-red-500 w-14 h-14 rounded-xl flex items-center justify-center mb-4">
+                    <Camera className="w-7 h-7 text-white" />
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">Daily Progress Photo</h3>
+                  <p className="text-gray-600 text-sm mb-3">
+                    Upload 1 progress photo every day. Agent Rapid tracks your body composition changes with AI analysis.
+                  </p>
+                  <div className="flex items-center text-xs text-orange-600 font-semibold">
+                    <CheckCircle2 className="w-4 h-4 mr-1" />
+                    MANDATORY
+                  </div>
+                </div>
+
+                {/* Requirement 2 - Daily Meal Photo */}
+                <div
+                  ref={transition({
+                    key: 'req-meal',
+                    ...fly({ y: 100, opacity: true })
+                  })}
+                  className="bg-white p-6 rounded-2xl shadow-lg"
+                >
+                  <div className="bg-gradient-to-r from-yellow-500 to-orange-500 w-14 h-14 rounded-xl flex items-center justify-center mb-4">
+                    <Utensils className="w-7 h-7 text-white" />
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">Meal Photo + Log</h3>
+                  <p className="text-gray-600 text-sm mb-3">
+                    Log at least 1 meal with photo daily. Agent Chef analyzes your nutrition and adjusts your macro targets.
+                  </p>
+                  <div className="flex items-center text-xs text-orange-600 font-semibold">
+                    <CheckCircle2 className="w-4 h-4 mr-1" />
+                    MANDATORY
+                  </div>
+                </div>
+
+                {/* Requirement 3 - Weekly Weight Check */}
+                <div
+                  ref={transition({
+                    key: 'req-weight',
+                    ...fly({ x: 100, opacity: true })
+                  })}
+                  className="bg-white p-6 rounded-2xl shadow-lg"
+                >
+                  <div className="bg-gradient-to-r from-green-500 to-teal-500 w-14 h-14 rounded-xl flex items-center justify-center mb-4">
+                    <TrendingUp className="w-7 h-7 text-white" />
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">Weekly Weight Check</h3>
+                  <p className="text-gray-600 text-sm mb-3">
+                    Log your weight once per week. Temporal workflows automatically recalculate your macros every Sunday.
+                  </p>
+                  <div className="flex items-center text-xs text-orange-600 font-semibold">
+                    <CheckCircle2 className="w-4 h-4 mr-1" />
+                    MANDATORY
+                  </div>
+                </div>
+              </div>
+
+              {/* Streak Benefits */}
+              <div className="bg-white rounded-2xl p-8 text-center">
+                <h3 className="text-2xl font-bold mb-6">🔥 Streak Rewards</h3>
+                <div className="grid md:grid-cols-4 gap-6">
+                  <div>
+                    <div className="text-3xl font-bold text-orange-600 mb-1">7 days</div>
+                    <div className="text-sm text-gray-600">Bronze Badge</div>
+                  </div>
+                  <div>
+                    <div className="text-3xl font-bold text-orange-600 mb-1">30 days</div>
+                    <div className="text-sm text-gray-600">Silver Badge</div>
+                  </div>
+                  <div>
+                    <div className="text-3xl font-bold text-orange-600 mb-1">90 days</div>
+                    <div className="text-sm text-gray-600">Gold Badge</div>
+                  </div>
+                  <div>
+                    <div className="text-3xl font-bold text-orange-600 mb-1">365 days</div>
+                    <div className="text-sm text-gray-600">Diamond Badge</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* SOCIAL COMPETITION FEATURES */}
+      <section className="relative z-10 py-24 bg-gradient-to-br from-purple-50 via-white to-blue-50">
+        <div className="container mx-auto px-6">
+          <div className="text-center mb-16">
+            <h2
+              ref={transition({
+                key: 'competition-title',
+                ...fly({ y: -50, opacity: true })
+              })}
+              className="text-5xl font-bold mb-6"
+            >
+              Compete & <span className="bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">Stay Motivated</span>
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Challenge your friends and community with fitness competitions, leaderboards, and social features
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
+            {/* Competition 1 - Calorie Burn */}
+            <div
+              ref={transition({
+                key: 'comp-calories',
+                ...fly({ x: -100, opacity: true })
+              })}
+              className="bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition border-2 border-red-100"
+            >
+              <div className="bg-gradient-to-r from-red-500 to-orange-500 w-12 h-12 rounded-xl flex items-center justify-center mb-4">
+                <Activity className="w-6 h-6 text-white" />
+              </div>
+              <h3 className="text-lg font-bold mb-2">Calorie Burn Challenge</h3>
+              <p className="text-gray-600 text-sm">
+                Compete weekly to see who burns the most calories. Real-time leaderboards updated by Temporal workflows.
+              </p>
+            </div>
+
+            {/* Competition 2 - Meal Quality */}
+            <div
+              ref={transition({
+                key: 'comp-meals',
+                ...fly({ y: 100, opacity: true })
+              })}
+              className="bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition border-2 border-yellow-100"
+            >
+              <div className="bg-gradient-to-r from-yellow-500 to-orange-500 w-12 h-12 rounded-xl flex items-center justify-center mb-4">
+                <Utensils className="w-6 h-6 text-white" />
+              </div>
+              <h3 className="text-lg font-bold mb-2">Meal Quality Scores</h3>
+              <p className="text-gray-600 text-sm">
+                Agent Chef rates your meals. Compete for the best nutrition scores and healthiest eating habits.
+              </p>
+            </div>
+
+            {/* Competition 3 - Weight Progress */}
+            <div
+              ref={transition({
+                key: 'comp-weight',
+                ...fly({ x: 100, opacity: true })
+              })}
+              className="bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition border-2 border-green-100"
+            >
+              <div className="bg-gradient-to-r from-green-500 to-teal-500 w-12 h-12 rounded-xl flex items-center justify-center mb-4">
+                <TrendingUp className="w-6 h-6 text-white" />
+              </div>
+              <h3 className="text-lg font-bold mb-2">Transformation Challenge</h3>
+              <p className="text-gray-600 text-sm">
+                Compete in weight loss or muscle gain challenges. Track progress against friends and community.
+              </p>
+            </div>
+
+            {/* Competition 4 - Friend Battles */}
+            <div
+              ref={transition({
+                key: 'comp-friends',
+                ...fly({ x: -100, opacity: true })
+              })}
+              className="bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition border-2 border-pink-100"
+            >
+              <div className="bg-gradient-to-r from-pink-500 to-red-500 w-12 h-12 rounded-xl flex items-center justify-center mb-4">
+                <Users className="w-6 h-6 text-white" />
+              </div>
+              <h3 className="text-lg font-bold mb-2">1v1 Friend Battles</h3>
+              <p className="text-gray-600 text-sm">
+                Challenge friends to custom fitness battles. Weekly and monthly rankings for bragging rights.
+              </p>
+            </div>
+          </div>
+
+          {/* Leaderboard Preview */}
+          <div className="mt-12 max-w-3xl mx-auto bg-white rounded-2xl p-8 shadow-xl border-2 border-purple-200">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-2xl font-bold">🏆 Weekly Leaderboard</h3>
+              <span className="bg-purple-100 text-purple-700 text-xs font-semibold px-3 py-1 rounded-full">
+                Live Updates
+              </span>
+            </div>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl border border-yellow-200">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full flex items-center justify-center text-white font-bold">1</div>
+                  <div>
+                    <div className="font-bold">Sowju</div>
+                    <div className="text-xs text-gray-500">180 day streak</div>
+                  </div>
+                </div>
+                <div className="text-orange-600 font-bold">🔥 15,240 cal</div>
+              </div>
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center text-white font-bold">2</div>
+                  <div>
+                    <div className="font-bold">Dinesh Reddy</div>
+                    <div className="text-xs text-gray-500">90 day streak</div>
+                  </div>
+                </div>
+                <div className="text-orange-600 font-bold">🔥 14,830 cal</div>
+              </div>
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-orange-300 rounded-full flex items-center justify-center text-white font-bold">3</div>
+                  <div>
+                    <div className="font-bold">Jashwita</div>
+                    <div className="text-xs text-gray-500">75 day streak</div>
+                  </div>
+                </div>
+                <div className="text-orange-600 font-bold">🔥 13,920 cal</div>
+              </div>
             </div>
           </div>
         </div>
