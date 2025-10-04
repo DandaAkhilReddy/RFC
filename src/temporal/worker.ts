@@ -9,9 +9,19 @@
  *   Production: Deploy as separate service
  */
 
+// CRITICAL: Load environment variables FIRST before any other imports
+import './loadEnv';
+
+// Now safe to import modules that depend on environment variables
 import { Worker, NativeConnection } from '@temporalio/worker';
 import * as activities from './activities';
 import TEMPORAL_CONFIG from './config';
+import { fileURLToPath } from 'url';
+import { dirname, resolve } from 'path';
+
+// ESM compatibility - create __dirname equivalent
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 async function runWorker() {
   console.log('='.repeat(60));
@@ -37,7 +47,7 @@ async function runWorker() {
       connection,
       namespace: TEMPORAL_CONFIG.namespace,
       taskQueue: TEMPORAL_CONFIG.taskQueues.bodyFatAnalysis,
-      workflowsPath: require.resolve('./workflows/bodyFatAnalysisWorkflow'),
+      workflowsPath: resolve(__dirname, './workflows'),
       activities,
     });
 

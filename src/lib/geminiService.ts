@@ -1,6 +1,10 @@
 // Google Gemini Vision API for Body Analysis - ReddyFit
 
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
+// Support both browser (Vite) and Node.js (Worker) environments
+const GEMINI_API_KEY = typeof import.meta !== 'undefined' && import.meta.env
+  ? import.meta.env.VITE_GEMINI_API_KEY || ''
+  : process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY || '';
+
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
 
 export interface BodyAnalysis {

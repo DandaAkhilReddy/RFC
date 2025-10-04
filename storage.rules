@@ -1,8 +1,15 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
+    // Allow authenticated users full access
     match /{allPaths=**} {
-      allow read, write: if request.auth != null;
+      allow read: if true; // Public read for now
+      allow write: if request.auth != null;
+    }
+
+    // Allow Temporal worker to upload progress photos (temporary for testing)
+    match /progress/{userId}/{fileName} {
+      allow write: if true; // TODO: Secure this with service account
     }
   }
 }

@@ -5,6 +5,14 @@
  * Environment: ap-northeast-1 (Asia Pacific)
  */
 
+// Helper to get env var from either Vite or Node.js environment
+const getEnv = (key: string) => {
+  if (typeof import.meta !== 'undefined' && import.meta.env) {
+    return import.meta.env[key];
+  }
+  return process.env[key];
+};
+
 export const TEMPORAL_CONFIG = {
   // Temporal Cloud endpoint
   address: 'ap-northeast-1.aws.api.temporal.io:7233',
@@ -13,7 +21,7 @@ export const TEMPORAL_CONFIG = {
   namespace: 'quickstart-areddyhh-70f499a0.tjhly',
 
   // API Key for authentication (load from environment variable)
-  apiKey: import.meta.env.VITE_TEMPORAL_API_KEY || process.env.TEMPORAL_API_KEY || '',
+  apiKey: getEnv('VITE_TEMPORAL_API_KEY') || getEnv('TEMPORAL_API_KEY') || '',
 
   // TLS enabled for secure connection
   tls: true,

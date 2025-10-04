@@ -1,14 +1,12 @@
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './components/AuthProvider';
 import LandingPage from './App';
 import ImprovedDashboard from './components/ImprovedDashboard';
+import ReliabilityPage from './pages/ReliabilityPage';
 import ErrorBoundary from './components/ErrorBoundary';
 
 export default function AppRouter() {
   const { user, loading } = useAuth();
-
-  // Check if we're on the test dashboard routes
-  const isTestDashboard = window.location.pathname === '/test-dashboard';
-  const isEnhancedDashboard = window.location.pathname === '/enhanced-dashboard';
 
   console.log('[AppRouter] user:', user?.email, 'loading:', loading);
 
@@ -24,21 +22,25 @@ export default function AppRouter() {
     );
   }
 
-  // NOT logged in - show landing page
-  if (!user) {
-    console.log('[AppRouter] No user - showing landing page');
-    return (
-      <ErrorBoundary>
-        <LandingPage />
-      </ErrorBoundary>
-    );
-  }
-
-  // Logged in - show improved dashboard
-  console.log('[AppRouter] User logged in - showing improved dashboard');
   return (
     <ErrorBoundary>
-      <ImprovedDashboard />
+      <BrowserRouter>
+        <Routes>
+          {/* Public routes */}
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/reliability" element={<ReliabilityPage />} />
+
+          {/* Protected routes - require authentication */}
+          <Route
+            path="/app"
+            element={user ? <ImprovedDashboard /> : <Navigate to="/" replace />}
+          />
+
+          {/* Redirect old paths */}
+          <Route path="/test-dashboard" element={<Navigate to="/app" replace />} />
+          <Route path="/enhanced-dashboard" element={<Navigate to="/app" replace />} />
+        </Routes>
+      </BrowserRouter>
     </ErrorBoundary>
   );
 }

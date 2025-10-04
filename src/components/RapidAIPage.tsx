@@ -253,8 +253,10 @@ export default function RapidAIPage() {
   ];
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    setUploadedPhotos(prev => [...prev, ...files]);
+    const file = e.target.files?.[0];
+    if (file) {
+      setUploadedPhotos([file]); // Only keep the latest photo
+    }
   };
 
   const removePhoto = (index: number) => {
@@ -422,9 +424,9 @@ export default function RapidAIPage() {
                   <span className="text-purple-600 font-bold">1</span>
                 </div>
                 <div>
-                  <h3 className="font-bold text-lg text-gray-800 mb-2">Upload Multiple Photos</h3>
+                  <h3 className="font-bold text-lg text-gray-800 mb-2">Upload Your Photo</h3>
                   <p className="text-gray-600 text-sm">
-                    Upload 1-3 clear photos (front, side, back views recommended). More photos = better accuracy. Our Gemini Vision AI analyzes your body composition.
+                    Upload a clear photo of yourself (front view recommended). Our Gemini Vision AI will analyze your body composition.
                   </p>
                 </div>
               </div>
@@ -510,7 +512,7 @@ export default function RapidAIPage() {
                 <li>• Form-fitting clothing or shirtless for males</li>
                 <li>• Stand 6-8 feet from camera</li>
                 <li>• Neutral posture (relaxed, arms at sides)</li>
-                <li>• Multiple angles increase accuracy</li>
+                <li>• Front view recommended for best results</li>
               </ul>
             </div>
 
@@ -518,7 +520,6 @@ export default function RapidAIPage() {
               ref={fileInputRef}
               type="file"
               accept="image/*"
-              multiple
               onChange={handlePhotoUpload}
               className="hidden"
             />
@@ -529,9 +530,9 @@ export default function RapidAIPage() {
             >
               <Upload className="w-12 h-12 text-purple-400 mx-auto mb-4 group-hover:text-purple-600" />
               <p className="text-gray-600 group-hover:text-purple-600 font-semibold">
-                Click to upload photos
+                Click to upload your photo
               </p>
-              <p className="text-sm text-gray-400 mt-2">or drag and drop</p>
+              <p className="text-sm text-gray-400 mt-2">JPG, PNG (max 10MB)</p>
             </button>
 
             {uploadedPhotos.length > 0 && (

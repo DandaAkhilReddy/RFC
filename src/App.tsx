@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { transition } from '@ssgoi/react';
 import { fly, mask } from '@ssgoi/react/transitions';
 import {
@@ -77,8 +78,7 @@ export default function LandingPage() {
         <Logo size={56} showText={true} />
         <div className="hidden md:flex space-x-8 text-gray-700">
           <a href="#features" className="hover:text-orange-600 transition">Features</a>
-          <a href="#buddies" className="hover:text-orange-600 transition">Workout Buddies</a>
-          <a href="#dating" className="hover:text-orange-600 transition">Cupid Dating</a>
+          <Link to="/reliability" className="hover:text-orange-600 transition">Reliability</Link>
           <a href="#pricing" className="hover:text-orange-600 transition">Pricing</a>
         </div>
       </nav>

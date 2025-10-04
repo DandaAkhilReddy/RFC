@@ -34,17 +34,10 @@ export async function uploadPhotoToStorageActivity(input: UploadPhotoInput): Pro
   console.log(`[Activity] Uploading photo for user: ${userId}`);
 
   try {
-    // Convert base64 to blob
+    // Convert base64 to blob (Node.js compatible)
     const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
-    const byteCharacters = atob(base64Data);
-    const byteNumbers = new Array(byteCharacters.length);
-
-    for (let i = 0; i < byteCharacters.length; i++) {
-      byteNumbers[i] = byteCharacters.charCodeAt(i);
-    }
-
-    const byteArray = new Uint8Array(byteNumbers);
-    const blob = new Blob([byteArray], { type: 'image/jpeg' });
+    const buffer = Buffer.from(base64Data, 'base64');
+    const blob = new Blob([buffer], { type: 'image/jpeg' });
 
     // Create storage reference
     const filename = `progress/${userId}/${timestamp}.jpg`;
