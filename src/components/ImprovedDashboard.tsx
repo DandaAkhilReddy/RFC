@@ -704,31 +704,37 @@ export default function ImprovedDashboard() {
                     <Smartphone className="w-10 h-10 text-white" />
                   </div>
                   <h3 className="text-2xl font-bold mb-2">Share with Friends</h3>
-                  <p className="text-gray-600 mb-6">Touch phones together or send a friend request</p>
+                  <p className="text-gray-600 mb-2">Share your profile link with friends</p>
+                  <div className="inline-flex items-center bg-orange-100 text-orange-700 rounded-full px-3 py-1 text-xs font-semibold mb-4">
+                    <Sparkles className="w-3 h-3 mr-1" />
+                    Web Version
+                  </div>
 
                   <div className="space-y-3">
                     <button
                       onClick={() => {
-                        setToast({ message: '📱 Hold phones together to connect!', type: 'info' });
+                        navigator.clipboard.writeText(`https://delightful-sky-0437f100f.2.azurestaticapps.net/add/${user?.uid}`);
+                        setToast({ message: '🔗 Friend link copied!', type: 'success' });
                         setShowNFCShare(false);
                       }}
                       className="w-full px-6 py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:shadow-lg transition-all transform hover:scale-105 flex items-center justify-center space-x-2 font-semibold"
                     >
-                      <Radio className="w-5 h-5 animate-pulse" />
-                      <span>Touch to Share (NFC)</span>
+                      <UserPlus className="w-5 h-5" />
+                      <span>Copy Website Link</span>
                     </button>
 
-                    <button
-                      onClick={() => {
-                        navigator.clipboard.writeText(`https://reddyfit.app/add/${user?.uid}`);
-                        setToast({ message: '🔗 Friend link copied!', type: 'success' });
-                        setShowNFCShare(false);
-                      }}
-                      className="w-full px-6 py-4 bg-white border-2 border-purple-500 text-purple-600 rounded-xl hover:bg-purple-50 transition-all flex items-center justify-center space-x-2 font-semibold"
-                    >
-                      <UserPlus className="w-5 h-5" />
-                      <span>Copy Friend Link</span>
-                    </button>
+                    <div className="relative">
+                      <button
+                        disabled
+                        className="w-full px-6 py-4 bg-gray-100 text-gray-400 rounded-xl cursor-not-allowed flex items-center justify-center space-x-2 font-semibold relative"
+                      >
+                        <Radio className="w-5 h-5" />
+                        <span>NFC Share</span>
+                      </button>
+                      <div className="absolute -top-2 -right-2 bg-blue-500 text-white text-xs px-2 py-1 rounded-full">
+                        Coming Soon in Mobile Apps
+                      </div>
+                    </div>
 
                     <button
                       onClick={() => setShowNFCShare(false)}

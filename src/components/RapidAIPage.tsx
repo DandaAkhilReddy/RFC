@@ -61,7 +61,7 @@ export default function RapidAIPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const questions = [
-    // Basic Info (5 questions)
+    // Basic Info (4 questions)
     {
       id: 'height',
       question: 'What is your height?',
@@ -94,111 +94,23 @@ export default function RapidAIPage() {
       category: 'Basic Info'
     },
 
-    // Workout Habits (6 questions)
+    // Workout Habits (2 questions)
     {
       id: 'gymFrequency',
       question: 'How often do you go to the gym or workout?',
       type: 'select',
       options: ['Never', '1-2 times/week', '3-4 times/week', '5-6 times/week', 'Daily'],
-      category: 'Workout Habits'
-    },
-    {
-      id: 'preferredWorkoutTime',
-      question: 'What time do you usually prefer to workout?',
-      type: 'select',
-      options: ['Early Morning (5-7 AM)', 'Morning (7-10 AM)', 'Afternoon (12-3 PM)', 'Evening (5-8 PM)', 'Night (8-11 PM)'],
-      category: 'Workout Habits'
-    },
-    {
-      id: 'workHoursPerDay',
-      question: 'How many hours do you work per day?',
-      type: 'number',
-      unit: 'hours',
-      placeholder: '8',
-      category: 'Workout Habits'
-    },
-    {
-      id: 'workoutLocation',
-      question: 'Where do you prefer to workout?',
-      type: 'select',
-      options: ['Home - No Equipment', 'Home - Basic Equipment', 'Commercial Gym', 'Outdoor/Park', 'Flexible/Anywhere'],
-      category: 'Workout Habits'
+      category: 'Workout'
     },
     {
       id: 'fitnessExperience',
       question: 'What is your fitness experience level?',
       type: 'select',
       options: ['Complete Beginner', 'Some Experience (< 6 months)', 'Intermediate (6 months - 2 years)', 'Advanced (2+ years)', 'Athlete/Pro'],
-      category: 'Workout Habits'
-    },
-    {
-      id: 'currentWorkoutRoutine',
-      question: 'Describe your current workout routine (if any)',
-      type: 'textarea',
-      placeholder: 'E.g., I do 30 minutes of cardio 3 times a week, some pushups and squats...',
-      category: 'Workout Habits'
+      category: 'Workout'
     },
 
-    // Nutrition (8 questions)
-    {
-      id: 'typicalFoods',
-      question: 'Describe the foods you eat most regularly',
-      type: 'textarea',
-      placeholder: 'E.g., I usually eat rice, chicken, vegetables, eggs, yogurt, fruits like apples and bananas...',
-      category: 'Nutrition'
-    },
-    {
-      id: 'breakfastDescription',
-      question: 'What do you typically eat for breakfast?',
-      type: 'textarea',
-      placeholder: 'E.g., Oatmeal with banana and coffee, or eggs with toast...',
-      category: 'Nutrition'
-    },
-    {
-      id: 'lunchDescription',
-      question: 'What do you typically eat for lunch?',
-      type: 'textarea',
-      placeholder: 'E.g., Chicken salad, rice with curry, sandwich...',
-      category: 'Nutrition'
-    },
-    {
-      id: 'dinnerDescription',
-      question: 'What do you typically eat for dinner?',
-      type: 'textarea',
-      placeholder: 'E.g., Grilled fish with vegetables, pasta, soup...',
-      category: 'Nutrition'
-    },
-    {
-      id: 'snacksDescription',
-      question: 'What snacks do you eat throughout the day?',
-      type: 'textarea',
-      placeholder: 'E.g., Nuts, protein bars, fruits, cookies...',
-      category: 'Nutrition'
-    },
-    {
-      id: 'proteinIntake',
-      question: 'How would you describe your daily protein intake?',
-      type: 'select',
-      options: ['Very Low (rarely eat protein)', 'Low (1 serving/day)', 'Moderate (2-3 servings/day)', 'High (4+ servings/day)', 'Not sure'],
-      category: 'Nutrition'
-    },
-    {
-      id: 'dietaryRestrictions',
-      question: 'Do you have any dietary restrictions or preferences?',
-      type: 'textarea',
-      placeholder: 'E.g., Vegetarian, vegan, lactose intolerant, allergic to nuts, halal, kosher, etc.',
-      category: 'Nutrition'
-    },
-    {
-      id: 'waterIntake',
-      question: 'How many glasses of water do you drink daily?',
-      type: 'number',
-      unit: 'glasses',
-      placeholder: '8',
-      category: 'Nutrition'
-    },
-
-    // Goals & Lifestyle (7 questions)
+    // Goals (2 questions)
     {
       id: 'primaryGoal',
       question: 'What is your primary fitness goal?',
@@ -214,21 +126,8 @@ export default function RapidAIPage() {
       placeholder: '70',
       category: 'Goals'
     },
-    {
-      id: 'timeframe',
-      question: 'What is your target timeframe?',
-      type: 'select',
-      options: ['1 month', '2-3 months', '3-6 months', '6-12 months', '1+ year', 'No specific timeframe'],
-      category: 'Goals'
-    },
-    {
-      id: 'sleepHours',
-      question: 'How many hours do you sleep per night on average?',
-      type: 'number',
-      unit: 'hours',
-      placeholder: '7',
-      category: 'Lifestyle'
-    },
+
+    // Lifestyle (2 questions)
     {
       id: 'activityLevel',
       question: 'How would you describe your daily activity level (outside of exercise)?',
@@ -237,18 +136,12 @@ export default function RapidAIPage() {
       category: 'Lifestyle'
     },
     {
-      id: 'injuries',
-      question: 'Do you have any current or past injuries we should know about?',
-      type: 'textarea',
-      placeholder: 'E.g., Bad knee, lower back pain, shoulder injury, etc. Or type "None"',
-      category: 'Health'
-    },
-    {
-      id: 'medications',
-      question: 'Are you currently taking any medications or supplements?',
-      type: 'textarea',
-      placeholder: 'E.g., Protein powder, creatine, multivitamins, prescription meds, etc. Or type "None"',
-      category: 'Health'
+      id: 'sleepHours',
+      question: 'How many hours do you sleep per night on average?',
+      type: 'number',
+      unit: 'hours',
+      placeholder: '7',
+      category: 'Lifestyle'
     }
   ];
 
@@ -403,9 +296,8 @@ export default function RapidAIPage() {
                 <div className="text-sm">
                   <p className="text-white font-semibold mb-1">🧪 Beta Version - Accuracy Notice</p>
                   <p className="text-purple-100">
-                    This tool uses Gemini Vision API for body fat estimation. We're training our own Llama models with 10M+ datasets
-                    from Hugging Face and Tinker API for improved accuracy. Results are for informational purposes only and should not
-                    replace professional medical advice.
+                    This AI-powered body composition analysis tool provides estimates based on your photo and data. Results are for
+                    informational purposes only and should not replace professional medical advice or body composition testing.
                   </p>
                 </div>
               </div>
@@ -426,7 +318,7 @@ export default function RapidAIPage() {
                 <div>
                   <h3 className="font-bold text-lg text-gray-800 mb-2">Upload Your Photo</h3>
                   <p className="text-gray-600 text-sm">
-                    Upload a clear photo of yourself (front view recommended). Our Gemini Vision AI will analyze your body composition.
+                    Upload a clear photo of yourself (front view recommended). Our AI will analyze your body composition.
                   </p>
                 </div>
               </div>
@@ -714,7 +606,7 @@ export default function RapidAIPage() {
               <AlertCircle className="w-6 h-6 text-yellow-600" />
               <div>
                 <h4 className="font-bold text-yellow-900">Beta Results - For Informational Purposes Only</h4>
-                <p className="text-sm text-yellow-800">These estimates are generated by Gemini Vision AI and should not replace professional body composition analysis.</p>
+                <p className="text-sm text-yellow-800">These AI-generated estimates should not replace professional body composition analysis or medical advice.</p>
               </div>
             </div>
           </div>
