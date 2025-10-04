@@ -22,6 +22,7 @@ import CommunityPage from './CommunityPage';
 import AgentRapidInfo from './AgentRapidInfo';
 import AgentCupidInfo from './AgentCupidInfo';
 import PhotoFoodInput from './PhotoFoodInput';
+import VoiceNoteInput from './VoiceNoteInput';
 
 type PageType = 'dashboard' | 'diet' | 'workout' | 'ai-agents' | 'friends' | 'rapid-ai' | 'cupid-ai' | 'settings' | 'agent-rapid-info' | 'agent-cupid-info';
 
@@ -102,7 +103,7 @@ export default function ImprovedDashboard() {
   const [streak, setStreak] = useState(0);
   const [editingWeight, setEditingWeight] = useState(false);
   const [editingSteps, setEditingSteps] = useState(false);
-  const [foodInputMode, setFoodInputMode] = useState<'photo' | 'manual'>('photo');
+  const [foodInputMode, setFoodInputMode] = useState<'photo' | 'voice' | 'manual'>('photo');
 
   // Form states
   const [newFood, setNewFood] = useState({
@@ -1223,6 +1224,16 @@ export default function ImprovedDashboard() {
                     📸 Photo
                   </button>
                   <button
+                    onClick={() => setFoodInputMode('voice')}
+                    className={`flex-1 pb-3 font-semibold transition-all ${
+                      foodInputMode === 'voice'
+                        ? 'border-b-4 border-purple-500 text-purple-600'
+                        : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                  >
+                    🎤 Voice
+                  </button>
+                  <button
                     onClick={() => setFoodInputMode('manual')}
                     className={`flex-1 pb-3 font-semibold transition-all ${
                       foodInputMode === 'manual'
@@ -1258,6 +1269,48 @@ export default function ImprovedDashboard() {
                       setShowAddFood(false);
                       setFoodInputMode('photo'); // Reset for next time
                       setToast({ message: `✅ Added ${foodEntry.name}!`, type: 'success' });
+                    }}
+                    onCancel={() => {
+                      setShowAddFood(false);
+                      setFoodInputMode('photo'); // Reset for next time
+                    }}
+                    userContext={{
+                      name: user?.displayName || 'User',
+                      email: user?.email || '',
+                      startWeight: userGoals.currentWeight,
+                      currentWeight: dailyData.weight || userGoals.currentWeight,
+                      targetWeight: userGoals.targetWeight,
+                      fitnessGoal: 'Lose Weight',
+                      currentLevel: 'Intermediate',
+                      dailyCalories: userGoals.dailyCalories,
+                      dailyProtein: userGoals.dailyProtein
+                    }}
+                  />
+                )}
+
+                {/* Voice Mode */}
+                {foodInputMode === 'voice' && (
+                  <VoiceNoteInput
+                    onAnalysisComplete={(result) => {
+                      // Add meal from voice analysis
+                      const foodEntry: FoodEntry = {
+                        id: Date.now().toString(),
+                        name: result.foods.join(', '),
+                        calories: result.calories,
+                        protein: result.protein,
+                        carbs: result.carbs,
+                        fat: result.fats,
+                        time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+                      };
+
+                      setDailyData(prev => ({
+                        ...prev,
+                        foods: [...prev.foods, foodEntry]
+                      }));
+
+                      setShowAddFood(false);
+                      setFoodInputMode('photo'); // Reset for next time
+                      setToast({ message: `✅ Added ${foodEntry.name} from voice!`, type: 'success' });
                     }}
                     onCancel={() => {
                       setShowAddFood(false);

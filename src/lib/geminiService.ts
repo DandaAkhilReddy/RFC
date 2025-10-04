@@ -254,3 +254,101 @@ Return ONLY valid JSON, no additional text.`;
     throw error;
   }
 }
+
+// Analyze meal from voice/text description (no photo)
+export async function analyzeMealFromText(
+  mealDescription: string,
+  userContext: UserContext
+): Promise<MealAnalysis> {
+  try {
+    const prompt = `You are an expert nutritionist. A user said: "${mealDescription}"
+
+**User Targets:**
+- Daily Calories: ${userContext.dailyCalories} cal
+- Daily Protein: ${userContext.dailyProtein}g
+- Goal: ${userContext.fitnessGoal}
+
+**Task:**
+1. Identify all mentioned foods
+2. Estimate realistic portion sizes based on typical servings
+3. Calculate total macros:
+   - Calories (kcal)
+   - Protein (grams)
+   - Carbs (grams)
+   - Fats (grams)
+4. Rate meal quality (1-5 stars) based on nutrition and goals
+5. Provide 2-3 specific recommendations
+
+**Examples:**
+- "burger and fries" → Burger (1), French Fries (medium)
+- "scrambled eggs and toast" → Eggs (2), Toast (2 slices), Butter
+- "chicken salad" → Grilled Chicken Breast (150g), Mixed Greens, Dressing
+
+**Response Format (JSON only):**
+{
+  "calories": <number>,
+  "protein": <number>,
+  "carbs": <number>,
+  "fats": <number>,
+  "quality": <1-5>,
+  "foods": ["<food 1 with portion>", "<food 2 with portion>", ...],
+  "recommendations": ["<tip 1>", "<tip 2>", "<tip 3>"]
+}
+
+Return ONLY valid JSON, no additional text.`;
+
+    const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contents: [{
+          parts: [{ text: prompt }]
+        }],
+        generationConfig: {
+          temperature: 0.4,
+          maxOutputTokens: 512,
+        }
+      })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error?.message || 'Gemini API error');
+    }
+
+    const data = await response.json();
+    const content = data.candidates[0].content.parts[0].text;
+
+    // Parse JSON response
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      const analysis = JSON.parse(jsonMatch[0]);
+      return {
+        calories: analysis.calories || 400,
+        protein: analysis.protein || 30,
+        carbs: analysis.carbs || 40,
+        fats: analysis.fats || 15,
+        quality: analysis.quality || 3,
+        foods: analysis.foods || [mealDescription],
+        recommendations: analysis.recommendations || ['Good meal choice!']
+      };
+    }
+
+    // Fallback
+    return {
+      calories: 400,
+      protein: 30,
+      carbs: 40,
+      fats: 15,
+      quality: 3,
+      foods: [mealDescription],
+      recommendations: ['Nutritional breakdown estimated']
+    };
+
+  } catch (error) {
+    console.error('Error analyzing meal text with Gemini:', error);
+    throw error;
+  }
+}
