@@ -23,6 +23,7 @@ import AgentRapidInfo from './AgentRapidInfo';
 import AgentCupidInfo from './AgentCupidInfo';
 import PhotoFoodInput from './PhotoFoodInput';
 import VoiceNoteInput from './VoiceNoteInput';
+import PhotoWorkoutInput from './PhotoWorkoutInput';
 
 type PageType = 'dashboard' | 'diet' | 'workout' | 'ai-agents' | 'friends' | 'rapid-ai' | 'cupid-ai' | 'settings' | 'agent-rapid-info' | 'agent-cupid-info';
 
@@ -104,6 +105,7 @@ export default function ImprovedDashboard() {
   const [editingWeight, setEditingWeight] = useState(false);
   const [editingSteps, setEditingSteps] = useState(false);
   const [foodInputMode, setFoodInputMode] = useState<'photo' | 'voice' | 'manual'>('photo');
+  const [workoutInputMode, setWorkoutInputMode] = useState<'photo' | 'manual'>('photo');
 
   // Form states
   const [newFood, setNewFood] = useState({
@@ -1561,9 +1563,77 @@ export default function ImprovedDashboard() {
           {/* Add Workout Modal */}
           {showAddWorkout && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-              <div className="bg-white rounded-3xl p-8 max-w-md w-full mx-4 shadow-3xl">
+              <div className="bg-white rounded-3xl p-8 max-w-md w-full mx-4 shadow-3xl max-h-[90vh] overflow-y-auto">
                 <h3 className="text-2xl font-bold mb-6">Add Workout</h3>
-                <div className="space-y-4">
+
+                {/* Tab Switcher */}
+                <div className="flex mb-6 border-b-2 border-gray-200">
+                  <button
+                    onClick={() => setWorkoutInputMode('photo')}
+                    className={`flex-1 pb-3 font-semibold transition-all ${
+                      workoutInputMode === 'photo'
+                        ? 'border-b-4 border-blue-500 text-blue-600'
+                        : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                  >
+                    📸 Photo
+                  </button>
+                  <button
+                    onClick={() => setWorkoutInputMode('manual')}
+                    className={`flex-1 pb-3 font-semibold transition-all ${
+                      workoutInputMode === 'manual'
+                        ? 'border-b-4 border-purple-500 text-purple-600'
+                        : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                  >
+                    ✍️ Manual
+                  </button>
+                </div>
+
+                {/* Photo Mode */}
+                {workoutInputMode === 'photo' && (
+                  <PhotoWorkoutInput
+                    onAnalysisComplete={(result) => {
+                      // Add workout from photo analysis
+                      const workoutEntry = {
+                        id: Date.now().toString(),
+                        name: result.exercise,
+                        duration: result.duration.toString(),
+                        caloriesBurned: result.calories.toString(),
+                        time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+                        photo: result.photoUrl
+                      };
+
+                      setDailyData(prev => ({
+                        ...prev,
+                        workouts: [...prev.workouts, workoutEntry]
+                      }));
+
+                      setShowAddWorkout(false);
+                      setWorkoutInputMode('photo'); // Reset for next time
+                      setToast({ message: `✅ Added ${workoutEntry.name}!`, type: 'success' });
+                    }}
+                    onCancel={() => {
+                      setShowAddWorkout(false);
+                      setWorkoutInputMode('photo'); // Reset for next time
+                    }}
+                    userContext={{
+                      name: user?.displayName || 'User',
+                      email: user?.email || '',
+                      startWeight: userGoals.currentWeight,
+                      currentWeight: dailyData.weight || userGoals.currentWeight,
+                      targetWeight: userGoals.targetWeight,
+                      fitnessGoal: 'Lose Weight',
+                      currentLevel: 'Intermediate',
+                      dailyCalories: userGoals.dailyCalories,
+                      dailyProtein: userGoals.dailyProtein
+                    }}
+                  />
+                )}
+
+                {/* Manual Mode */}
+                {workoutInputMode === 'manual' && (
+                  <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Workout Name</label>
                     <input
@@ -1596,24 +1666,26 @@ export default function ImprovedDashboard() {
                       />
                     </div>
                   </div>
-                  <div className="flex space-x-3 mt-6">
-                    <button
-                      onClick={handleAddWorkout}
-                      className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl hover:shadow-lg transition-all font-semibold"
-                    >
-                      Add Workout
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowAddWorkout(false);
-                        setNewWorkout({ name: '', duration: '', caloriesBurned: '' });
-                      }}
-                      className="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition"
-                    >
-                      Cancel
-                    </button>
+                    <div className="flex space-x-3 mt-6">
+                      <button
+                        onClick={handleAddWorkout}
+                        className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl hover:shadow-lg transition-all font-semibold"
+                      >
+                        Add Workout
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowAddWorkout(false);
+                          setNewWorkout({ name: '', duration: '', caloriesBurned: '' });
+                          setWorkoutInputMode('photo'); // Reset for next time
+                        }}
+                        className="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition"
+                      >
+                        Cancel
+                      </button>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
           )}

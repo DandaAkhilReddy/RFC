@@ -26,6 +26,17 @@ export interface MealAnalysis {
   recommendations: string[];
 }
 
+export interface WorkoutAnalysis {
+  exercise: string;
+  calories: number;
+  duration: number; // minutes
+  distance?: number; // km
+  intensity: 'Low' | 'Medium' | 'High';
+  equipment?: string;
+  notes: string;
+  recommendations: string[];
+}
+
 export interface UserContext {
   name: string;
   email: string;
@@ -349,6 +360,127 @@ Return ONLY valid JSON, no additional text.`;
 
   } catch (error) {
     console.error('Error analyzing meal text with Gemini:', error);
+    throw error;
+  }
+}
+
+// Analyze workout photo with Gemini Vision
+export async function analyzeWorkoutPhotoWithGemini(
+  imageBase64: string,
+  userContext: UserContext
+): Promise<WorkoutAnalysis> {
+  try {
+    // Remove data URL prefix if present
+    const base64Image = imageBase64.replace(/^data:image\/\w+;base64,/, '');
+
+    const prompt = `You are an expert fitness trainer. Analyze this workout photo and extract workout data.
+
+**User Context:**
+- Goal: ${userContext.fitnessGoal}
+- Current Weight: ${userContext.currentWeight}kg
+- Fitness Level: ${userContext.currentLevel}
+
+**Photo Analysis Task:**
+1. **Identify Exercise Type**: What workout is shown?
+   - Treadmill/Cardio machine display → Extract visible metrics
+   - Gym equipment → Identify exercise (bench press, squats, etc.)
+   - Person exercising → Identify activity
+   - Fitness app screenshot → Parse workout data
+
+2. **Extract Metrics** (if visible on display/screen):
+   - Calories burned
+   - Duration (minutes)
+   - Distance (km, if applicable)
+   - Speed/Pace (if shown)
+
+3. **Estimate Missing Data** (if display not visible):
+   - Estimate calories based on exercise type and typical duration
+   - Estimate duration based on user's fitness level
+   - Rate intensity: Low/Medium/High
+
+4. **Equipment Identification**: What equipment/machine is used?
+
+5. **Provide 2-3 recommendations** for improvement or variation
+
+**Examples:**
+- Treadmill display showing "450 CAL, 30:00, 5.2 KM" → Running, 450 cal, 30 min, 5.2 km
+- Person doing bench press → Bench Press, ~200 cal, ~20 min (estimated), High intensity
+- Cycling machine → Cycling, extract metrics from display
+
+**Response Format (JSON only):**
+{
+  "exercise": "<exercise name>",
+  "calories": <number>,
+  "duration": <minutes as number>,
+  "distance": <km as number or null>,
+  "intensity": "Low" | "Medium" | "High",
+  "equipment": "<equipment name or null>",
+  "notes": "<brief description of what you see>",
+  "recommendations": ["<tip 1>", "<tip 2>", "<tip 3>"]
+}
+
+Return ONLY valid JSON, no additional text.`;
+
+    const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contents: [{
+          parts: [
+            { text: prompt },
+            {
+              inline_data: {
+                mime_type: 'image/jpeg',
+                data: base64Image
+              }
+            }
+          ]
+        }],
+        generationConfig: {
+          temperature: 0.3,
+          maxOutputTokens: 512,
+        }
+      })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error?.message || 'Gemini API error');
+    }
+
+    const data = await response.json();
+    const content = data.candidates[0].content.parts[0].text;
+
+    // Parse JSON response
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      const analysis = JSON.parse(jsonMatch[0]);
+      return {
+        exercise: analysis.exercise || 'Workout',
+        calories: analysis.calories || 200,
+        duration: analysis.duration || 30,
+        distance: analysis.distance || undefined,
+        intensity: analysis.intensity || 'Medium',
+        equipment: analysis.equipment || undefined,
+        notes: analysis.notes || 'Workout completed',
+        recommendations: analysis.recommendations || ['Great job!']
+      };
+    }
+
+    // Fallback
+    return {
+      exercise: 'Workout',
+      calories: 200,
+      duration: 30,
+      intensity: 'Medium',
+      notes: 'Workout analysis in progress',
+      recommendations: ['Keep up the good work!']
+    };
+
+  } catch (error) {
+    console.error('Error analyzing workout with Gemini:', error);
     throw error;
   }
 }
