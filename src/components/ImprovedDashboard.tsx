@@ -21,6 +21,7 @@ import SettingsPage from './SettingsPage';
 import CommunityPage from './CommunityPage';
 import AgentRapidInfo from './AgentRapidInfo';
 import AgentCupidInfo from './AgentCupidInfo';
+import PhotoFoodInput from './PhotoFoodInput';
 
 type PageType = 'dashboard' | 'diet' | 'workout' | 'ai-agents' | 'friends' | 'rapid-ai' | 'cupid-ai' | 'settings' | 'agent-rapid-info' | 'agent-cupid-info';
 
@@ -101,6 +102,7 @@ export default function ImprovedDashboard() {
   const [streak, setStreak] = useState(0);
   const [editingWeight, setEditingWeight] = useState(false);
   const [editingSteps, setEditingSteps] = useState(false);
+  const [foodInputMode, setFoodInputMode] = useState<'photo' | 'manual'>('photo');
 
   // Form states
   const [newFood, setNewFood] = useState({
@@ -1205,9 +1207,79 @@ export default function ImprovedDashboard() {
           {/* Add Food Modal */}
           {showAddFood && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-              <div className="bg-white rounded-3xl p-8 max-w-md w-full mx-4 shadow-3xl">
-                <h3 className="text-2xl font-bold mb-6">Add Food</h3>
-                <div className="space-y-4">
+              <div className="bg-white rounded-3xl p-8 max-w-md w-full mx-4 shadow-3xl max-h-[90vh] overflow-y-auto">
+                <h3 className="text-2xl font-bold mb-6">Add Meal</h3>
+
+                {/* Tab Switcher */}
+                <div className="flex mb-6 border-b-2 border-gray-200">
+                  <button
+                    onClick={() => setFoodInputMode('photo')}
+                    className={`flex-1 pb-3 font-semibold transition-all ${
+                      foodInputMode === 'photo'
+                        ? 'border-b-4 border-green-500 text-green-600'
+                        : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                  >
+                    📸 Photo
+                  </button>
+                  <button
+                    onClick={() => setFoodInputMode('manual')}
+                    className={`flex-1 pb-3 font-semibold transition-all ${
+                      foodInputMode === 'manual'
+                        ? 'border-b-4 border-orange-500 text-orange-600'
+                        : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                  >
+                    ✍️ Manual
+                  </button>
+                </div>
+
+                {/* Photo Mode */}
+                {foodInputMode === 'photo' && (
+                  <PhotoFoodInput
+                    onAnalysisComplete={(result) => {
+                      // Add meal from photo analysis
+                      const foodEntry: FoodEntry = {
+                        id: Date.now().toString(),
+                        name: result.foods.join(', '),
+                        calories: result.calories,
+                        protein: result.protein,
+                        carbs: result.carbs,
+                        fat: result.fats,
+                        time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+                        photo: result.photoUrl
+                      };
+
+                      setDailyData(prev => ({
+                        ...prev,
+                        foods: [...prev.foods, foodEntry]
+                      }));
+
+                      setShowAddFood(false);
+                      setFoodInputMode('photo'); // Reset for next time
+                      setToast({ message: `✅ Added ${foodEntry.name}!`, type: 'success' });
+                    }}
+                    onCancel={() => {
+                      setShowAddFood(false);
+                      setFoodInputMode('photo'); // Reset for next time
+                    }}
+                    userContext={{
+                      name: user?.displayName || 'User',
+                      email: user?.email || '',
+                      startWeight: userGoals.currentWeight,
+                      currentWeight: dailyData.weight || userGoals.currentWeight,
+                      targetWeight: userGoals.targetWeight,
+                      fitnessGoal: 'Lose Weight',
+                      currentLevel: 'Intermediate',
+                      dailyCalories: userGoals.dailyCalories,
+                      dailyProtein: userGoals.dailyProtein
+                    }}
+                  />
+                )}
+
+                {/* Manual Mode */}
+                {foodInputMode === 'manual' && (
+                  <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Food Name</label>
                     <input
@@ -1240,24 +1312,26 @@ export default function ImprovedDashboard() {
                       />
                     </div>
                   </div>
-                  <div className="flex space-x-3 mt-6">
-                    <button
-                      onClick={handleAddFood}
-                      className="flex-1 px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl hover:shadow-lg transition-all font-semibold"
-                    >
-                      Add Food
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowAddFood(false);
-                        setNewFood({ name: '', calories: '', protein: '', carbs: '', fat: '' });
-                      }}
-                      className="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition"
-                    >
-                      Cancel
-                    </button>
+                    <div className="flex space-x-3 mt-6">
+                      <button
+                        onClick={handleAddFood}
+                        className="flex-1 px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl hover:shadow-lg transition-all font-semibold"
+                      >
+                        Add Food
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowAddFood(false);
+                          setNewFood({ name: '', calories: '', protein: '', carbs: '', fat: '' });
+                          setFoodInputMode('photo'); // Reset for next time
+                        }}
+                        className="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition"
+                      >
+                        Cancel
+                      </button>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
           )}
