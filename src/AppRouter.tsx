@@ -26,13 +26,19 @@ export default function AppRouter() {
     <ErrorBoundary>
       <BrowserRouter>
         <Routes>
-          {/* Public routes */}
-          <Route path="/" element={<LandingPage />} />
+          {/* Public routes - redirect to /app if logged in */}
+          <Route path="/" element={user ? <Navigate to="/app" replace /> : <LandingPage />} />
           <Route path="/reliability" element={<ReliabilityPage />} />
 
           {/* Protected routes - require authentication */}
           <Route
             path="/app"
+            element={user ? <ImprovedDashboard /> : <Navigate to="/" replace />}
+          />
+
+          {/* Dashboard alias */}
+          <Route
+            path="/dashboard"
             element={user ? <ImprovedDashboard /> : <Navigate to="/" replace />}
           />
 
