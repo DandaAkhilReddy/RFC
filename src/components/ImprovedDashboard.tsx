@@ -24,6 +24,9 @@ import AgentCupidInfo from './AgentCupidInfo';
 import PhotoFoodInput from './PhotoFoodInput';
 import VoiceNoteInput from './VoiceNoteInput';
 import PhotoWorkoutInput from './PhotoWorkoutInput';
+import InsightCard from './InsightCard';
+import ProgressCard from './ProgressCard';
+import { generateInsights, calculateDailyTotals } from '../lib/insightGenerator';
 
 type PageType = 'dashboard' | 'diet' | 'workout' | 'ai-agents' | 'friends' | 'rapid-ai' | 'cupid-ai' | 'settings' | 'agent-rapid-info' | 'agent-cupid-info';
 
@@ -1010,6 +1013,78 @@ export default function ImprovedDashboard() {
                   <ChevronRight className="w-5 h-5 text-gray-400" />
                 </div>
               </div>
+
+              {/* Progress Visualizations */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <ProgressCard
+                  icon="🔥"
+                  label="Daily Calories"
+                  current={calculateDailyTotals({
+                    steps: dailyData.steps,
+                    water: dailyData.water,
+                    weight: dailyData.weight,
+                    foods: dailyData.foods.map(f => ({ calories: f.calories, protein: f.protein, carbs: f.carbs, fat: f.fat })),
+                    workouts: dailyData.workouts.map(w => ({ caloriesBurned: w.caloriesBurned.toString(), duration: w.duration.toString() }))
+                  }).netCalories}
+                  target={userGoals.dailyCalories}
+                  unit="calories"
+                  color="orange"
+                />
+                <ProgressCard
+                  icon="💪"
+                  label="Daily Protein"
+                  current={calculateDailyTotals({
+                    steps: dailyData.steps,
+                    water: dailyData.water,
+                    weight: dailyData.weight,
+                    foods: dailyData.foods.map(f => ({ calories: f.calories, protein: f.protein, carbs: f.carbs, fat: f.fat })),
+                    workouts: dailyData.workouts.map(w => ({ caloriesBurned: w.caloriesBurned.toString(), duration: w.duration.toString() }))
+                  }).protein}
+                  target={userGoals.dailyProtein}
+                  unit="grams"
+                  color="blue"
+                />
+              </div>
+
+              {/* AI Insights */}
+              {(() => {
+                const insights = generateInsights(
+                  {
+                    steps: dailyData.steps,
+                    water: dailyData.water,
+                    weight: dailyData.weight,
+                    foods: dailyData.foods.map(f => ({ calories: f.calories, protein: f.protein, carbs: f.carbs, fat: f.fat })),
+                    workouts: dailyData.workouts.map(w => ({ caloriesBurned: w.caloriesBurned.toString(), duration: w.duration.toString() }))
+                  },
+                  {
+                    dailyCalories: userGoals.dailyCalories,
+                    dailyProtein: userGoals.dailyProtein,
+                    targetWeight: userGoals.targetWeight,
+                    currentWeight: userGoals.currentWeight
+                  },
+                  streak
+                );
+
+                return insights.length > 0 && (
+                  <div className="mb-6">
+                    <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center">
+                      <Sparkles className="w-5 h-5 mr-2 text-purple-500" />
+                      Today's Insights
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {insights.map((insight) => (
+                        <InsightCard
+                          key={insight.id}
+                          type={insight.type}
+                          icon={insight.icon}
+                          title={insight.title}
+                          message={insight.message}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Apple Watch Banner */}
               <div className="bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-200 p-6 rounded-2xl mb-8">
