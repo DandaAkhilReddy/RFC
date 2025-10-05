@@ -1152,30 +1152,39 @@ export default function ImprovedDashboard() {
               })()}
 
               {/* Gamification & Leaderboard */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                {/* Gamification Widget */}
-                <GamificationWidget
-                  totalPoints={totalPoints}
-                  todayPoints={todayPoints}
-                  weeklyPoints={weeklyPoints}
-                  streak={streak}
-                  earnedBadges={earnedBadges}
-                  motivationalMessage={getMotivationalMessage({
-                    caloriesRemaining: userGoals.dailyCalories - calculateDailyTotals(dailyData).totalCalories,
-                    daysIntoChallenge: 15, // TODO: Calculate from start date
+              {(() => {
+                try {
+                  const totals = calculateDailyTotals(dailyData);
+                  const motivationMsg = getMotivationalMessage({
+                    caloriesRemaining: userGoals.dailyCalories - totals.totalCalories,
+                    daysIntoChallenge: 15,
                     targetDays: 93,
                     workoutStreak: streak,
-                    bodyFatProgress: 0 // TODO: Calculate from body fat tracking
-                  })}
-                />
+                    bodyFatProgress: 0
+                  });
 
-                {/* Leaderboard */}
-                <Leaderboard
-                  period="weekly"
-                  currentUserPoints={totalPoints}
-                  currentUserRank={4} // TODO: Calculate real rank
-                />
-              </div>
+                  return (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                      <GamificationWidget
+                        totalPoints={totalPoints}
+                        todayPoints={todayPoints}
+                        weeklyPoints={weeklyPoints}
+                        streak={streak}
+                        earnedBadges={earnedBadges}
+                        motivationalMessage={motivationMsg}
+                      />
+                      <Leaderboard
+                        period="weekly"
+                        currentUserPoints={totalPoints}
+                        currentUserRank={4}
+                      />
+                    </div>
+                  );
+                } catch (error) {
+                  console.error('Gamification error:', error);
+                  return null;
+                }
+              })()}
 
               {/* Today's Progress - 3 Cards Grid */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">

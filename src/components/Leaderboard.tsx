@@ -1,4 +1,4 @@
-import { Trophy, TrendingUp, Medal } from 'lucide-react';
+import { Trophy, TrendingUp } from 'lucide-react';
 
 interface LeaderboardEntry {
   rank: number;
