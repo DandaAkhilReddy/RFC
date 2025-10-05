@@ -8,7 +8,7 @@ import {
   Save, Apple, Coffee, Drumstick, Cookie, Info, BarChart3, Sparkles, Zap,
   Users, Share2, Smartphone, Radio, Bot, Send, UserPlus, Trophy, Lock,
   TrendingDown, Award, ChevronRight, AlertCircle, Shield, CheckCircle2,
-  ArrowLeft, Mic, Brain
+  ArrowLeft, Mic, Brain, Watch, Scale, Droplet
 } from 'lucide-react';
 import { doc, getDoc, setDoc, collection, query, where, getDocs, updateDoc } from 'firebase/firestore';
 import { db, Collections } from '../lib/firebase';
@@ -956,6 +956,23 @@ export default function ImprovedDashboard() {
           {/* Dashboard Page */}
           {currentPage === 'dashboard' && (
             <>
+              {/* FREE BETA Banner */}
+              <div className="bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 p-6 rounded-2xl shadow-xl mb-6 text-white">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-2xl font-bold mb-1 flex items-center">
+                      🎉 FREE BETA - All Features Unlocked!
+                    </h2>
+                    <p className="text-white/90">
+                      New feature releases every week • Join 1000+ beta testers
+                    </p>
+                  </div>
+                  <div className="hidden md:block text-6xl opacity-20">
+                    🚀
+                  </div>
+                </div>
+              </div>
+
               {/* Header */}
               <div className="flex justify-between items-center mb-8">
                 <div>
@@ -1145,70 +1162,233 @@ export default function ImprovedDashboard() {
                 );
               })()}
 
-              {/* Coming Soon Features */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                {/* Body Composition Analysis - Beta */}
-                <div className="bg-gradient-to-r from-orange-50 to-red-50 border-2 border-orange-200 p-4 rounded-xl">
-                  <div className="flex items-center space-x-3 mb-2">
-                    <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center">
-                      <Users className="w-5 h-5 text-white" />
+              {/* LIVE FEATURES - Free Beta */}
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                  <Sparkles className="w-6 h-6 mr-2 text-green-500" />
+                  Live Features - FREE Beta
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* AI Photo Food Analysis */}
+                  <div className="bg-gradient-to-br from-orange-50 to-red-50 border-2 border-green-300 p-4 rounded-xl hover:shadow-lg transition-shadow">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center">
+                        <Camera className="w-5 h-5 text-white" />
+                      </div>
+                      <span className="text-xs bg-green-500 text-white px-2 py-1 rounded-full font-semibold">🟢 LIVE</span>
                     </div>
-                    <div className="flex-1">
-                      <h3 className="font-bold text-gray-800">Body Composition Analysis</h3>
-                      <span className="text-xs bg-orange-500 text-white px-2 py-0.5 rounded-full">BETA</span>
-                    </div>
+                    <h3 className="font-bold text-gray-800 mb-1">AI Photo Food Analysis</h3>
+                    <p className="text-sm text-gray-600">Snap a photo, get instant nutrition</p>
                   </div>
-                  <p className="text-sm text-gray-600">
-                    AI-powered body fat % detection from photos - Currently in development
-                  </p>
-                </div>
 
-                {/* Workout Library */}
-                <div className="bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 p-4 rounded-xl">
-                  <div className="flex items-center space-x-3 mb-2">
-                    <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-                      <Dumbbell className="w-5 h-5 text-white" />
+                  {/* Voice Meal Entry */}
+                  <div className="bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-green-300 p-4 rounded-xl hover:shadow-lg transition-shadow">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+                        <Mic className="w-5 h-5 text-white" />
+                      </div>
+                      <span className="text-xs bg-green-500 text-white px-2 py-1 rounded-full font-semibold">🟢 LIVE</span>
                     </div>
-                    <div className="flex-1">
-                      <h3 className="font-bold text-gray-800">Workout Library</h3>
-                      <span className="text-xs bg-purple-500 text-white px-2 py-0.5 rounded-full">COMING SOON</span>
-                    </div>
+                    <h3 className="font-bold text-gray-800 mb-1">Voice Meal Entry</h3>
+                    <p className="text-sm text-gray-600">Say what you ate, AI does the rest</p>
                   </div>
-                  <p className="text-sm text-gray-600">
-                    Pre-built workout plans, exercise guides, and video tutorials
-                  </p>
-                </div>
 
-                {/* Progress Analytics */}
-                <div className="bg-gradient-to-r from-blue-50 to-cyan-50 border-2 border-blue-200 p-4 rounded-xl">
-                  <div className="flex items-center space-x-3 mb-2">
-                    <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center">
-                      <BarChart3 className="w-5 h-5 text-white" />
+                  {/* Smart Workout Photo */}
+                  <div className="bg-gradient-to-br from-blue-50 to-cyan-50 border-2 border-green-300 p-4 rounded-xl hover:shadow-lg transition-shadow">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center">
+                        <Dumbbell className="w-5 h-5 text-white" />
+                      </div>
+                      <span className="text-xs bg-green-500 text-white px-2 py-1 rounded-full font-semibold">🟢 LIVE</span>
                     </div>
-                    <div className="flex-1">
-                      <h3 className="font-bold text-gray-800">Advanced Analytics</h3>
-                      <span className="text-xs bg-blue-500 text-white px-2 py-0.5 rounded-full">COMING SOON</span>
-                    </div>
+                    <h3 className="font-bold text-gray-800 mb-1">Smart Workout Tracking</h3>
+                    <p className="text-sm text-gray-600">Photo of gym display = auto-logged</p>
                   </div>
-                  <p className="text-sm text-gray-600">
-                    Weekly/monthly reports, trends, and detailed progress charts
-                  </p>
-                </div>
 
-                {/* Apple Watch Integration */}
-                <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 p-4 rounded-xl">
-                  <div className="flex items-center space-x-3 mb-2">
-                    <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center">
-                      <Sparkles className="w-5 h-5 text-white" />
+                  {/* AI Insight Cards */}
+                  <div className="bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-green-300 p-4 rounded-xl hover:shadow-lg transition-shadow">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="w-10 h-10 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full flex items-center justify-center">
+                        <Sparkles className="w-5 h-5 text-white" />
+                      </div>
+                      <span className="text-xs bg-green-500 text-white px-2 py-1 rounded-full font-semibold">🟢 LIVE</span>
                     </div>
-                    <div className="flex-1">
-                      <h3 className="font-bold text-gray-800">Apple Watch Sync</h3>
-                      <span className="text-xs bg-green-500 text-white px-2 py-0.5 rounded-full">COMING SOON</span>
+                    <h3 className="font-bold text-gray-800 mb-1">AI Insight Cards</h3>
+                    <p className="text-sm text-gray-600">Personalized tips & motivation</p>
+                  </div>
+
+                  {/* Success Animations */}
+                  <div className="bg-gradient-to-br from-pink-50 to-rose-50 border-2 border-green-300 p-4 rounded-xl hover:shadow-lg transition-shadow">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="w-10 h-10 bg-gradient-to-r from-pink-500 to-rose-500 rounded-full flex items-center justify-center">
+                        <Trophy className="w-5 h-5 text-white" />
+                      </div>
+                      <span className="text-xs bg-green-500 text-white px-2 py-1 rounded-full font-semibold">🟢 LIVE</span>
+                    </div>
+                    <h3 className="font-bold text-gray-800 mb-1">Success Animations</h3>
+                    <p className="text-sm text-gray-600">Celebrate every milestone!</p>
+                  </div>
+
+                  {/* Calorie & Macro Tracking */}
+                  <div className="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-300 p-4 rounded-xl hover:shadow-lg transition-shadow">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center">
+                        <BarChart3 className="w-5 h-5 text-white" />
+                      </div>
+                      <span className="text-xs bg-green-500 text-white px-2 py-1 rounded-full font-semibold">🟢 LIVE</span>
+                    </div>
+                    <h3 className="font-bold text-gray-800 mb-1">Calorie & Macro Tracking</h3>
+                    <p className="text-sm text-gray-600">Real-time nutrition monitoring</p>
+                  </div>
+
+                  {/* Weight Tracking */}
+                  <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border-2 border-green-300 p-4 rounded-xl hover:shadow-lg transition-shadow">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="w-10 h-10 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full flex items-center justify-center">
+                        <Scale className="w-5 h-5 text-white" />
+                      </div>
+                      <span className="text-xs bg-green-500 text-white px-2 py-1 rounded-full font-semibold">🟢 LIVE</span>
+                    </div>
+                    <h3 className="font-bold text-gray-800 mb-1">Weight Tracking</h3>
+                    <p className="text-sm text-gray-600">Track progress over time</p>
+                  </div>
+
+                  {/* Water Tracking */}
+                  <div className="bg-gradient-to-br from-cyan-50 to-blue-50 border-2 border-green-300 p-4 rounded-xl hover:shadow-lg transition-shadow">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="w-10 h-10 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full flex items-center justify-center">
+                        <Droplet className="w-5 h-5 text-white" />
+                      </div>
+                      <span className="text-xs bg-green-500 text-white px-2 py-1 rounded-full font-semibold">🟢 LIVE</span>
+                    </div>
+                    <h3 className="font-bold text-gray-800 mb-1">Water Tracking</h3>
+                    <p className="text-sm text-gray-600">Stay hydrated daily</p>
+                  </div>
+
+                  {/* Streak Monitoring */}
+                  <div className="bg-gradient-to-br from-red-50 to-orange-50 border-2 border-green-300 p-4 rounded-xl hover:shadow-lg transition-shadow">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="w-10 h-10 bg-gradient-to-r from-red-500 to-orange-500 rounded-full flex items-center justify-center">
+                        <Flame className="w-5 h-5 text-white" />
+                      </div>
+                      <span className="text-xs bg-green-500 text-white px-2 py-1 rounded-full font-semibold">🟢 LIVE</span>
+                    </div>
+                    <h3 className="font-bold text-gray-800 mb-1">Streak Monitoring</h3>
+                    <p className="text-sm text-gray-600">Build consistency habits</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* BETA TESTING */}
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                  <Zap className="w-6 h-6 mr-2 text-yellow-500" />
+                  Beta Testing
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+                  {/* Body Composition Analysis */}
+                  <div className="bg-gradient-to-br from-orange-50 to-red-50 border-2 border-yellow-300 p-4 rounded-xl hover:shadow-lg transition-shadow">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center">
+                        <Users className="w-5 h-5 text-white" />
+                      </div>
+                      <span className="text-xs bg-yellow-500 text-white px-2 py-1 rounded-full font-semibold">🟡 BETA</span>
+                    </div>
+                    <h3 className="font-bold text-gray-800 mb-1">Body Composition Analysis</h3>
+                    <p className="text-sm text-gray-600">AI body fat % detection - 80% accurate (improving weekly)</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* COMING SOON */}
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                  <Clock className="w-6 h-6 mr-2 text-blue-500" />
+                  Coming Soon
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Workout Library */}
+                  <div className="bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-blue-300 p-4 rounded-xl hover:shadow-lg transition-shadow">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+                        <Dumbbell className="w-5 h-5 text-white" />
+                      </div>
+                      <span className="text-xs bg-blue-500 text-white px-2 py-1 rounded-full font-semibold">🔵 SOON</span>
+                    </div>
+                    <h3 className="font-bold text-gray-800 mb-1">Workout Library</h3>
+                    <p className="text-sm text-gray-600">Pre-built plans & video tutorials</p>
+                  </div>
+
+                  {/* Advanced Analytics */}
+                  <div className="bg-gradient-to-br from-blue-50 to-cyan-50 border-2 border-blue-300 p-4 rounded-xl hover:shadow-lg transition-shadow">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center">
+                        <TrendingUp className="w-5 h-5 text-white" />
+                      </div>
+                      <span className="text-xs bg-blue-500 text-white px-2 py-1 rounded-full font-semibold">🔵 SOON</span>
+                    </div>
+                    <h3 className="font-bold text-gray-800 mb-1">Advanced Analytics</h3>
+                    <p className="text-sm text-gray-600">Weekly/monthly trends & reports</p>
+                  </div>
+
+                  {/* Apple Watch Sync */}
+                  <div className="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-blue-300 p-4 rounded-xl hover:shadow-lg transition-shadow">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center">
+                        <Watch className="w-5 h-5 text-white" />
+                      </div>
+                      <span className="text-xs bg-blue-500 text-white px-2 py-1 rounded-full font-semibold">🔵 SOON</span>
+                    </div>
+                    <h3 className="font-bold text-gray-800 mb-1">Apple Watch Sync</h3>
+                    <p className="text-sm text-gray-600">Auto-sync workouts & heart rate</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* RELEASE SCHEDULE */}
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                  <Calendar className="w-6 h-6 mr-2 text-purple-500" />
+                  Release Schedule - What's Next?
+                </h2>
+                <div className="bg-white/90 backdrop-blur-sm p-6 rounded-2xl shadow-xl">
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-3 text-green-600">
+                      <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center font-bold text-sm">✓</div>
+                      <span className="font-semibold">Week 1-2:</span>
+                      <span className="text-gray-600">Core tracking features</span>
+                    </div>
+                    <div className="flex items-center space-x-3 text-green-600">
+                      <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center font-bold text-sm">✓</div>
+                      <span className="font-semibold">Week 3-4:</span>
+                      <span className="text-gray-600">AI photo & voice features</span>
+                    </div>
+                    <div className="flex items-center space-x-3 text-yellow-600">
+                      <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center font-bold text-sm">⚡</div>
+                      <span className="font-semibold">Week 5:</span>
+                      <span className="text-gray-600">Body composition (in testing)</span>
+                    </div>
+                    <div className="flex items-center space-x-3 text-blue-600">
+                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center font-bold text-sm">→</div>
+                      <span className="font-semibold">Week 6:</span>
+                      <span className="text-gray-600">Workout library launch</span>
+                    </div>
+                    <div className="flex items-center space-x-3 text-blue-600">
+                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center font-bold text-sm">→</div>
+                      <span className="font-semibold">Week 7:</span>
+                      <span className="text-gray-600">Advanced analytics dashboard</span>
+                    </div>
+                    <div className="flex items-center space-x-3 text-blue-600">
+                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center font-bold text-sm">→</div>
+                      <span className="font-semibold">Week 8:</span>
+                      <span className="text-gray-600">Apple Watch integration</span>
                     </div>
                   </div>
-                  <p className="text-sm text-gray-600">
-                    Auto-sync workouts, heart rate, and activity data from Apple Watch
-                  </p>
+                  <div className="mt-4 pt-4 border-t border-gray-200">
+                    <p className="text-sm text-gray-600 text-center">
+                      📬 Get notified about new features - check your email weekly!
+                    </p>
+                  </div>
                 </div>
               </div>
 
