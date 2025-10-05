@@ -115,7 +115,6 @@ export default function ImprovedDashboard() {
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [streak, setStreak] = useState(0);
   const [editingWeight, setEditingWeight] = useState(false);
-  const [editingSteps, setEditingSteps] = useState(false);
   const [foodInputMode, setFoodInputMode] = useState<'photo' | 'voice' | 'manual'>('photo');
   const [workoutInputMode, setWorkoutInputMode] = useState<'photo' | 'manual'>('photo');
 
@@ -222,7 +221,16 @@ export default function ImprovedDashboard() {
   // Save daily data to Firestore whenever it changes
   useEffect(() => {
     const saveDailyData = async () => {
-      if (!user?.uid || dailyData.foods.length === 0 && dailyData.workouts.length === 0) return;
+      if (!user?.uid) return;
+
+      // Save if there's ANY data (weight, foods, workouts, water, etc.)
+      const hasData = dailyData.weight > 0 ||
+                     dailyData.foods.length > 0 ||
+                     dailyData.workouts.length > 0 ||
+                     dailyData.water > 0 ||
+                     dailyData.steps > 0;
+
+      if (!hasData) return;
 
       try {
         await setDoc(doc(db, Collections.USERS, user.uid, 'daily_activities', currentDate), dailyData);
@@ -965,8 +973,8 @@ export default function ImprovedDashboard() {
                 </div>
               </div>
 
-              {/* Today's Progress - 4 Cards Grid */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+              {/* Today's Progress - 3 Cards Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 {/* Weight Card */}
                 <div
                   onClick={() => setEditingWeight(true)}
@@ -1023,53 +1031,6 @@ export default function ImprovedDashboard() {
                         >
                           +
                         </button>
-                      </div>
-                    </>
-                  )}
-                </div>
-
-                {/* Steps Card */}
-                <div
-                  onClick={() => setEditingSteps(true)}
-                  className="bg-gradient-to-br from-green-500 to-emerald-600 p-4 rounded-xl shadow-lg text-white cursor-pointer hover:shadow-xl transition-all flex flex-col justify-between min-h-[140px]"
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-sm font-semibold opacity-90">Steps</h3>
-                    <Activity className="w-4 h-4 opacity-75" />
-                  </div>
-                  {editingSteps ? (
-                    <div className="flex flex-col items-center space-y-2">
-                      <input
-                        type="number"
-                        value={dailyData.steps}
-                        onChange={(e) => setDailyData({...dailyData, steps: parseInt(e.target.value) || 0})}
-                        className="w-full px-2 py-1 rounded-lg text-gray-800 text-lg font-bold text-center"
-                        placeholder="Enter steps"
-                        autoFocus
-                      />
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setEditingSteps(false);
-                        }}
-                        className="px-3 py-1 bg-white/20 rounded-lg hover:bg-white/30 transition text-xs"
-                      >
-                        Done
-                      </button>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="text-center flex-1 flex items-center justify-center">
-                        <div className="text-2xl font-bold">{dailyData.steps.toLocaleString()}</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="w-full bg-white/20 rounded-full h-1.5">
-                          <div
-                            className="h-1.5 bg-white rounded-full transition-all duration-500"
-                            style={{ width: `${Math.min(100, (dailyData.steps / 10000) * 100)}%` }}
-                          ></div>
-                        </div>
-                        <div className="text-xs opacity-75 mt-1">Goal: 10k</div>
                       </div>
                     </>
                   )}
@@ -1184,26 +1145,70 @@ export default function ImprovedDashboard() {
                 );
               })()}
 
-              {/* Apple Watch Banner */}
-              <div className="bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-200 p-6 rounded-2xl mb-8">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
-                      <Sparkles className="w-6 h-6 text-white" />
+              {/* Coming Soon Features */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                {/* Body Composition Analysis - Beta */}
+                <div className="bg-gradient-to-r from-orange-50 to-red-50 border-2 border-orange-200 p-4 rounded-xl">
+                  <div className="flex items-center space-x-3 mb-2">
+                    <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center">
+                      <Users className="w-5 h-5 text-white" />
                     </div>
-                    <div>
-                      <h3 className="font-bold text-gray-800 mb-1">Coming Soon: Apple Watch Integration</h3>
-                      <p className="text-sm text-gray-600">
-                        Automatically sync steps, workouts, and sleep data from your Apple Watch
-                      </p>
+                    <div className="flex-1">
+                      <h3 className="font-bold text-gray-800">Body Composition Analysis</h3>
+                      <span className="text-xs bg-orange-500 text-white px-2 py-0.5 rounded-full">BETA</span>
                     </div>
                   </div>
-                  <button
-                    onClick={() => setToast({ message: 'We\'ll notify you when Apple Watch integration is ready!', type: 'info' })}
-                    className="px-4 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition text-sm font-semibold"
-                  >
-                    Notify me
-                  </button>
+                  <p className="text-sm text-gray-600">
+                    AI-powered body fat % detection from photos - Currently in development
+                  </p>
+                </div>
+
+                {/* Workout Library */}
+                <div className="bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 p-4 rounded-xl">
+                  <div className="flex items-center space-x-3 mb-2">
+                    <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+                      <Dumbbell className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-bold text-gray-800">Workout Library</h3>
+                      <span className="text-xs bg-purple-500 text-white px-2 py-0.5 rounded-full">COMING SOON</span>
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    Pre-built workout plans, exercise guides, and video tutorials
+                  </p>
+                </div>
+
+                {/* Progress Analytics */}
+                <div className="bg-gradient-to-r from-blue-50 to-cyan-50 border-2 border-blue-200 p-4 rounded-xl">
+                  <div className="flex items-center space-x-3 mb-2">
+                    <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center">
+                      <BarChart3 className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-bold text-gray-800">Advanced Analytics</h3>
+                      <span className="text-xs bg-blue-500 text-white px-2 py-0.5 rounded-full">COMING SOON</span>
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    Weekly/monthly reports, trends, and detailed progress charts
+                  </p>
+                </div>
+
+                {/* Apple Watch Integration */}
+                <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 p-4 rounded-xl">
+                  <div className="flex items-center space-x-3 mb-2">
+                    <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center">
+                      <Sparkles className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-bold text-gray-800">Apple Watch Sync</h3>
+                      <span className="text-xs bg-green-500 text-white px-2 py-0.5 rounded-full">COMING SOON</span>
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    Auto-sync workouts, heart rate, and activity data from Apple Watch
+                  </p>
                 </div>
               </div>
 
