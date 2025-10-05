@@ -136,6 +136,9 @@ export default function ImprovedDashboard() {
     fat: ''
   });
 
+  // Yesterday's data for comparison
+  const [yesterdayData, setYesterdayData] = useState<DailyActivity | null>(null);
+
   const [newWorkout, setNewWorkout] = useState({
     name: '',
     duration: '',
@@ -164,6 +167,29 @@ export default function ImprovedDashboard() {
         const dailyDataDoc = await getDoc(doc(db, Collections.USERS, user.uid, 'daily_activities', currentDate));
         if (dailyDataDoc.exists()) {
           setDailyData(dailyDataDoc.data() as DailyActivity);
+        } else {
+          // Reset to empty data for new date
+          setDailyData({
+            date: currentDate,
+            steps: 0,
+            water: 0,
+            weight: userGoals.currentWeight,
+            photos: [],
+            foods: [],
+            workouts: [],
+            notes: ''
+          });
+        }
+
+        // Load yesterday's data for comparison
+        const yesterday = new Date(currentDate);
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayDateStr = yesterday.toISOString().split('T')[0];
+        const yesterdayDoc = await getDoc(doc(db, Collections.USERS, user.uid, 'daily_activities', yesterdayDateStr));
+        if (yesterdayDoc.exists()) {
+          setYesterdayData(yesterdayDoc.data() as DailyActivity);
+        } else {
+          setYesterdayData(null);
         }
       } catch (error) {
         console.error('Error loading user data:', error);
@@ -589,6 +615,45 @@ export default function ImprovedDashboard() {
     }
   };
 
+  // Date navigation functions
+  const goToPreviousDay = () => {
+    const prevDate = new Date(currentDate);
+    prevDate.setDate(prevDate.getDate() - 1);
+    setCurrentDate(prevDate.toISOString().split('T')[0]);
+  };
+
+  const goToNextDay = () => {
+    const nextDate = new Date(currentDate);
+    nextDate.setDate(nextDate.getDate() + 1);
+    const today = new Date().toISOString().split('T')[0];
+    // Don't allow going past today
+    if (nextDate.toISOString().split('T')[0] <= today) {
+      setCurrentDate(nextDate.toISOString().split('T')[0]);
+    }
+  };
+
+  const goToToday = () => {
+    setCurrentDate(new Date().toISOString().split('T')[0]);
+  };
+
+  const isToday = currentDate === new Date().toISOString().split('T')[0];
+
+  // Calculate comparison data
+  const getTodayTotals = () => {
+    const calories = dailyData.foods.reduce((sum, food) => sum + food.calories, 0);
+    const protein = dailyData.foods.reduce((sum, food) => sum + food.protein, 0);
+    const workouts = dailyData.workouts.length;
+    return { calories, protein, workouts, water: dailyData.water, weight: dailyData.weight };
+  };
+
+  const getYesterdayTotals = () => {
+    if (!yesterdayData) return null;
+    const calories = yesterdayData.foods.reduce((sum, food) => sum + food.calories, 0);
+    const protein = yesterdayData.foods.reduce((sum, food) => sum + food.protein, 0);
+    const workouts = yesterdayData.workouts.length;
+    return { calories, protein, workouts, water: yesterdayData.water, weight: yesterdayData.weight };
+  };
+
   // Initialize temp stats when editing
   useEffect(() => {
     if (editingStats) {
@@ -957,7 +1022,7 @@ export default function ImprovedDashboard() {
           {currentPage === 'dashboard' && (
             <>
               {/* Header */}
-              <div className="flex justify-between items-center mb-8">
+              <div className="flex justify-between items-center mb-4">
                 <div>
                   <h1 className="text-4xl font-bold text-gray-800 mb-1">
                     Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening'}, {user?.displayName?.split(' ')[0] || user?.email?.split('@')[0]}!
@@ -972,6 +1037,101 @@ export default function ImprovedDashboard() {
                   <span className="text-sm opacity-90">day{streak !== 1 ? 's' : ''}</span>
                 </div>
               </div>
+
+              {/* Date Navigation */}
+              <div className="bg-white/90 backdrop-blur-sm p-4 rounded-2xl shadow-lg mb-6">
+                <div className="flex items-center justify-between">
+                  <button
+                    onClick={goToPreviousDay}
+                    className="flex items-center space-x-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-all"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    <span className="text-sm font-semibold">Previous</span>
+                  </button>
+
+                  <div className="flex items-center space-x-3">
+                    <Calendar className="w-5 h-5 text-gray-600" />
+                    <span className="text-xl font-bold text-gray-800">
+                      {new Date(currentDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </span>
+                    {!isToday && (
+                      <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+                        Viewing past day
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    {!isToday && (
+                      <button
+                        onClick={goToToday}
+                        className="px-4 py-2 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg hover:shadow-lg transition-all text-sm font-semibold"
+                      >
+                        Today
+                      </button>
+                    )}
+                    <button
+                      onClick={goToNextDay}
+                      disabled={isToday}
+                      className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all ${
+                        isToday
+                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                          : 'bg-gray-100 hover:bg-gray-200'
+                      }`}
+                    >
+                      <span className="text-sm font-semibold">Next</span>
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Yesterday vs Today Comparison */}
+              {yesterdayData && isToday && (() => {
+                const today = getTodayTotals();
+                const yesterday = getYesterdayTotals();
+                if (!yesterday) return null;
+
+                const renderComparison = (label: string, todayVal: number, yesterdayVal: number, unit: string = '') => {
+                  const diff = todayVal - yesterdayVal;
+                  const isPositive = diff > 0;
+                  const isNegative = diff < 0;
+                  const icon = isPositive ? '📈' : isNegative ? '📉' : '→';
+                  const color = label === 'Weight'
+                    ? (isNegative ? 'text-green-600' : isPositive ? 'text-red-600' : 'text-gray-600')
+                    : (isPositive ? 'text-green-600' : isNegative ? 'text-red-600' : 'text-gray-600');
+
+                  return (
+                    <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                      <span className="font-semibold text-gray-700">{label}:</span>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-gray-500">{yesterdayVal}{unit}</span>
+                        <span className="text-gray-400">→</span>
+                        <span className="font-bold text-gray-800">{todayVal}{unit}</span>
+                        <span className={`${color} text-sm font-semibold min-w-[60px] text-right`}>
+                          {icon} {diff !== 0 ? `${diff > 0 ? '+' : ''}${diff}${unit}` : ''}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                };
+
+                return (
+                  <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-6 rounded-2xl shadow-lg mb-6 border-2 border-blue-200">
+                    <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                      <TrendingUp className="w-5 h-5 mr-2 text-blue-600" />
+                      Yesterday vs Today
+                    </h3>
+                    <div className="space-y-2">
+                      {renderComparison('Calories', today.calories, yesterday.calories, ' cal')}
+                      {renderComparison('Protein', Math.round(today.protein), Math.round(yesterday.protein), 'g')}
+                      {renderComparison('Water', today.water, yesterday.water, ' cups')}
+                      {today.weight > 0 && yesterday.weight > 0 && renderComparison('Weight', today.weight, yesterday.weight, ' kg')}
+                      {renderComparison('Workouts', today.workouts, yesterday.workouts, '')}
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Today's Progress - 3 Cards Grid */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
