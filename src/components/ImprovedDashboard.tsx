@@ -26,6 +26,8 @@ import VoiceNoteInput from './VoiceNoteInput';
 import PhotoWorkoutInput from './PhotoWorkoutInput';
 import InsightCard from './InsightCard';
 import ProgressCard from './ProgressCard';
+import GamificationWidget from './GamificationWidget';
+import Leaderboard from './Leaderboard';
 import { generateInsights, calculateDailyTotals } from '../lib/insightGenerator';
 import {
   celebrateCalorieGoal,
@@ -36,6 +38,15 @@ import {
   celebrateFirstEntry,
   megaCelebration
 } from '../lib/animations';
+import {
+  calculateDailyPoints,
+  checkBadgeUnlocks,
+  getMotivationalMessage,
+  getAvailableRewards,
+  BADGES,
+  type Badge,
+  type Reward
+} from '../lib/gamification';
 
 type PageType = 'dashboard' | 'diet' | 'workout' | 'ai-agents' | 'friends' | 'rapid-ai' | 'cupid-ai' | 'settings' | 'agent-rapid-info' | 'agent-cupid-info';
 
@@ -126,6 +137,13 @@ export default function ImprovedDashboard() {
     streak: false,
     weight: false
   });
+
+  // Gamification state
+  const [totalPoints, setTotalPoints] = useState(2450); // Demo value
+  const [earnedBadges, setEarnedBadges] = useState<string[]>(['first_workout', 'week_warrior', 'points_rookie']); // Demo badges
+  const [unlockedRewards, setUnlockedRewards] = useState<string[]>([]);
+  const [todayPoints, setTodayPoints] = useState(175); // Demo value
+  const [weeklyPoints, setWeeklyPoints] = useState(890); // Demo value
 
   // Form states
   const [newFood, setNewFood] = useState({
@@ -1132,6 +1150,32 @@ export default function ImprovedDashboard() {
                   </div>
                 );
               })()}
+
+              {/* Gamification & Leaderboard */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                {/* Gamification Widget */}
+                <GamificationWidget
+                  totalPoints={totalPoints}
+                  todayPoints={todayPoints}
+                  weeklyPoints={weeklyPoints}
+                  streak={streak}
+                  earnedBadges={earnedBadges}
+                  motivationalMessage={getMotivationalMessage({
+                    caloriesRemaining: userGoals.dailyCalories - calculateDailyTotals(dailyData).totalCalories,
+                    daysIntoChallenge: 15, // TODO: Calculate from start date
+                    targetDays: 93,
+                    workoutStreak: streak,
+                    bodyFatProgress: 0 // TODO: Calculate from body fat tracking
+                  })}
+                />
+
+                {/* Leaderboard */}
+                <Leaderboard
+                  period="weekly"
+                  currentUserPoints={totalPoints}
+                  currentUserRank={4} // TODO: Calculate real rank
+                />
+              </div>
 
               {/* Today's Progress - 3 Cards Grid */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
