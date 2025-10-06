@@ -140,8 +140,9 @@ Please upload a photo of food for nutrition analysis.`);
   const handleConfirm = async () => {
     if (editableResult && photoPreview) {
       // Store meal in Supermemory for AI long-term memory
+      let memoryId: string | null = null;
       try {
-        await storeMealMemory({
+        memoryId = await storeMealMemory({
           userId: userContext.email,
           date: new Date().toISOString().split('T')[0],
           mealName: editableResult.foods.join(', '),
@@ -158,7 +159,8 @@ Please upload a photo of food for nutrition analysis.`);
 
       onAnalysisComplete({
         ...editableResult,
-        photoUrl: photoPreview
+        photoUrl: photoPreview,
+        memoryId: memoryId || undefined
       });
     }
   };

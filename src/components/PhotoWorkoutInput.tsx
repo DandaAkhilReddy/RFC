@@ -103,8 +103,9 @@ export default function PhotoWorkoutInput({ onAnalysisComplete, onCancel, userCo
   const handleConfirm = async () => {
     if (editableResult && photoPreview) {
       // Store workout in Supermemory for AI long-term memory
+      let memoryId: string | null = null;
       try {
-        await storeWorkoutMemory({
+        memoryId = await storeWorkoutMemory({
           userId: userContext.email,
           date: new Date().toISOString().split('T')[0],
           exercise: editableResult.exercise,
@@ -121,7 +122,8 @@ export default function PhotoWorkoutInput({ onAnalysisComplete, onCancel, userCo
 
       onAnalysisComplete({
         ...editableResult,
-        photoUrl: photoPreview
+        photoUrl: photoPreview,
+        memoryId: memoryId || undefined
       });
     }
   };

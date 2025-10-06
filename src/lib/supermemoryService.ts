@@ -131,8 +131,9 @@ export async function storeUserProfile(profile: UserProfile): Promise<void> {
 
 /**
  * Store meal/food entry
+ * @returns Memory ID for later deletion
  */
-export async function storeMealMemory(meal: MealMemory): Promise<void> {
+export async function storeMealMemory(meal: MealMemory): Promise<string | null> {
   try {
     const client = getClient();
 
@@ -144,7 +145,7 @@ export async function storeMealMemory(meal: MealMemory): Promise<void> {
 - Type: ${meal.mealType || 'Not specified'}
 ${meal.userNotes ? `- Notes: ${meal.userNotes}` : ''}`;
 
-    await client.memories.add({
+    const response = await client.memories.add({
       content,
       metadata: {
         type: 'meal',
@@ -156,17 +157,20 @@ ${meal.userNotes ? `- Notes: ${meal.userNotes}` : ''}`;
       }
     });
 
-    console.log('✅ Meal stored in Supermemory');
+    console.log('✅ Meal stored in Supermemory with ID:', response.id);
+    return response.id;
   } catch (error) {
     console.error('Error storing meal:', error);
     // Don't throw - we don't want to break the UI if memory storage fails
+    return null;
   }
 }
 
 /**
  * Store workout entry
+ * @returns Memory ID for later deletion
  */
-export async function storeWorkoutMemory(workout: WorkoutMemory): Promise<void> {
+export async function storeWorkoutMemory(workout: WorkoutMemory): Promise<string | null> {
   try {
     const client = getClient();
 
@@ -179,7 +183,7 @@ export async function storeWorkoutMemory(workout: WorkoutMemory): Promise<void> 
 - Type: ${workout.workoutType || 'Not specified'}
 ${workout.userNotes ? `- Notes: ${workout.userNotes}` : ''}`;
 
-    await client.memories.add({
+    const response = await client.memories.add({
       content,
       metadata: {
         type: 'workout',
@@ -191,9 +195,11 @@ ${workout.userNotes ? `- Notes: ${workout.userNotes}` : ''}`;
       }
     });
 
-    console.log('✅ Workout stored in Supermemory');
+    console.log('✅ Workout stored in Supermemory with ID:', response.id);
+    return response.id;
   } catch (error) {
     console.error('Error storing workout:', error);
+    return null;
   }
 }
 
@@ -385,6 +391,68 @@ export async function getFullUserContext(userId: string): Promise<string> {
   } catch (error) {
     console.error('Error getting user context:', error);
     return 'No user context available.';
+  }
+}
+
+// ===== DELETE MEMORIES =====
+
+/**
+ * Delete a meal memory by ID
+ */
+export async function deleteMealMemory(memoryId: string): Promise<boolean> {
+  try {
+    const client = getClient();
+    await client.memories.delete(memoryId);
+    console.log('✅ Meal memory deleted from Supermemory:', memoryId);
+    return true;
+  } catch (error) {
+    console.error('Error deleting meal memory:', error);
+    return false;
+  }
+}
+
+/**
+ * Delete a workout memory by ID
+ */
+export async function deleteWorkoutMemory(memoryId: string): Promise<boolean> {
+  try {
+    const client = getClient();
+    await client.memories.delete(memoryId);
+    console.log('✅ Workout memory deleted from Supermemory:', memoryId);
+    return true;
+  } catch (error) {
+    console.error('Error deleting workout memory:', error);
+    return false;
+  }
+}
+
+/**
+ * Delete a conversation memory by ID
+ */
+export async function deleteConversationMemory(memoryId: string): Promise<boolean> {
+  try {
+    const client = getClient();
+    await client.memories.delete(memoryId);
+    console.log('✅ Conversation memory deleted from Supermemory:', memoryId);
+    return true;
+  } catch (error) {
+    console.error('Error deleting conversation memory:', error);
+    return false;
+  }
+}
+
+/**
+ * Delete a progress memory by ID
+ */
+export async function deleteProgressMemory(memoryId: string): Promise<boolean> {
+  try {
+    const client = getClient();
+    await client.memories.delete(memoryId);
+    console.log('✅ Progress memory deleted from Supermemory:', memoryId);
+    return true;
+  } catch (error) {
+    console.error('Error deleting progress memory:', error);
+    return false;
   }
 }
 

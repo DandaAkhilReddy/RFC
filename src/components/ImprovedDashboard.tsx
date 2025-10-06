@@ -38,6 +38,7 @@ import {
   type Badge,
   type Reward
 } from '../lib/gamification';
+import { deleteMealMemory, deleteWorkoutMemory } from '../lib/supermemoryService';
 
 type PageType = 'dashboard' | 'diet' | 'workout' | 'ai-agents' | 'friends' | 'rapid-ai' | 'cupid-ai' | 'settings' | 'agent-rapid-info' | 'agent-cupid-info';
 
@@ -50,6 +51,7 @@ interface FoodEntry {
   fat: number;
   time: string;
   photo?: string;
+  memoryId?: string; // Supermemory ID for deletion
 }
 
 interface WorkoutEntry {
@@ -59,6 +61,7 @@ interface WorkoutEntry {
   caloriesBurned: number;
   time: string;
   photo?: string;
+  memoryId?: string; // Supermemory ID for deletion
 }
 
 interface DailyActivity {
@@ -505,13 +508,22 @@ export default function ImprovedDashboard() {
     }
   };
 
-  const handleDeleteFood = (id: string) => {
+  const handleDeleteFood = async (id: string) => {
     try {
       if (!id) {
         setToast({ message: '⚠️ Invalid food entry', type: 'error' });
         return;
       }
 
+      // Find food to get memoryId before deleting
+      const food = dailyData.foods.find(f => f.id === id);
+
+      // Delete from Supermemory if memoryId exists
+      if (food?.memoryId) {
+        await deleteMealMemory(food.memoryId);
+      }
+
+      // Remove from local state
       setDailyData(prev => ({
         ...prev,
         foods: prev.foods.filter(food => food.id !== id)
@@ -523,13 +535,22 @@ export default function ImprovedDashboard() {
     }
   };
 
-  const handleDeleteWorkout = (id: string) => {
+  const handleDeleteWorkout = async (id: string) => {
     try {
       if (!id) {
         setToast({ message: '⚠️ Invalid workout entry', type: 'error' });
         return;
       }
 
+      // Find workout to get memoryId before deleting
+      const workout = dailyData.workouts.find(w => w.id === id);
+
+      // Delete from Supermemory if memoryId exists
+      if (workout?.memoryId) {
+        await deleteWorkoutMemory(workout.memoryId);
+      }
+
+      // Remove from local state
       setDailyData(prev => ({
         ...prev,
         workouts: prev.workouts.filter(workout => workout.id !== id)
