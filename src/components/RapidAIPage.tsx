@@ -60,6 +60,15 @@ export default function RapidAIPage() {
   const [generatedPlan, setGeneratedPlan] = useState<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Camera capture state
+  const [showCamera, setShowCamera] = useState(false);
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
   const questions = [
     // Basic Info (4 questions)
     {
@@ -154,6 +163,100 @@ export default function RapidAIPage() {
 
   const removePhoto = (index: number) => {
     setUploadedPhotos(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // Camera functions
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode }
+      });
+      setCameraStream(stream);
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+      setShowCamera(true);
+    } catch (error) {
+      console.error('Error accessing camera:', error);
+      alert('Unable to access camera. Please check permissions.');
+    }
+  };
+
+  const stopCamera = () => {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop());
+      setCameraStream(null);
+    }
+    setShowCamera(false);
+    setCapturedImage(null);
+    setCountdown(null);
+  };
+
+  const switchCamera = async () => {
+    const newFacingMode = facingMode === 'user' ? 'environment' : 'user';
+    setFacingMode(newFacingMode);
+
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop());
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: newFacingMode }
+      });
+      setCameraStream(stream);
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+    } catch (error) {
+      console.error('Error switching camera:', error);
+    }
+  };
+
+  const startCountdown = () => {
+    setCountdown(3);
+    const timer = setInterval(() => {
+      setCountdown(prev => {
+        if (prev === 1) {
+          clearInterval(timer);
+          capturePhoto();
+          return null;
+        }
+        return prev ? prev - 1 : null;
+      });
+    }, 1000);
+  };
+
+  const capturePhoto = () => {
+    if (videoRef.current && canvasRef.current) {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(video, 0, 0);
+        const imageDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+        setCapturedImage(imageDataUrl);
+      }
+    }
+  };
+
+  const confirmCapturedPhoto = () => {
+    if (capturedImage) {
+      // Convert base64 to File object
+      fetch(capturedImage)
+        .then(res => res.blob())
+        .then(blob => {
+          const file = new File([blob], `camera_capture_${Date.now()}.jpg`, { type: 'image/jpeg' });
+          setUploadedPhotos([file]);
+          stopCamera();
+        });
+    }
+  };
+
+  const retakePhoto = () => {
+    setCapturedImage(null);
   };
 
   const handleStartAssessment = async () => {
@@ -416,16 +519,29 @@ export default function RapidAIPage() {
               className="hidden"
             />
 
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="w-full border-2 border-dashed border-purple-300 rounded-xl p-12 hover:border-purple-500 hover:bg-purple-50 transition-all text-center group"
-            >
-              <Upload className="w-12 h-12 text-purple-400 mx-auto mb-4 group-hover:text-purple-600" />
-              <p className="text-gray-600 group-hover:text-purple-600 font-semibold">
-                Click to upload your photo
-              </p>
-              <p className="text-sm text-gray-400 mt-2">JPG, PNG (max 10MB)</p>
-            </button>
+            <div className="grid grid-cols-2 gap-4">
+              {/* Upload Photo Button */}
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="border-2 border-dashed border-purple-300 rounded-xl p-8 hover:border-purple-500 hover:bg-purple-50 transition-all text-center group"
+              >
+                <Upload className="w-10 h-10 text-purple-400 mx-auto mb-3 group-hover:text-purple-600" />
+                <p className="text-gray-600 group-hover:text-purple-600 font-semibold text-sm">
+                  Upload Photo
+                </p>
+              </button>
+
+              {/* Take Photo Button */}
+              <button
+                onClick={startCamera}
+                className="border-2 border-dashed border-blue-300 rounded-xl p-8 hover:border-blue-500 hover:bg-blue-50 transition-all text-center group"
+              >
+                <Camera className="w-10 h-10 text-blue-400 mx-auto mb-3 group-hover:text-blue-600" />
+                <p className="text-gray-600 group-hover:text-blue-600 font-semibold text-sm">
+                  Take Photo
+                </p>
+              </button>
+            </div>
 
             {uploadedPhotos.length > 0 && (
               <div className="mt-6">
@@ -717,6 +833,95 @@ export default function RapidAIPage() {
             </button>
           </div>
         </div>
+
+        {/* Camera Modal */}
+        {showCamera && (
+          <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4">
+            <div className="relative w-full max-w-4xl">
+              {/* Close button */}
+              <button
+                onClick={stopCamera}
+                className="absolute top-4 right-4 z-10 p-2 bg-red-500 text-white rounded-full hover:bg-red-600"
+              >
+                <X className="w-6 h-6" />
+              </button>
+
+              {!capturedImage ? (
+                <>
+                  {/* Video Preview */}
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    className="w-full rounded-lg"
+                  />
+                  <canvas ref={canvasRef} className="hidden" />
+
+                  {/* Countdown Display */}
+                  {countdown && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="text-white text-9xl font-bold animate-pulse">
+                        {countdown}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Camera Controls */}
+                  <div className="mt-4 flex justify-center space-x-4">
+                    <button
+                      onClick={switchCamera}
+                      className="px-6 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 flex items-center space-x-2"
+                    >
+                      <Camera className="w-5 h-5" />
+                      <span>Switch Camera</span>
+                    </button>
+                    <button
+                      onClick={startCountdown}
+                      className="px-8 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:shadow-xl flex items-center space-x-2"
+                    >
+                      <Camera className="w-5 h-5" />
+                      <span>Take Photo (3s)</span>
+                    </button>
+                    <button
+                      onClick={capturePhoto}
+                      className="px-8 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center space-x-2"
+                    >
+                      <Camera className="w-5 h-5" />
+                      <span>Capture Now</span>
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Captured Image Preview */}
+                  <img
+                    src={capturedImage}
+                    alt="Captured"
+                    className="w-full rounded-lg"
+                  />
+
+                  {/* Confirm/Retake Controls */}
+                  <div className="mt-4 flex justify-center space-x-4">
+                    <button
+                      onClick={retakePhoto}
+                      className="px-8 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 flex items-center space-x-2"
+                    >
+                      <X className="w-5 h-5" />
+                      <span>Retake</span>
+                    </button>
+                    <button
+                      onClick={confirmCapturedPhoto}
+                      className="px-8 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center space-x-2"
+                    >
+                      <CheckCircle2 className="w-5 h-5" />
+                      <span>Use This Photo</span>
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     );
   }
