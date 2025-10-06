@@ -30,15 +30,6 @@ import GamificationWidget from './GamificationWidget';
 import Leaderboard from './Leaderboard';
 import { generateInsights, calculateDailyTotals } from '../lib/insightGenerator';
 import {
-  celebrateCalorieGoal,
-  celebrateProteinGoal,
-  celebrateWorkout,
-  celebrateStreak,
-  celebrateWeightMilestone,
-  celebrateFirstEntry,
-  megaCelebration
-} from '../lib/animations';
-import {
   calculateDailyPoints,
   checkBadgeUnlocks,
   getMotivationalMessage,
@@ -128,15 +119,6 @@ export default function ImprovedDashboard() {
   const [editingWeight, setEditingWeight] = useState(false);
   const [foodInputMode, setFoodInputMode] = useState<'photo' | 'voice' | 'manual'>('photo');
   const [workoutInputMode, setWorkoutInputMode] = useState<'photo' | 'manual'>('photo');
-
-  // Celebration tracking
-  const [celebratedToday, setCelebratedToday] = useState({
-    calories: false,
-    protein: false,
-    workout: false,
-    streak: false,
-    weight: false
-  });
 
   // Gamification state
   const [totalPoints, setTotalPoints] = useState(2450); // Demo value
@@ -324,72 +306,6 @@ export default function ImprovedDashboard() {
 
   // Weight progress calculation
   const weightDifference = userGoals.currentWeight - userGoals.targetWeight;
-
-  // Celebration effect - trigger confetti when goals are achieved
-  useEffect(() => {
-    const todayKey = new Date().toISOString().split('T')[0];
-
-    // Reset celebrations for new day
-    if (dailyData.date !== todayKey) {
-      setCelebratedToday({
-        calories: false,
-        protein: false,
-        workout: false,
-        streak: false,
-        weight: false
-      });
-    }
-
-    // Calorie goal celebration
-    if (totalCalories >= userGoals.dailyCalories && !celebratedToday.calories && totalCalories > 0) {
-      celebrateCalorieGoal();
-      setCelebratedToday(prev => ({ ...prev, calories: true }));
-      setToast({ message: '🎉 Daily calorie goal achieved!', type: 'success' });
-    }
-
-    // Protein goal celebration
-    if (totalProtein >= userGoals.dailyProtein && !celebratedToday.protein && totalProtein > 0) {
-      celebrateProteinGoal();
-      setCelebratedToday(prev => ({ ...prev, protein: true }));
-      setToast({ message: '💪 Protein goal crushed!', type: 'success' });
-    }
-
-    // Workout goal celebration
-    if (totalWorkoutMinutes >= userGoals.dailyWorkoutMinutes && !celebratedToday.workout && totalWorkoutMinutes > 0) {
-      celebrateWorkout();
-      setCelebratedToday(prev => ({ ...prev, workout: true }));
-      setToast({ message: '🔥 Workout goal completed!', type: 'success' });
-    }
-
-    // Streak milestone celebration
-    if (streak > 0 && streak % 7 === 0 && !celebratedToday.streak) {
-      celebrateStreak(streak);
-      setCelebratedToday(prev => ({ ...prev, streak: true }));
-      setToast({ message: `🔥 ${streak} day streak! You're unstoppable!`, type: 'success' });
-    }
-
-    // Weight milestone celebration (every 1kg lost)
-    if (dailyData.weight > 0 && dailyData.weight < userGoals.currentWeight) {
-      const weightLost = userGoals.currentWeight - dailyData.weight;
-      if (weightLost >= 1 && !celebratedToday.weight) {
-        celebrateWeightMilestone();
-        setCelebratedToday(prev => ({ ...prev, weight: true }));
-        setToast({ message: `📉 Amazing! ${weightLost.toFixed(1)}kg lost!`, type: 'success' });
-      }
-    }
-
-    // Mega celebration for perfect day (all goals met)
-    const perfectDay = totalCalories >= userGoals.dailyCalories &&
-                      totalProtein >= userGoals.dailyProtein &&
-                      totalWorkoutMinutes >= userGoals.dailyWorkoutMinutes;
-
-    if (perfectDay && celebratedToday.calories && celebratedToday.protein && celebratedToday.workout) {
-      setTimeout(() => {
-        megaCelebration();
-        setToast({ message: '🏆 PERFECT DAY! All goals achieved!', type: 'success' });
-      }, 1000);
-    }
-  }, [totalCalories, totalProtein, totalWorkoutMinutes, streak, dailyData.weight, userGoals, celebratedToday]);
   const weightProgress = userGoals.currentWeight - dailyData.weight;
   const weightProgressPercent = Math.min(100, Math.max(0, (weightProgress / weightDifference) * 100));
   const daysToTarget = Math.ceil((new Date(userGoals.targetDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
@@ -475,10 +391,6 @@ export default function ImprovedDashboard() {
       setNewFood({ name: '', calories: '', protein: '', carbs: '', fat: '' });
       setShowAddFood(false);
       setToast({ message: `✅ Added ${foodEntry.name}!`, type: 'success' });
-
-      if (isFirstMeal) {
-        celebrateFirstEntry();
-      }
     } catch (error) {
       console.error('Error adding food:', error);
       setToast({ message: '❌ Failed to add food. Please try again.', type: 'error' });
@@ -537,10 +449,6 @@ export default function ImprovedDashboard() {
       }));
 
       setNewWorkout({ name: '', duration: '', caloriesBurned: '' });
-
-      if (isFirstWorkout) {
-        celebrateFirstEntry();
-      }
       setShowAddWorkout(false);
       setToast({ message: `💪 Added ${workoutEntry.name}!`, type: 'success' });
     } catch (error) {
