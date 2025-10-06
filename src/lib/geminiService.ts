@@ -7,6 +7,65 @@ const GEMINI_API_KEY = typeof import.meta !== 'undefined' && import.meta.env
 
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
 
+// API Configuration
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 1000; // 1 second
+
+// Validation helper
+function validateAPIKey(): void {
+  if (!GEMINI_API_KEY || GEMINI_API_KEY.trim() === '') {
+    throw new Error(
+      '❌ Gemini API key not configured. Please add VITE_GEMINI_API_KEY to your .env file. ' +
+      'Get your free API key at: https://makersuite.google.com/app/apikey'
+    );
+  }
+}
+
+// Retry helper with exponential backoff
+async function retryWithBackoff<T>(
+  fn: () => Promise<T>,
+  retries: number = MAX_RETRIES
+): Promise<T> {
+  try {
+    return await fn();
+  } catch (error: any) {
+    if (retries === 0) throw error;
+
+    // Don't retry on authentication or API not enabled errors
+    if (error.message?.includes('API key') ||
+        error.message?.includes('not been used') ||
+        error.message?.includes('API has not been')) {
+      throw error;
+    }
+
+    await new Promise(resolve => setTimeout(resolve, RETRY_DELAY * (MAX_RETRIES - retries + 1)));
+    return retryWithBackoff(fn, retries - 1);
+  }
+}
+
+// Parse Gemini error for user-friendly messages
+function parseGeminiError(error: any): string {
+  const errorMessage = error.error?.message || error.message || String(error);
+
+  if (errorMessage.includes('API key not valid') || errorMessage.includes('API_KEY_INVALID')) {
+    return '❌ Invalid Gemini API key. Please check your VITE_GEMINI_API_KEY in .env file';
+  }
+
+  if (errorMessage.includes('has not been used') || errorMessage.includes('Enable it by visiting')) {
+    return '⚠️ Gemini API not enabled. Please enable it at: https://console.developers.google.com/apis/api/generativelanguage.googleapis.com/overview?project=YOUR_PROJECT_ID';
+  }
+
+  if (errorMessage.includes('quota') || errorMessage.includes('RESOURCE_EXHAUSTED')) {
+    return '⏱️ API rate limit reached. Please wait a few minutes and try again. Free tier: 15 requests/minute';
+  }
+
+  if (errorMessage.includes('INVALID_ARGUMENT')) {
+    return '❌ Invalid request format. Please try again or contact support';
+  }
+
+  return `❌ API Error: ${errorMessage}`;
+}
+
 export interface BodyAnalysis {
   bodyFat: number;
   muscleMass: string;
@@ -55,6 +114,9 @@ export async function analyzeProgressPhotoWithGemini(
   userContext: UserContext,
   previousAnalysis?: any
 ): Promise<BodyAnalysis> {
+  // Validate API key before making request
+  validateAPIKey();
+
   try {
     // Remove data URL prefix if present
     const base64Image = imageBase64.replace(/^data:image\/\w+;base64,/, '');
@@ -98,36 +160,39 @@ ${previousAnalysis ? `\n**Previous Analysis**: Body fat was ${previousAnalysis.b
 
 Return ONLY valid JSON, no additional text.`;
 
-    const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        contents: [{
-          parts: [
-            { text: prompt },
-            {
-              inline_data: {
-                mime_type: 'image/jpeg',
-                data: base64Image
+    // Wrap API call with retry logic
+    const data = await retryWithBackoff(async () => {
+      const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [{
+            parts: [
+              { text: prompt },
+              {
+                inline_data: {
+                  mime_type: 'image/jpeg',
+                  data: base64Image
+                }
               }
-            }
-          ]
-        }],
-        generationConfig: {
-          temperature: 0.4,
-          maxOutputTokens: 1024,
-        }
-      })
+            ]
+          }],
+          generationConfig: {
+            temperature: 0.4,
+            maxOutputTokens: 1024,
+          }
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw error;
+      }
+
+      return await response.json();
     });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error?.message || 'Gemini API error');
-    }
-
-    const data = await response.json();
     const content = data.candidates[0].content.parts[0].text;
 
     // Parse JSON response
@@ -152,9 +217,10 @@ Return ONLY valid JSON, no additional text.`;
       recommendations: ['Keep up the great work!'],
     };
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error analyzing photo with Gemini:', error);
-    throw error;
+    const userFriendlyMessage = parseGeminiError(error);
+    throw new Error(userFriendlyMessage);
   }
 }
 
@@ -163,6 +229,8 @@ export async function analyzeMealPhotoWithGemini(
   imageBase64: string,
   userContext: UserContext
 ): Promise<MealAnalysis> {
+  validateAPIKey();
+
   try {
     // Remove data URL prefix if present
     const base64Image = imageBase64.replace(/^data:image\/\w+;base64,/, '');
