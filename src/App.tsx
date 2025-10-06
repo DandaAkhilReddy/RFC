@@ -82,17 +82,6 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      {/* BETA/FREE BANNER */}
-      <div className="relative z-10 container mx-auto px-6 pt-4">
-        <div className="bg-gradient-to-r from-green-500 to-teal-500 text-white px-8 py-4 rounded-2xl text-center shadow-xl">
-          <div className="flex items-center justify-center gap-3">
-            <Sparkles className="w-6 h-6" />
-            <span className="text-lg md:text-xl font-bold">All Features Currently FREE - Beta Version</span>
-            <Sparkles className="w-6 h-6" />
-          </div>
-        </div>
-      </div>
-
       {/* HERO SECTION */}
       <section className="relative z-10 container mx-auto px-6 pt-20 pb-32 text-center">
         <div className="max-w-5xl mx-auto">
