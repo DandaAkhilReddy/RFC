@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import { Camera, Upload, X, Loader, Sparkles, Star, CheckCircle2, Edit2, AlertCircle } from 'lucide-react';
 import { analyzeMealPhotoWithGemini, MealAnalysis, UserContext } from '../lib/geminiService';
 import { analyzeFoodPhoto, extractNutritionLabel } from '../lib/firebaseFunctions';
+import { storeMealMemory } from '../lib/supermemoryService';
 
 interface PhotoFoodInputProps {
   onAnalysisComplete: (result: MealAnalysis & { photoUrl: string }) => void;
@@ -136,8 +137,25 @@ Please upload a photo of food for nutrition analysis.`);
     }
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (editableResult && photoPreview) {
+      // Store meal in Supermemory for AI long-term memory
+      try {
+        await storeMealMemory({
+          userId: userContext.email,
+          date: new Date().toISOString().split('T')[0],
+          mealName: editableResult.foods.join(', '),
+          calories: editableResult.calories,
+          protein: editableResult.protein,
+          carbs: editableResult.carbs,
+          fats: editableResult.fats,
+          foods: editableResult.foods,
+        });
+      } catch (error) {
+        console.error('Failed to store meal memory:', error);
+        // Don't block the UI if memory storage fails
+      }
+
       onAnalysisComplete({
         ...editableResult,
         photoUrl: photoPreview

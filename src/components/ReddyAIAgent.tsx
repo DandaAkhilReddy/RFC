@@ -20,6 +20,7 @@ import { uploadImageToAzure, BlobContainers } from '../lib/storage';
 import { sendChatMessage, analyzeMealPhoto, type ChatMessage, type UserContext } from '../lib/aiService';
 import { db, Collections } from '../lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
+import { getFullUserContext, storeConversationMemory } from '../lib/supermemoryService';
 
 interface Message {
   id: string;
@@ -181,13 +182,29 @@ export default function ReddyAIAgent({ onBack }: ReddyAIAgentProps) {
         const analysis = await analyzeMealPhoto(imageUrl, userContext);
         aiContent = formatMealAnalysis(analysis);
       } else if (userContext) {
-        // Regular AI chat
+        // Get user's full memory context from Supermemory
+        let memoryContext = '';
+        try {
+          memoryContext = await getFullUserContext(user.email);
+        } catch (error) {
+          console.log('Supermemory context not available, continuing without it');
+        }
+
+        // Regular AI chat with memory-enhanced context
         const conversationHistory: ChatMessage[] = messages
           .filter(m => m.role !== 'system')
           .map(msg => ({
             role: msg.role as 'user' | 'assistant',
             content: msg.content
           }));
+
+        // Add memory context as a system message if available
+        if (memoryContext && memoryContext !== 'No user context available.') {
+          conversationHistory.unshift({
+            role: 'user' as const,
+            content: `[MEMORY CONTEXT - Use this to personalize your response]\n${memoryContext}`
+          });
+        }
 
         const rawResponse = await sendChatMessage(currentInput, userContext, conversationHistory);
         aiContent = formatAIResponse(rawResponse);
@@ -204,6 +221,21 @@ export default function ReddyAIAgent({ onBack }: ReddyAIAgentProps) {
 
       setMessages(prev => [...prev, aiResponse]);
       setIsLoading(false);
+
+      // Store conversation in Supermemory for future context
+      if (userContext) {
+        try {
+          await storeConversationMemory({
+            userId: user.email,
+            date: new Date().toISOString().split('T')[0],
+            userMessage: currentInput,
+            aiResponse: aiContent,
+            context: selectedImage ? 'image_analysis' : 'chat'
+          });
+        } catch (error) {
+          console.error('Failed to store conversation memory:', error);
+        }
+      }
 
       // Auto-speak AI response (clean version without formatting)
       const cleanContent = aiContent.replace(/[#*•\-]/g, '').replace(/\n{2,}/g, '. ');

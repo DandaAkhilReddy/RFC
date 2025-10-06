@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { Camera, Upload, X, Loader, Dumbbell, Activity, Timer, Flame, AlertCircle, CheckCircle2, TrendingUp } from 'lucide-react';
 import { analyzeWorkoutPhotoWithGemini, WorkoutAnalysis, UserContext } from '../lib/geminiService';
+import { storeWorkoutMemory } from '../lib/supermemoryService';
 
 interface PhotoWorkoutInputProps {
   onAnalysisComplete: (result: WorkoutAnalysis & { photoUrl: string }) => void;
@@ -99,8 +100,25 @@ export default function PhotoWorkoutInput({ onAnalysisComplete, onCancel, userCo
     }
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (editableResult && photoPreview) {
+      // Store workout in Supermemory for AI long-term memory
+      try {
+        await storeWorkoutMemory({
+          userId: userContext.email,
+          date: new Date().toISOString().split('T')[0],
+          exercise: editableResult.exercise,
+          duration: editableResult.duration,
+          caloriesBurned: editableResult.calories,
+          intensity: editableResult.intensity,
+          workoutType: editableResult.equipment || undefined,
+          userNotes: editableResult.notes,
+        });
+      } catch (error) {
+        console.error('Failed to store workout memory:', error);
+        // Don't block the UI if memory storage fails
+      }
+
       onAnalysisComplete({
         ...editableResult,
         photoUrl: photoPreview
