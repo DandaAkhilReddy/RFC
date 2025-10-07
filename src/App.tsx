@@ -13,6 +13,8 @@ import WorkoutTracker from './pages/WorkoutTracker'
 import Progress from './pages/Progress'
 import RecipeLibrary from './pages/RecipeLibrary'
 import Settings from './pages/Settings'
+import DailyScanPage from './pages/DailyScanPage'
+import ScanResultsPage from './pages/ScanResultsPage'
 
 // Your personal data (starting point)
 export const USER_DATA = {
@@ -184,6 +186,19 @@ function App() {
                     <Settings />
                   </main>
                 </div>
+              </ProtectedRoute>
+            } />
+
+            {/* Daily Scan Routes */}
+            <Route path="/scan" element={
+              <ProtectedRoute>
+                <DailyScanPage />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/scan/results/:scanId" element={
+              <ProtectedRoute>
+                <ScanResultsPage />
               </ProtectedRoute>
             } />
           </Routes>
