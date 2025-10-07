@@ -7,13 +7,14 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Camera, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { Camera, Loader2, CheckCircle, AlertCircle, Upload } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { createScan, updateScanStatus, hasScannedToday, updateScanWithAnalysis } from '../../lib/firestore/scans';
 import type { WizardStep, ScanPhoto, ScanAngle, GeminiVisionRequest } from '../../types/scan';
 import { SCAN_ANGLE_ORDER, ANGLE_DISPLAY_NAMES } from '../../types/scan';
 import CameraCapture from './CameraCapture';
 import { analyzeBodyCompositionWithRetry } from '../../services/geminiVision';
+import { uploadAllScanPhotos, getTotalPhotoSize, formatBytes } from '../../services/storageService';
 
 interface DailyScanWizardProps {
   onComplete?: (scanId: string) => void;
@@ -35,6 +36,7 @@ const DailyScanWizard: React.FC<DailyScanWizardProps> = ({ onComplete, onCancel 
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasScannedTodayState, setHasScannedTodayState] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<Map<ScanAngle, number>>(new Map());
 
   // Check if user has already scanned today
   useEffect(() => {
@@ -100,32 +102,19 @@ const DailyScanWizard: React.FC<DailyScanWizardProps> = ({ onComplete, onCancel 
       // Update scan status to uploading
       await updateScanStatus(scanId, 'uploading');
 
-      // TODO: Upload photos to Firebase Storage in Phase 26-30
-      // For now, we'll create mock ScanPhoto objects with data URLs
-      const photoPromises = SCAN_ANGLE_ORDER.map(async (angle) => {
-        const blob = blobs.get(angle);
-        if (!blob) throw new Error(`Missing photo for angle: ${angle}`);
+      // Upload photos to Firebase Storage with progress tracking
+      const handleUploadProgress = (angle: ScanAngle, progress: number) => {
+        setUploadProgress((prev) => new Map(prev).set(angle, progress));
+      };
 
-        // Convert blob to data URL (temporary - will use Storage URLs in Phase 26-30)
-        const dataUrl = await new Promise<string>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result as string);
-          reader.onerror = reject;
-          reader.readAsDataURL(blob);
-        });
+      const photos = await uploadAllScanPhotos(
+        user.uid,
+        scanId,
+        blobs,
+        handleUploadProgress
+      );
 
-        const photo: ScanPhoto = {
-          angle,
-          url: dataUrl,
-          storagePath: `scans/${user.uid}/${scanId}/${angle}.jpg`,
-          capturedAt: new Date(),
-          fileSize: blob.size,
-        };
-
-        return photo;
-      });
-
-      const photos = await Promise.all(photoPromises);
+      console.log('✅ All photos uploaded to Firebase Storage');
 
       // Move to processing step
       setCurrentStep('processing');
@@ -345,16 +334,63 @@ const DailyScanWizard: React.FC<DailyScanWizardProps> = ({ onComplete, onCancel 
         );
 
       case 'upload':
+        const totalSize = getTotalPhotoSize(photoBlobs);
+
         return (
-          <div className="space-y-6 text-center">
-            <Loader2 className="w-16 h-16 text-primary-500 mx-auto animate-spin" />
-            <h3 className="text-2xl font-bold text-gray-900">
-              Uploading Your Photos...
-            </h3>
-            <p className="text-gray-600">
-              Please wait while we securely upload your scan photos
-            </p>
-            {/* Progress bars will go here */}
+          <div className="space-y-6">
+            {/* Header */}
+            <div className="text-center">
+              <Upload className="w-16 h-16 text-primary-500 mx-auto mb-4" />
+              <h3 className="text-2xl font-bold text-gray-900">
+                Uploading Your Photos
+              </h3>
+              <p className="text-gray-600">
+                Securely uploading {formatBytes(totalSize)} to Firebase Storage
+              </p>
+            </div>
+
+            {/* Progress for each angle */}
+            <div className="space-y-4">
+              {SCAN_ANGLE_ORDER.map((angle) => {
+                const progress = uploadProgress.get(angle) || 0;
+                const isComplete = progress >= 100;
+
+                return (
+                  <div key={angle} className="bg-white rounded-lg p-4 shadow-sm">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-gray-900">
+                        {ANGLE_DISPLAY_NAMES[angle]}
+                      </span>
+                      <div className="flex items-center space-x-2">
+                        {isComplete ? (
+                          <>
+                            <CheckCircle className="w-4 h-4 text-green-500" />
+                            <span className="text-sm text-green-600">Complete</span>
+                          </>
+                        ) : (
+                          <span className="text-sm text-gray-600">{Math.round(progress)}%</span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        className={`h-2 rounded-full transition-all duration-300 ${
+                          isComplete ? 'bg-green-500' : 'bg-primary-500'
+                        }`}
+                        style={{ width: `${progress}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Info */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <p className="text-sm text-blue-700 text-center">
+                🔒 Your photos are encrypted during upload and stored securely
+              </p>
+            </div>
           </div>
         );
 
