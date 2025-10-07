@@ -7,9 +7,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Camera, Loader2, CheckCircle, AlertCircle, Upload } from 'lucide-react';
+import { Camera, Loader2, CheckCircle, AlertCircle, Upload, Flame } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { createScan, updateScanStatus, hasScannedToday, updateScanWithAnalysis } from '../../lib/firestore/scans';
+import { updateStreak, getPreviousScan, calculateScanDelta } from '../../lib/firestore/scanHistory';
 import type { WizardStep, ScanPhoto, ScanAngle, GeminiVisionRequest } from '../../types/scan';
 import { SCAN_ANGLE_ORDER, ANGLE_DISPLAY_NAMES } from '../../types/scan';
 import CameraCapture from './CameraCapture';
@@ -138,14 +139,40 @@ const DailyScanWizard: React.FC<DailyScanWizardProps> = ({ onComplete, onCancel 
         throw new Error(analysisResult.errorMessage || 'Analysis failed');
       }
 
+      // Calculate delta vs previous scan
+      const previousScan = await getPreviousScan(user.uid, scanId);
+      let delta = null;
+
+      if (previousScan && previousScan.bodyComposition && analysisResult.bodyComposition) {
+        // Create temporary scan object with current data for delta calculation
+        const currentScanForDelta = {
+          bodyComposition: analysisResult.bodyComposition,
+          weight,
+          createdAt: new Date(),
+        };
+
+        delta = calculateScanDelta(currentScanForDelta as any, previousScan);
+        console.log('📊 Delta calculated:', delta);
+      }
+
       // Save analysis results to Firestore
       await updateScanWithAnalysis(scanId, {
         bodyComposition: analysisResult.bodyComposition,
         qualityCheck: analysisResult.qualityCheck,
+        delta: delta || undefined,
       });
 
       // Mark scan as completed
       await updateScanStatus(scanId, 'completed');
+
+      // Update streak
+      try {
+        const streak = await updateStreak(user.uid);
+        console.log('🔥 Streak updated:', streak.currentStreak, 'days');
+      } catch (streakError) {
+        console.error('Error updating streak:', streakError);
+        // Don't fail the entire scan if streak update fails
+      }
 
       // Move to results
       setCurrentStep('results');

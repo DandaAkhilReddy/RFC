@@ -15,6 +15,7 @@ import RecipeLibrary from './pages/RecipeLibrary'
 import Settings from './pages/Settings'
 import DailyScanPage from './pages/DailyScanPage'
 import ScanResultsPage from './pages/ScanResultsPage'
+import ScanHistoryPage from './pages/ScanHistoryPage'
 
 // Your personal data (starting point)
 export const USER_DATA = {
@@ -199,6 +200,12 @@ function App() {
             <Route path="/scan/results/:scanId" element={
               <ProtectedRoute>
                 <ScanResultsPage />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/scan/history" element={
+              <ProtectedRoute>
+                <ScanHistoryPage />
               </ProtectedRoute>
             } />
           </Routes>
