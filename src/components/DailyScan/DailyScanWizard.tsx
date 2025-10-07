@@ -9,10 +9,11 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Camera, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { createScan, updateScanStatus, hasScannedToday } from '../../lib/firestore/scans';
-import type { WizardStep, ScanPhoto, ScanAngle } from '../../types/scan';
+import { createScan, updateScanStatus, hasScannedToday, updateScanWithAnalysis } from '../../lib/firestore/scans';
+import type { WizardStep, ScanPhoto, ScanAngle, GeminiVisionRequest } from '../../types/scan';
 import { SCAN_ANGLE_ORDER, ANGLE_DISPLAY_NAMES } from '../../types/scan';
 import CameraCapture from './CameraCapture';
+import { analyzeBodyCompositionWithRetry } from '../../services/geminiVision';
 
 interface DailyScanWizardProps {
   onComplete?: (scanId: string) => void;
@@ -71,7 +72,8 @@ const DailyScanWizard: React.FC<DailyScanWizardProps> = ({ onComplete, onCancel 
   // Handle photo captured from camera
   const handlePhotoCaptured = (photoBlob: Blob) => {
     // Store blob for this angle
-    setPhotoBlobs((prev) => new Map(prev).set(currentAngle, photoBlob));
+    const newPhotoBlobs = new Map(photoBlobs).set(currentAngle, photoBlob);
+    setPhotoBlobs(newPhotoBlobs);
 
     // Find next angle
     const currentIndex = SCAN_ANGLE_ORDER.indexOf(currentAngle);
@@ -79,17 +81,91 @@ const DailyScanWizard: React.FC<DailyScanWizardProps> = ({ onComplete, onCancel 
       // Move to next angle
       setCurrentAngle(SCAN_ANGLE_ORDER[currentIndex + 1]);
     } else {
-      // All photos captured, move to upload
+      // All photos captured, start processing
+      processScan(newPhotoBlobs);
+    }
+  };
+
+  // Process scan with Gemini AI
+  const processScan = async (blobs: Map<ScanAngle, Blob>) => {
+    if (!scanId || !user?.uid) {
+      setError('Scan session invalid. Please start over.');
+      return;
+    }
+
+    try {
       setCurrentStep('upload');
+      setIsProcessing(true);
+
+      // Update scan status to uploading
+      await updateScanStatus(scanId, 'uploading');
+
       // TODO: Upload photos to Firebase Storage in Phase 26-30
-      // For now, move directly to processing (mock)
-      setTimeout(() => {
-        setCurrentStep('processing');
-        // Mock processing delay
-        setTimeout(() => {
-          setCurrentStep('results');
-        }, 3000);
-      }, 2000);
+      // For now, we'll create mock ScanPhoto objects with data URLs
+      const photoPromises = SCAN_ANGLE_ORDER.map(async (angle) => {
+        const blob = blobs.get(angle);
+        if (!blob) throw new Error(`Missing photo for angle: ${angle}`);
+
+        // Convert blob to data URL (temporary - will use Storage URLs in Phase 26-30)
+        const dataUrl = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+
+        const photo: ScanPhoto = {
+          angle,
+          url: dataUrl,
+          storagePath: `scans/${user.uid}/${scanId}/${angle}.jpg`,
+          capturedAt: new Date(),
+          fileSize: blob.size,
+        };
+
+        return photo;
+      });
+
+      const photos = await Promise.all(photoPromises);
+
+      // Move to processing step
+      setCurrentStep('processing');
+      await updateScanStatus(scanId, 'processing');
+
+      // Analyze with Gemini
+      const analysisRequest: GeminiVisionRequest = {
+        photos,
+        weight,
+        userContext: {
+          // TODO: Get user profile data from Firestore in future
+          age: 30,
+          gender: 'unknown',
+          height: 175,
+        },
+      };
+
+      const analysisResult = await analyzeBodyCompositionWithRetry(analysisRequest);
+
+      if (!analysisResult.success || !analysisResult.bodyComposition) {
+        throw new Error(analysisResult.errorMessage || 'Analysis failed');
+      }
+
+      // Save analysis results to Firestore
+      await updateScanWithAnalysis(scanId, {
+        bodyComposition: analysisResult.bodyComposition,
+        qualityCheck: analysisResult.qualityCheck,
+      });
+
+      // Mark scan as completed
+      await updateScanStatus(scanId, 'completed');
+
+      // Move to results
+      setCurrentStep('results');
+      setIsProcessing(false);
+    } catch (err) {
+      console.error('Scan processing error:', err);
+      setError('Failed to process scan. Please try again.');
+      await updateScanStatus(scanId, 'failed', err instanceof Error ? err.message : 'Unknown error');
+      setIsProcessing(false);
     }
   };
 
