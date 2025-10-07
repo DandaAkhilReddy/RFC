@@ -12,10 +12,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { createScan, updateScanStatus, hasScannedToday } from '../../lib/firestore/scans';
 import type { WizardStep, ScanPhoto, ScanAngle } from '../../types/scan';
 import { SCAN_ANGLE_ORDER, ANGLE_DISPLAY_NAMES } from '../../types/scan';
-
-// We'll import these components after creating them
-// import CameraCapture from './CameraCapture';
-// import UploadProgress from './UploadProgress';
+import CameraCapture from './CameraCapture';
 
 interface DailyScanWizardProps {
   onComplete?: (scanId: string) => void;
@@ -29,6 +26,7 @@ const DailyScanWizard: React.FC<DailyScanWizardProps> = ({ onComplete, onCancel 
   // Wizard state
   const [currentStep, setCurrentStep] = useState<WizardStep>('intro');
   const [capturedPhotos, setCapturedPhotos] = useState<ScanPhoto[]>([]);
+  const [photoBlobs, setPhotoBlobs] = useState<Map<ScanAngle, Blob>>(new Map());
   const [currentAngle, setCurrentAngle] = useState<ScanAngle>('front');
   const [weight, setWeight] = useState<number>(0);
   const [notes, setNotes] = useState('');
@@ -70,17 +68,28 @@ const DailyScanWizard: React.FC<DailyScanWizardProps> = ({ onComplete, onCancel 
     }
   };
 
-  // Handle photo captured
-  const handlePhotoCaptured = (photo: ScanPhoto) => {
-    setCapturedPhotos((prev) => [...prev, photo]);
+  // Handle photo captured from camera
+  const handlePhotoCaptured = (photoBlob: Blob) => {
+    // Store blob for this angle
+    setPhotoBlobs((prev) => new Map(prev).set(currentAngle, photoBlob));
 
     // Find next angle
     const currentIndex = SCAN_ANGLE_ORDER.indexOf(currentAngle);
     if (currentIndex < SCAN_ANGLE_ORDER.length - 1) {
+      // Move to next angle
       setCurrentAngle(SCAN_ANGLE_ORDER[currentIndex + 1]);
     } else {
       // All photos captured, move to upload
       setCurrentStep('upload');
+      // TODO: Upload photos to Firebase Storage in Phase 26-30
+      // For now, move directly to processing (mock)
+      setTimeout(() => {
+        setCurrentStep('processing');
+        // Mock processing delay
+        setTimeout(() => {
+          setCurrentStep('results');
+        }, 3000);
+      }, 2000);
     }
   };
 
@@ -239,47 +248,23 @@ const DailyScanWizard: React.FC<DailyScanWizardProps> = ({ onComplete, onCancel 
                   Capture {ANGLE_DISPLAY_NAMES[currentAngle]}
                 </h3>
                 <span className="text-sm text-gray-600">
-                  {capturedPhotos.length + 1} of 4
+                  {photoBlobs.size + 1} of 4
                 </span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
                 <div
                   className="bg-gradient-to-r from-primary-500 to-secondary-500 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${(capturedPhotos.length / 4) * 100}%` }}
+                  style={{ width: `${(photoBlobs.size / 4) * 100}%` }}
                 />
               </div>
             </div>
 
-            {/* Camera component (placeholder for now) */}
-            <div className="bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg aspect-[3/4] flex items-center justify-center">
-              <div className="text-center">
-                <Camera className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600">
-                  Camera Component Will Go Here
-                </p>
-                <p className="text-sm text-gray-500 mt-2">
-                  Current angle: {ANGLE_DISPLAY_NAMES[currentAngle]}
-                </p>
-              </div>
-            </div>
-
-            {/* Temporary skip button for testing */}
-            <button
-              onClick={() => {
-                // Mock photo for testing
-                const mockPhoto: ScanPhoto = {
-                  angle: currentAngle,
-                  url: 'https://via.placeholder.com/600x800',
-                  storagePath: `scans/${scanId}/${currentAngle}.jpg`,
-                  capturedAt: new Date(),
-                  fileSize: 1024 * 500, // 500KB
-                };
-                handlePhotoCaptured(mockPhoto);
-              }}
-              className="w-full px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-colors"
-            >
-              Skip (Test Mode)
-            </button>
+            {/* Camera component */}
+            <CameraCapture
+              angle={currentAngle}
+              onCapture={handlePhotoCaptured}
+              onCancel={() => setCurrentStep('intro')}
+            />
           </div>
         );
 
