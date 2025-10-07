@@ -1,0 +1,135 @@
+# CodeRabbit Configuration for ReddyFit Social Fitness Platform
+# AI-powered code reviews for fitness tracking and social competition features
+
+language: en-US
+early_access: false
+
+reviews:
+  profile: chill
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  review_status: true
+  collapse_walkthrough: false
+
+  auto_review:
+    enabled: true
+    drafts: false
+    base_branches:
+      - main
+      - master
+      - develop
+
+  tools:
+    shellcheck:
+      enabled: true
+    ruff:
+      enabled: true
+    markdownlint:
+      enabled: true
+    github-actions:
+      enabled: true
+    eslint:
+      enabled: true
+    biome:
+      enabled: true
+
+chat:
+  auto_reply: true
+
+# Project-specific review instructions
+instructions: |
+  ## ReddyFit Social Fitness Platform
+
+  ### Architecture Overview
+  - Vite + React + TypeScript fitness tracking application
+  - Firebase Authentication and Firestore for data storage
+  - Social competition system with friends, leaderboards, and points
+  - Vitest for unit testing with React Testing Library
+  - Tailwind CSS for styling
+  - Azure Static Web Apps for deployment
+
+  ### Key Components
+  - **ImprovedDashboard.tsx**: Main dashboard with meal/workout tracking
+  - **FriendsPage.tsx**: Friend management, requests, and groups
+  - **Leaderboard.tsx**: Multi-scope rankings (Friends/City/Country/Global)
+
+  ### Core Services
+  - **pointsService.ts**: Points calculation and tracking
+    - Meal points: 30 base, +20 for photo (50 total)
+    - Workout points: 50 base, +25-75 for calories
+    - Streak/goal bonuses
+  - **friendsService.ts**: Friend requests, connections, groups
+  - **leaderboardService.ts**: Multi-scope leaderboard queries
+
+  ### Review Focus Areas
+
+  #### 1. Firebase & Firestore
+  - Optimize query performance (use indexes, limit results)
+  - Validate security rules compliance
+  - Check for proper error handling
+  - Ensure transaction safety for points
+  - Validate bidirectional relationship patterns (friends)
+
+  #### 2. React & TypeScript
+  - Type safety: No 'any' types unless justified
+  - Proper prop typing with interfaces
+  - Memoization for expensive calculations
+  - useEffect dependencies correctness
+  - Avoid unnecessary re-renders
+
+  #### 3. Social Competition Logic
+  - Points calculation accuracy
+  - Prevent points gaming/cheating
+  - Leaderboard ranking correctness
+  - Friend request validation (prevent duplicates)
+  - Group membership authorization
+
+  #### 4. Security
+  - Validate user can only modify own data
+  - Friend request authorization (only recipient can accept)
+  - Group ownership verification
+  - API key exposure prevention
+  - Input sanitization
+
+  #### 5. Performance
+  - Firebase query optimization (batch reads, pagination)
+  - React component optimization (memo, useMemo, useCallback)
+  - Large list rendering (virtual scrolling if needed)
+  - Image optimization
+  - Bundle size considerations
+
+  #### 6. Testing
+  - Test coverage for critical paths (points, friends, leaderboard)
+  - Mock Firebase operations correctly
+  - Test button interactions and user workflows
+  - Edge case handling (empty states, errors)
+  - Integration test completeness
+
+  #### 7. Code Quality
+  - DRY principle (avoid duplication)
+  - Single Responsibility Principle
+  - Clear naming conventions
+  - Consistent error handling patterns
+  - Proper cleanup in useEffect hooks
+
+  #### 8. UI/UX
+  - Responsive design (mobile-first)
+  - Loading states for async operations
+  - Error states with user-friendly messages
+  - Success feedback (toasts, notifications)
+  - Accessibility (ARIA labels, keyboard navigation)
+
+  ### Known Patterns
+  - Points awarded via `awardMealPoints()`, `awardWorkoutPoints()`
+  - Friend requests use bidirectional Firestore documents
+  - Leaderboard enriches points data with user profiles
+  - Toast notifications for user feedback
+  - Modal patterns for add/edit operations
+
+  ### Priorities
+  1. Security: Prevent unauthorized data modification
+  2. Accuracy: Points and rankings must be correct
+  3. Performance: Firebase queries must be optimized
+  4. User Experience: Clear feedback and error handling
+  5. Code Quality: Maintainable, testable, documented
