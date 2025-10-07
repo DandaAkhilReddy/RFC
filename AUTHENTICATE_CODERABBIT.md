@@ -76,8 +76,11 @@ bash scripts/coderabbit-claude-integration.sh
 
 1. **Add GitHub Secret** (for CI/CD)
    ```bash
-   gh secret set CODERABBIT_API_KEY -b"cr-cbcb884bec03f7666bc563a8de1c358ff13329051e9c960add3eeabade"
+   # Get your API key from: https://app.coderabbit.ai/settings/api-keys
+   gh secret set CODERABBIT_API_KEY -b"<YOUR_API_KEY_HERE>"
    ```
+
+   **Note**: Replace `<YOUR_API_KEY_HERE>` with your actual CodeRabbit API key from settings.
 
 2. **Run Initial Review**
    ```powershell

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Users, UserPlus, Search, X, Check, Loader, Trophy, Flame, TrendingUp, Crown } from 'lucide-react';
 import { useAuth } from './AuthProvider';
 import {
@@ -40,6 +40,16 @@ export default function FriendsPage() {
   const [newGroupName, setNewGroupName] = useState('');
   const [newGroupDesc, setNewGroupDesc] = useState('');
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+  const toastTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Cleanup toast timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (toastTimeoutRef.current) {
+        clearTimeout(toastTimeoutRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (user?.uid) {
@@ -196,8 +206,18 @@ export default function FriendsPage() {
   };
 
   const showToast = (message: string, type: 'success' | 'error' | 'info') => {
+    // Clear any existing timeout
+    if (toastTimeoutRef.current) {
+      clearTimeout(toastTimeoutRef.current);
+    }
+
     setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
+
+    // Set new timeout and store reference
+    toastTimeoutRef.current = setTimeout(() => {
+      setToast(null);
+      toastTimeoutRef.current = null;
+    }, 3000);
   };
 
   return (

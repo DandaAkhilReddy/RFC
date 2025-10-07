@@ -56,9 +56,21 @@ export async function sendFriendRequest(
   fromUserPhoto?: string
 ): Promise<void> {
   try {
-    // Check if already friends or request exists
-    const existingRequest = await getFriendRequest(fromUserId, toUserId);
-    if (existingRequest) {
+    // Prevent self-friendship
+    if (fromUserId === toUserId) {
+      throw new Error('Cannot send friend request to yourself');
+    }
+
+    // Check if already friends
+    const alreadyFriends = await areFriends(fromUserId, toUserId);
+    if (alreadyFriends) {
+      throw new Error('Already friends with this user');
+    }
+
+    // Check if already friends or request exists (bidirectional)
+    const existingRequest1 = await getFriendRequest(fromUserId, toUserId);
+    const existingRequest2 = await getFriendRequest(toUserId, fromUserId);
+    if (existingRequest1 || existingRequest2) {
       throw new Error('Friend request already exists');
     }
 
