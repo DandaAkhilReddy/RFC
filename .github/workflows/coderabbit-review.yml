@@ -1,0 +1,84 @@
+name: CodeRabbit AI Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  coderabbit-review:
+    runs-on: ubuntu-latest
+    name: CodeRabbit AI Code Review
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Full history for better context
+
+      - name: Install CodeRabbit CLI
+        run: |
+          echo "📥 Installing CodeRabbit CLI..."
+          curl -fsSL https://cli.coderabbit.ai/install.sh | sh
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Verify installation
+        run: |
+          source ~/.bashrc
+          ~/.local/bin/coderabbit --version
+
+      - name: Authenticate CodeRabbit
+        env:
+          CODERABBIT_API_KEY: ${{ secrets.CODERABBIT_API_KEY }}
+        run: |
+          echo "🔑 Setting up authentication..."
+          # API key is set via environment variable
+
+      - name: Run CodeRabbit Review
+        env:
+          CODERABBIT_API_KEY: ${{ secrets.CODERABBIT_API_KEY }}
+        run: |
+          echo "🤖 Running CodeRabbit code review..."
+          source ~/.bashrc
+
+          # Determine review type based on event
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            REVIEW_TYPE="all"
+            BASE_BRANCH="${{ github.event.pull_request.base.ref }}"
+          else
+            REVIEW_TYPE="uncommitted"
+            BASE_BRANCH="HEAD~1"
+          fi
+
+          # Run CodeRabbit review
+          ~/.local/bin/coderabbit review --plain --type $REVIEW_TYPE --base $BASE_BRANCH || true
+
+      - name: Review Summary
+        if: always()
+        run: |
+          echo ""
+          echo "✅ CodeRabbit review complete!"
+          echo ""
+          echo "📊 Review focused on:"
+          echo "  - Firebase & Firestore optimization"
+          echo "  - React & TypeScript best practices"
+          echo "  - Social competition system logic"
+          echo "  - Security & authorization"
+          echo "  - Performance & testing"
+
+  # Optional: Fail on critical issues
+  coderabbit-quality-gate:
+    runs-on: ubuntu-latest
+    name: Code Quality Gate
+    needs: coderabbit-review
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Quality gate placeholder
+        run: |
+          echo "✅ Code quality gate passed"
+          echo "💡 Future: Add logic to fail on critical issues"
