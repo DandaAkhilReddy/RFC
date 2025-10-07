@@ -39,6 +39,8 @@ import {
   type Reward
 } from '../lib/gamification';
 import { deleteMealMemory, deleteWorkoutMemory } from '../lib/supermemoryService';
+import { awardMealPoints, awardWorkoutPoints, getUserPoints, UserPoints } from '../lib/pointsService';
+import FriendsPage from './FriendsPage';
 
 type PageType = 'dashboard' | 'diet' | 'workout' | 'ai-agents' | 'friends' | 'rapid-ai' | 'cupid-ai' | 'settings' | 'agent-rapid-info' | 'agent-cupid-info';
 
@@ -129,6 +131,7 @@ export default function ImprovedDashboard() {
   const [unlockedRewards, setUnlockedRewards] = useState<string[]>([]);
   const [todayPoints, setTodayPoints] = useState(175); // Demo value
   const [weeklyPoints, setWeeklyPoints] = useState(890); // Demo value
+  const [userPoints, setUserPoints] = useState<UserPoints | null>(null);
 
   // Form states
   const [newFood, setNewFood] = useState({
@@ -202,6 +205,18 @@ export default function ImprovedDashboard() {
 
     loadUserData();
   }, [user, currentDate]);
+
+  // Load user points
+  useEffect(() => {
+    const loadUserPoints = async () => {
+      if (user?.uid) {
+        const points = await getUserPoints(user.uid);
+        setUserPoints(points);
+      }
+    };
+
+    loadUserPoints();
+  }, [user?.uid]);
 
   // Calculate streak
   useEffect(() => {
@@ -391,9 +406,16 @@ export default function ImprovedDashboard() {
         foods: [...prev.foods, foodEntry]
       }));
 
+      // Award points for meal (manual)
+      if (user?.uid) {
+        awardMealPoints(user.uid, false).then(() => {
+          getUserPoints(user.uid).then(setUserPoints);
+        });
+      }
+
       setNewFood({ name: '', calories: '', protein: '', carbs: '', fat: '' });
       setShowAddFood(false);
-      setToast({ message: `✅ Added ${foodEntry.name}!`, type: 'success' });
+      setToast({ message: `✅ Added ${foodEntry.name}! +30 points`, type: 'success' });
     } catch (error) {
       console.error('Error adding food:', error);
       setToast({ message: '❌ Failed to add food. Please try again.', type: 'error' });
@@ -451,9 +473,16 @@ export default function ImprovedDashboard() {
         workouts: [...prev.workouts, workoutEntry]
       }));
 
+      // Award points for workout
+      if (user?.uid) {
+        awardWorkoutPoints(user.uid, workoutEntry.caloriesBurned).then(() => {
+          getUserPoints(user.uid).then(setUserPoints);
+        });
+      }
+
       setNewWorkout({ name: '', duration: '', caloriesBurned: '' });
       setShowAddWorkout(false);
-      setToast({ message: `💪 Added ${workoutEntry.name}!`, type: 'success' });
+      setToast({ message: `💪 Added ${workoutEntry.name}! +50 points`, type: 'success' });
     } catch (error) {
       console.error('Error adding workout:', error);
       setToast({ message: '❌ Failed to add workout. Please try again.', type: 'error' });
@@ -668,6 +697,19 @@ export default function ImprovedDashboard() {
             <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 hover:bg-orange-100 rounded-lg transition w-full flex justify-center">
               <Menu className="w-6 h-6 text-gray-600" />
             </button>
+          )}
+
+          {/* Points Display */}
+          {sidebarOpen && userPoints && (
+            <div className="mt-4 px-4 py-3 bg-gradient-to-r from-orange-100 to-yellow-100 rounded-xl">
+              <div className="flex items-center space-x-2">
+                <Trophy className="w-5 h-5 text-orange-600" />
+                <div className="flex-1">
+                  <p className="text-xs text-orange-600 font-medium">Total Points</p>
+                  <p className="text-lg font-bold text-orange-700">{userPoints.totalPoints.toLocaleString()}</p>
+                </div>
+              </div>
+            </div>
           )}
         </div>
 
@@ -1102,11 +1144,14 @@ export default function ImprovedDashboard() {
                         earnedBadges={earnedBadges}
                         motivationalMessage={motivationMsg}
                       />
-                      <Leaderboard
-                        period="weekly"
-                        currentUserPoints={totalPoints}
-                        currentUserRank={4}
-                      />
+                      {user?.uid && (
+                        <Leaderboard
+                          userId={user.uid}
+                          period="weekly"
+                          scope="friends"
+                          showScopeSelector={true}
+                        />
+                      )}
                     </div>
                   );
                 } catch (error) {
@@ -1588,9 +1633,16 @@ export default function ImprovedDashboard() {
                         foods: [...prev.foods, foodEntry]
                       }));
 
+                      // Award points for meal with photo
+                      if (user?.uid) {
+                        awardMealPoints(user.uid, true).then(() => {
+                          getUserPoints(user.uid).then(setUserPoints);
+                        });
+                      }
+
                       setShowAddFood(false);
                       setFoodInputMode('photo'); // Reset for next time
-                      setToast({ message: `✅ Added ${foodEntry.name}!`, type: 'success' });
+                      setToast({ message: `✅ Added ${foodEntry.name}! +50 points`, type: 'success' });
                     }}
                     onCancel={() => {
                       setShowAddFood(false);
@@ -1630,9 +1682,16 @@ export default function ImprovedDashboard() {
                         foods: [...prev.foods, foodEntry]
                       }));
 
+                      // Award points for meal (no photo)
+                      if (user?.uid) {
+                        awardMealPoints(user.uid, false).then(() => {
+                          getUserPoints(user.uid).then(setUserPoints);
+                        });
+                      }
+
                       setShowAddFood(false);
                       setFoodInputMode('photo'); // Reset for next time
-                      setToast({ message: `✅ Added ${foodEntry.name} from voice!`, type: 'success' });
+                      setToast({ message: `✅ Added ${foodEntry.name} from voice! +30 points`, type: 'success' });
                     }}
                     onCancel={() => {
                       setShowAddFood(false);
@@ -1929,9 +1988,17 @@ export default function ImprovedDashboard() {
                         workouts: [...prev.workouts, workoutEntry]
                       }));
 
+                      // Award points for workout
+                      if (user?.uid) {
+                        const calories = parseInt(workoutEntry.caloriesBurned) || 0;
+                        awardWorkoutPoints(user.uid, calories).then(() => {
+                          getUserPoints(user.uid).then(setUserPoints);
+                        });
+                      }
+
                       setShowAddWorkout(false);
                       setWorkoutInputMode('photo'); // Reset for next time
-                      setToast({ message: `✅ Added ${workoutEntry.name}!`, type: 'success' });
+                      setToast({ message: `✅ Added ${workoutEntry.name}! +50 points`, type: 'success' });
                     }}
                     onCancel={() => {
                       setShowAddWorkout(false);
@@ -2180,7 +2247,7 @@ export default function ImprovedDashboard() {
           )}
 
           {/* Other Pages - Coming Soon */}
-          {currentPage === 'friends' && <CommunityPage />}
+          {currentPage === 'friends' && <FriendsPage />}
 
           {(currentPage === 'diet' || currentPage === 'workout') && (
             <div className="flex items-center justify-center min-h-[60vh]">
