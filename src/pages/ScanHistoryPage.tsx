@@ -21,6 +21,7 @@ import { getCompletedScans } from '../lib/firestore/scans';
 import { getCurrentStreak, getScanHistorySummary } from '../lib/firestore/scanHistory';
 import type { Scan, ScanStreak, ScanHistorySummary } from '../types/scan';
 import { format } from 'date-fns';
+import ProgressChart from '../components/ProgressChart';
 
 const ScanHistoryPage: React.FC = () => {
   const { user } = useAuth();
@@ -174,6 +175,13 @@ const ScanHistoryPage: React.FC = () => {
               </p>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Progress Chart */}
+      {scans.length >= 2 && (
+        <div className="container mx-auto px-4 py-6">
+          <ProgressChart scans={scans} metric="all" chartType="area" />
         </div>
       )}
 
