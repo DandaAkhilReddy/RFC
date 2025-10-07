@@ -148,7 +148,7 @@ git push origin main
 ```
 
 4. **Verify:**
-- Check Azure deployment: https://delightful-sky-0437f100f.2.azurestaticapps.net/
+- Check Azure deployment: https://delightful-sky-0437f100f.2.azurestaticapps.net/ ✅ LIVE
 
 ---
 

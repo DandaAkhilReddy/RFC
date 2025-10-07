@@ -3,6 +3,10 @@ import { useAuth } from './components/AuthProvider';
 import LandingPage from './App';
 import ImprovedDashboard from './components/ImprovedDashboard';
 import ReliabilityPage from './pages/ReliabilityPage';
+import DailyScanPage from './pages/DailyScanPage';
+import DailyScanDashboard from './pages/DailyScanDashboard';
+import ProfilePage from './pages/ProfilePage';
+import PublicQRCardPage from './pages/PublicQRCardPage';
 import ErrorBoundary from './components/ErrorBoundary';
 
 export default function AppRouter() {
@@ -30,6 +34,9 @@ export default function AppRouter() {
           <Route path="/" element={user ? <Navigate to="/app" replace /> : <LandingPage />} />
           <Route path="/reliability" element={<ReliabilityPage />} />
 
+          {/* Public QR Card - accessible without auth */}
+          <Route path="/q/:slug" element={<PublicQRCardPage />} />
+
           {/* Protected routes - require authentication */}
           <Route
             path="/app"
@@ -40,6 +47,22 @@ export default function AppRouter() {
           <Route
             path="/dashboard"
             element={user ? <ImprovedDashboard /> : <Navigate to="/" replace />}
+          />
+
+          {/* Daily Scan routes */}
+          <Route
+            path="/scan"
+            element={user ? <DailyScanPage /> : <Navigate to="/" replace />}
+          />
+          <Route
+            path="/scan-dashboard"
+            element={user ? <DailyScanDashboard /> : <Navigate to="/" replace />}
+          />
+
+          {/* Profile route */}
+          <Route
+            path="/profile"
+            element={user ? <ProfilePage /> : <Navigate to="/" replace />}
           />
 
           {/* Redirect old paths */}

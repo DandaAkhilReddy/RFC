@@ -6,3 +6,4 @@
 
 export * from './geminiActivities';
 export * from './firebaseActivities';
+export * from './dailyScanActivities';

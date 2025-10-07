@@ -2,7 +2,7 @@
 
 A modern, full-stack fitness transformation platform with AI-powered features, real-time chat, and personalized fitness plans. Built with React, TypeScript, Azure Functions, and Firebase.
 
-🌐 **Live Demo**: https://white-meadow-001c09f0f.2.azurestaticapps.net/
+🌐 **Live Demo**: https://delightful-sky-0437f100f.2.azurestaticapps.net/
 
 ## 📋 Table of Contents
 

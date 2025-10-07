@@ -59,5 +59,8 @@ export const Collections = {
   PARTNER_REQUESTS: 'partner_requests',
   // Community feature
   COMMUNITY_USERS: 'community_users',
-  USER_LOCATIONS: 'user_locations'
+  USER_LOCATIONS: 'user_locations',
+  // Daily Scan system
+  SCANS: 'scans',
+  DAY_LOGS: 'dayLogs'
 };
